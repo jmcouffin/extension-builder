@@ -1,0 +1,877 @@
+/* Global Styles */
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+}
+
+:root {
+  --bg-color-grey: #f1f1f1;
+  --bg-yellow: #eed151;
+  --bg-input: #f9f9f9;
+}
+
+body {
+  background-color: #bfbfbf;
+  padding: 20px;
+}
+
+/* Header Styles */
+header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+}
+
+.logo img {
+  margin-right: 10px;
+}
+
+.logo h1 {
+  font-size: 2.5rem;
+  color: #333;
+}
+
+.logo span {
+  display: block;
+  font-size: 1.2rem;
+  font-weight: normal;
+  margin-top: -5px;
+}
+
+.download-button button {
+  background-color: var(--bg-yellow);
+  color: rgb(22, 22, 22);
+  border: black;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.download-button button:hover {
+  background-color: #f23a02;
+}
+
+.download-icon {
+  margin-left: 10px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Extension Name */
+.extension-name-container {
+  background-color: var(--bg-yellow);
+  padding: 15px;
+  margin-bottom: 10px;
+  border-radius: 5px;
+  color: #444;
+  width: 500px;
+  font-weight: bold;
+}
+
+.extension-name-container input {
+  border: none;
+  background-color: var(--bg-yellow);
+  font-size: 1rem;
+  color: #757575;
+  width: 300px;
+  padding: 5px;
+  margin-left: 5px;
+  outline: 1px solid #ffea00;
+}
+
+.extension-name-container input:focus {
+  background-color: var(--bg-input);
+}
+
+/* Tabs Styles */
+.tabs-container {
+  display: flex;
+  align-items: center;
+  margin-bottom: 0px;
+}
+
+.tabs {
+  display: flex;
+  gap: 5px;
+  flex-grow: 1;
+}
+
+.tab {
+  padding: 10px 15px;
+  border-radius: 5px 5px 0 0;
+  border: 1px solid #ddd;
+  border-bottom: none;
+  cursor: pointer;
+  background-color: var(--bg-color-grey);
+  position: relative; /* Added for delete button positioning */
+}
+
+.tab.active {
+  border-bottom: 5px solid rgb(252, 116, 116);
+  position: relative;
+  z-index: 1;
+}
+
+.tab input {
+  border: none;
+  font-size: 0.9rem;
+  color: #333;
+  font-weight: bold;
+  width: 100px;
+  background-color: var(--bg-grey);
+}
+
+.tab input:focus {
+  background-color: #fadeb1;
+}
+
+/* Tab delete button */
+.tab-delete-button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 18px;
+  height: 18px;
+  font-size: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.tab-delete-button:hover {
+  opacity: 1;
+  background-color: #c0392b;
+}
+
+/* Ribbon Styles */
+.ribbon-container {
+  display: flex;
+  margin-bottom: 20px;
+}
+
+.ribbon {
+  border: 1px solid #ddd;
+  background-color: var(--bg-color-grey);
+  padding: 10px;
+  border-radius: 5px;
+  flex-grow: 1;
+  display: flex;
+  gap: 10px;
+  min-height: 200px;
+}
+
+.panel {
+  border: 1px solid #ddd;
+  border-radius: 3px;
+  padding: 5px;
+  min-width: 120px;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+}
+
+/* Panel delete button */
+.panel-delete-button {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.panel-delete-button:hover {
+  opacity: 1;
+  background-color: #c0392b;
+}
+
+.panel-content {
+  flex-grow: 1;
+  padding: 5px;
+  min-height: 100px;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  gap: 5px;
+  overflow-x: auto; /* Allow horizontal scrolling */
+}
+
+.button {
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  width: 70px; /* Fixed width */
+  height: 140px; /* Fixed height (2:1 ratio) */
+  position: relative;
+}
+
+/* Delete button for elements */
+.delete-button {
+  position: absolute;
+  top: 2px;
+  right: 25px; /* Position next to edit button */
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.delete-button:hover {
+  opacity: 1;
+  background-color: #c0392b;
+}
+
+/* Stack styles */
+.stack {
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  gap: 2px;
+  min-height: 40px;
+  height: auto;
+  position: relative;
+  width: auto !important;
+  min-width: 85px;
+  max-width: 150px;
+}
+
+/* Fix for stacked buttons - prevent text wrapping */
+.stacked-button {
+  min-height: 40px !important;
+  width: 100% !important;
+  margin-bottom: 2px;
+  height: auto !important; /* Override fixed height */
+}
+
+.stacked-button-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  padding: 2px;
+  white-space: nowrap; /* Prevent text wrapping */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Make stack extend horizontally when needed */
+.stack .button-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex-grow: 1;
+  text-align: left;
+}
+
+/* Button icon proportions */
+.button-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Improve stack visuals */
+.stack .button {
+  min-height: 30px;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.stack .button.stacked-button {
+  width: 100% !important;
+  min-height: 24px !important;
+  padding: 2px 5px;
+}
+
+.stack .stacked-button-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  padding: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Fix for pulldown elements */
+.pulldown {
+  width: 70px;
+  height: 140px;
+  position: relative;
+}
+
+/* Pulldown indicator */
+.pulldown-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 10px;
+  color: #555;
+  padding: 2px;
+  cursor: pointer;
+  background-color: #f0f0f0;
+  border-radius: 2px;
+  transition: background-color 0.2s;
+}
+
+.pulldown-indicator:hover {
+  background-color: #ddd;
+}
+
+.pulldown-content-container {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  padding: 15px; /* Increased padding */
+  margin-top: 10px;
+  display: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Added shadow for better visibility */
+  z-index: 1000 !important;
+}
+
+.pulldown-content {
+  min-width: 180px !important;
+  width: auto !important;
+  max-width: 300px;
+  margin: 0 auto;
+  border: 1px solid #eee;
+  padding: 5px;
+}
+
+/* Fix for panel element sizing */
+.panel-content .button,
+.panel-content .stack,
+.panel-content .pulldown {
+  width: 85px; /* Fixed width for consistent sizing */
+  margin-bottom: 5px;
+}
+
+/* Consistent sizing for buttons */
+.button-icon {
+  width: 50px;
+  height: 50px;
+  margin-bottom: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.button-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.button-name {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #e74c3c;
+  width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stack-name {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #555;
+  padding: 2px;
+  background-color: #eee;
+  border-radius: 3px;
+  margin-top: auto;
+}
+
+/* Pulldown styles */
+.pulldown {
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  padding: 5px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: grab;
+  min-height: 90px;
+  position: relative;
+}
+
+.pulldown-content .button {
+  width: 100% !important;
+  min-height: 35px;
+  padding: 5px;
+  margin-bottom: 5px;
+}
+
+.pulldown-content .button .button-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  width: auto;
+}
+
+.pulldown-label {
+  text-align: center;
+  font-size: 0.8rem;
+  color: #555;
+  margin-bottom: 5px;
+}
+
+/* Panel controls */
+.panel-controls {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  justify-content: space-around;
+}
+
+.panel-name-container {
+  text-align: center;
+  padding: 5px;
+  border-top: 1px solid #eee;
+  margin-top: 5px;
+}
+
+.panel-name {
+  border: none;
+  font-size: 0.8rem;
+  text-align: center;
+  width: 100%;
+  color: #333;
+}
+
+.panel-name:focus {
+  outline: 1px solid #3498db;
+  background-color: #f9f9f9;
+}
+
+/* Add buttons */
+.add-button {
+  background-color: #6495ed;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  font-size: 0.8rem;
+  border-radius: 3px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.3s;
+}
+
+.add-button:hover {
+  background-color: #4169e1;
+}
+
+.plus {
+  margin-right: 5px;
+  font-size: 1rem;
+  font-weight: bold;
+}
+
+.add-panel-container {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* Extension arrow info */
+.panel-extension-info {
+  display: none; /* Hide this element */
+}
+
+/* Extension Folder Preview */
+.extension-preview {
+  background-color: white;
+  border: 1px solid #ddd;
+  border-radius: 5px;
+  overflow: hidden;
+  margin-top: 20px;
+}
+
+.preview-header {
+  background-color: #eee;
+  padding: 10px;
+  font-weight: bold;
+  color: #333;
+  border-bottom: 1px solid #ddd;
+}
+
+.preview-content {
+  padding: 15px;
+  color: #555;
+  font-family: monospace;
+  line-height: 1.5;
+  white-space: pre;
+  overflow-x: auto;
+}
+
+/* Modal Styles */
+.modal {
+  display: none;
+  position: fixed;
+  z-index: 2000 !important;
+  left: 0;
+  top: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+  background-color: white;
+  margin: 5% auto;
+  padding: 20px;
+  border-radius: 5px;
+  width: 600px;
+  max-width: 90%;
+  position: relative;
+}
+
+.close-modal {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #777;
+}
+
+.close-modal:hover {
+  color: #333;
+}
+
+.button-type-selector {
+  margin: 20px 0;
+}
+
+.button-types {
+  display: flex;
+  gap: 15px;
+  margin-top: 10px;
+}
+
+.button-type {
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  cursor: pointer;
+  text-align: center;
+  flex: 1;
+}
+
+.button-type.selected {
+  border-color: #3498db;
+  background-color: #ebf5fb;
+}
+
+.type-icon {
+  font-size: 1.5rem;
+  margin-bottom: 5px;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  font-weight: bold;
+  color: #555;
+}
+
+.form-group input,
+.form-group textarea {
+  width: 100%;
+  padding: 8px;
+  border: 1px solid #ddd;
+  border-radius: 3px;
+}
+
+.form-group input:focus,
+.form-group textarea:focus {
+  outline: 1px solid #3498db;
+  border-color: #3498db;
+}
+
+.icon-upload {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.icon-preview {
+  width: 64px;
+  height: 64px;
+  border: 1px solid #ddd;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+}
+
+.icon-preview img {
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-top: 20px;
+}
+
+.modal-actions button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+#createButton {
+  background-color: #2ecc71;
+  color: white;
+}
+
+.cancel-button {
+  background-color: #95a5a6;
+  color: white;
+}
+
+/* Drag and drop styling */
+.dragging {
+  opacity: 0.5;
+  border: 2px solid #3498db !important;
+}
+
+.drag-over {
+  background-color: #ebf5fb;
+  border: 2px dashed #3498db !important;
+}
+
+/* Stack button styles */
+.stack .button {
+  min-height: 30px;
+}
+
+.stack .button-icon {
+  width: 18px; /* Reduced from 30px */
+  height: 18px; /* Reduced from 30px */
+  min-width: 18px;
+  margin-right: 4px;
+  margin-bottom: 0;
+}
+
+/* Make text unselectable during drag */
+.no-select {
+  user-select: none;
+}
+
+/* Code input styles */
+.code-input textarea {
+  font-family: monospace;
+  min-height: 100px;
+  resize: vertical;
+}
+
+/* Edit button styles */
+.edit-button {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  background-color: #6495ed;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 20px;
+  height: 20px;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.edit-button:hover {
+  opacity: 1;
+}
+
+/* Stack add button styles */
+.stack-add-button {
+  width: 100%;
+  height: 20px !important; /* Match the stacked button height */
+  background-color: #f5f5f5;
+  border: 1px dashed #ccc;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: #6495ed;
+}
+
+.stack-add-button:hover {
+  background-color: #e5e5e5;
+}
+
+/* Stack editing styles */
+.stack-edit-mode .stack-name input {
+  width: 100%;
+  font-size: 0.8rem;
+  padding: 2px;
+}
+
+.panel-content .button,
+.panel-content .stack,
+.panel-content .pulldown {
+  width: 85px; /* Fixed width for consistent sizing */
+  margin-bottom: 5px;
+}
+
+.stack .button,
+.pulldown-content .button {
+  min-height: 30px;
+  width: 100%; /* Full width of parent */
+  margin-bottom: 5px;
+  flex-direction: column;
+}
+
+/* Save and Load button styles */
+.download-button {
+  display: flex;
+  gap: 10px;
+}
+
+.save-button,
+.load-button {
+  background-color: #5c5f65;
+  color: rgb(22, 22, 22);
+  border: black;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  padding: 10px 20px;
+  font-size: 1rem;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  font-weight: bold;
+  transition: background-color 0.3s;
+}
+
+.save-button:hover {
+  background-color: #4caf50;
+  color: white;
+}
+
+.load-button:hover {
+  background-color: #2196f3;
+  color: white;
+}
+
+.save-icon,
+.load-icon {
+  margin-left: 10px;
+  font-weight: bold;
+  font-size: 1.2rem;
+}
+
+/* Loading overlay styles */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+}
+
+.loading-content {
+  background-color: white;
+  padding: 20px;
+  border-radius: 5px;
+  text-align: center;
+}
+
+.spinner {
+  border: 4px solid #f3f3f3;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  animation: spin 2s linear infinite;
+  margin: 0 auto 10px;
+}
+
+@keyframes spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}

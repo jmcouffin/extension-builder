@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>pyRevit Extension Builder</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+
+<body>
+    <header>
+        <div class="logo">
+            <img src="logo.png" alt="pyRevit Logo">
+            <!-- <h1>pyRevit<span>extension builder</span></h1> -->
+        </div>
+        <div class="download-button">
+            <button id="downloadZip">
+                DOWNLOAD EXTENSION AS ZIP
+                <span class="download-icon">⬇</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="extension-name-container">
+        <div>EXTENSION NAME: <input type="text" id="extensionName" value="Your Extension Name"></div>
+    </div>
+
+    <main>
+        <div class="tabs-container">
+            <div class="tabs" id="tabsContainer">
+                <!-- Default tab -->
+                <div class="tab active" data-tab-id="tab1">
+                    <input type="text" class="tab-name" value="TAB NAME">
+                </div>
+            </div>
+            <button class="add-button" id="addTab">
+                <span class="plus">+</span> NEW TAB
+            </button>
+        </div>
+
+        <div class="ribbon-container">
+            <div class="ribbon" id="ribbonContainer">
+                <!-- Default panel -->
+                <div class="panel" data-panel-id="panel1" data-tab-id="tab1">
+                    <div class="panel-content" id="panelContent1">
+                        <!-- Default button -->
+                        <div class="button" draggable="true" data-type="pushbutton" data-button-id="button1">
+                            <div class="button-icon">
+                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
+                                    alt="Button Icon">
+                            </div>
+                            <div class="button-name">Button 1</div>
+                        </div>
+                    </div>
+                    <div class="panel-controls">
+                        <button class="add-button" data-panel-id="panel1" data-action="add-button">
+                            <span class="plus">+</span> NEW BUTTON
+                        </button>
+                        <button class="add-button" data-panel-id="panel1" data-action="add-stack">
+                            <span class="plus">+</span> NEW STACK
+                        </button>
+                    </div>
+                    <div class="panel-name-container">
+                        <input type="text" class="panel-name" value="PANEL NAME">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="add-panel-container">
+            <button class="add-button" id="addPanel" data-tab-id="tab1">
+                <span class="plus">+</span> NEW PANEL
+            </button>
+        </div>
+
+        <div class="pulldown-content-container" id="pulldownContentContainer">
+            <!-- Pulldown content will be shown here when needed -->
+        </div>
+    </main>
+
+    <div class="extension-preview">
+        <div class="preview-header">EXTENSION FOLDER PREVIEW</div>
+        <div class="preview-content" id="folderPreview">
+            <!-- Folder structure preview will be populated by JavaScript -->
+        </div>
+    </div>
+
+    <!-- Modal for button creation -->
+    <div class="modal" id="buttonModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2>Create New Element</h2>
+
+            <div class="button-type-selector">
+                <h3>Element Type:</h3>
+                <div class="button-types">
+                    <div class="button-type selected" data-type="pushbutton">
+                        <div class="type-icon">🔘</div>
+                        <div class="type-name">Push Button</div>
+                    </div>
+                    <div class="button-type" data-type="pulldown">
+                        <div class="type-icon">🔽</div>
+                        <div class="type-name">Pulldown</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="buttonName">Name (Required):</label>
+                <input type="text" id="buttonName" required>
+            </div>
+
+            <div class="form-group">
+                <label for="buttonTitle">Title (Optional):</label>
+                <input type="text" id="buttonTitle">
+            </div>
+
+            <div class="form-group">
+                <label for="buttonTooltip">Tooltip (Optional):</label>
+                <input type="text" id="buttonTooltip">
+            </div>
+
+            <div class="form-group">
+                <label for="buttonIcon">Icon:</label>
+                <div class="icon-upload">
+                    <input type="file" id="buttonIcon" accept="image/*">
+                    <div class="icon-preview" id="iconPreview">
+                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
+                            alt="Default Icon">
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-group code-input">
+                <label for="buttonCode">Python Code (Optional):</label>
+                <textarea id="buttonCode" rows="4" placeholder="# Your Python code here..."></textarea>
+            </div>
+
+            <div class="modal-actions">
+                <button id="createButton">Create</button>
+                <button class="cancel-button">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading overlay for operations -->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div id="loadingMessage">Loading...</div>
+        </div>
+    </div>
+
+    <!-- Load scripts in correct order with proper dependencies -->
+    <script src="template.js"></script>
+    <script src="state.js"></script>
+    <script src="folder-structure.js"></script>
+    <script src="drag-drop.js"></script>
+    <script src="ui-elements.js"></script>
+    <script src="modal-handlers.js"></script>
+    <script src="event-handlers.js"></script>
+    <!-- Add the new save-load.js file -->
+    <script src="save-load.js"></script>
+    <script src="app.js"></script>
+</body>
+
+</html>
