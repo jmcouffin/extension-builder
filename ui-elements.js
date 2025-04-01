@@ -697,7 +697,7 @@ const UIElements = {
   addDeleteButton: function (elementElement, elementId) {
     const deleteButton = document.createElement("button");
     deleteButton.className = "delete-button";
-    deleteButton.innerHTML = "✕";
+    deleteButton.innerHTML = "";
     deleteButton.title = "Delete Element";
 
     // Position at top right corner
