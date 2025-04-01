@@ -209,16 +209,6 @@ const UIElements = {
                     </div>
                     <div class="button-name">${element.name}</div>
                 `;
-        // Add edit button
-        const editButton = document.createElement("button");
-        editButton.className = "edit-button";
-        editButton.innerHTML = "✎";
-        editButton.title = "Edit Button";
-        editButton.addEventListener("click", (e) => {
-          e.stopPropagation();
-          window.ModalHandlers.editElement(elementId);
-        });
-        elementElement.appendChild(editButton);
 
         // Add delete button
         this.addDeleteButton(elementElement, elementId);
@@ -238,17 +228,6 @@ const UIElements = {
                     </div>
                     <div class="button-name">${element.name}</div>
                 `;
-
-        // Add edit button for pulldown
-        const pulldownEditButton = document.createElement("button");
-        pulldownEditButton.className = "edit-button";
-        pulldownEditButton.innerHTML = "✎";
-        pulldownEditButton.title = "Edit Pulldown";
-        pulldownEditButton.addEventListener("click", (e) => {
-          e.stopPropagation();
-          window.ModalHandlers.editElement(elementId);
-        });
-        elementElement.appendChild(pulldownEditButton);
 
         // Add delete button for pulldown
         this.addDeleteButton(elementElement, elementId);
@@ -397,6 +376,23 @@ const UIElements = {
     contentWrapper.appendChild(nameDiv);
     buttonElement.appendChild(contentWrapper);
 
+    if (button.type === "pulldown") {
+      // Create pulldown indicator
+      const pulldownIndicator = document.createElement("span");
+      pulldownIndicator.className = "pulldown-indicator";
+      pulldownIndicator.innerHTML = "▼";
+      pulldownIndicator.title = "Open Pulldown Content";
+
+      // Add click handler to show pulldown content
+      pulldownIndicator.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.UIElements.togglePulldownContent(buttonId);
+      });
+
+      // Add to button
+      contentWrapper.appendChild(pulldownIndicator);
+    }
+
     // Add delete button
     this.addDeleteButton(buttonElement, buttonId);
 
@@ -509,7 +505,7 @@ const UIElements = {
       // Create delete button
       const deleteButton = document.createElement("button");
       deleteButton.className = "tab-delete-button";
-      deleteButton.innerHTML = "✕";
+      deleteButton.innerHTML = "";
       deleteButton.title = "Delete Tab";
       deleteButton.style.position = "absolute";
       deleteButton.style.top = "2px";
@@ -610,7 +606,7 @@ const UIElements = {
   addPanelDeleteButton: function (panelElement, panelId) {
     const deleteButton = document.createElement("button");
     deleteButton.className = "panel-delete-button";
-    deleteButton.innerHTML = "✕";
+    deleteButton.innerHTML = "";
     deleteButton.title = "Delete Panel";
     deleteButton.style.position = "absolute";
     deleteButton.style.top = "5px";
@@ -703,16 +699,19 @@ const UIElements = {
     deleteButton.className = "delete-button";
     deleteButton.innerHTML = "✕";
     deleteButton.title = "Delete Element";
+
+    // Position at top right corner
     deleteButton.style.position = "absolute";
     deleteButton.style.top = "2px";
-    deleteButton.style.right = "25px"; // Position next to edit button
+    deleteButton.style.right = "2px";
+
     deleteButton.style.backgroundColor = "#e74c3c";
     deleteButton.style.color = "white";
     deleteButton.style.border = "none";
     deleteButton.style.borderRadius = "50%";
-    deleteButton.style.width = "20px";
-    deleteButton.style.height = "20px";
-    deleteButton.style.fontSize = "10px";
+    deleteButton.style.width = "7px";
+    deleteButton.style.height = "7px";
+    deleteButton.style.fontSize = "5px";
     deleteButton.style.display = "flex";
     deleteButton.style.alignItems = "center";
     deleteButton.style.justifyContent = "center";
@@ -832,3 +831,5 @@ const UIElements = {
 
 // Export UI Elements to be used by other modules
 window.UIElements = UIElements;
+
+
