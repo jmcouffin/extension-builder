@@ -7,13 +7,14 @@
 }
 
 :root {
-  --bg-color-grey: #f1f1f1;
-  --bg-yellow: #eed151;
+  --bg-color-grey: #ffffff;
+  --bg-yellow: #fff0ac;
+  --bg-bright-yellow: #ffe600;
   --bg-input: #f9f9f9;
 }
 
 body {
-  background-color: #bfbfbf;
+  background-color: #ffffff;
   padding: 20px;
 }
 
@@ -31,7 +32,7 @@ header {
 }
 
 .logo img {
-  margin-right: 10px;
+  margin-right: 20px;
 }
 
 .logo h1 {
@@ -47,9 +48,8 @@ header {
 }
 
 .download-button button {
-  background-color: var(--bg-yellow);
+  background-color: var(--bg-bright-yellow);
   color: rgb(22, 22, 22);
-  border: black;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   padding: 10px 20px;
   font-size: 1rem;
@@ -62,7 +62,9 @@ header {
 }
 
 .download-button button:hover {
-  background-color: #f23a02;
+  border: 2px solid var(--bg-bright-yellow);
+  background-color: var(--bg-yellow);
+  color: grey;
 }
 
 .download-icon {
@@ -77,6 +79,7 @@ header {
   padding: 15px;
   margin-bottom: 10px;
   border-radius: 5px;
+  border: 2px solid var(--bg-bright-yellow);
   color: #444;
   width: 500px;
   font-weight: bold;
@@ -85,12 +88,12 @@ header {
 .extension-name-container input {
   border: none;
   background-color: var(--bg-yellow);
-  font-size: 1rem;
+  font-size: 2rem;
   color: #757575;
-  width: 300px;
+  width: 100%;
   padding: 5px;
   margin-left: 5px;
-  outline: 1px solid #ffea00;
+  /* outline: 2px solid #ffea00; */
 }
 
 .extension-name-container input:focus {
@@ -113,15 +116,16 @@ header {
 .tab {
   padding: 10px 15px;
   border-radius: 5px 5px 0 0;
-  border: 1px solid #ddd;
+  border: 2px solid #ddd;
   border-bottom: none;
   cursor: pointer;
-  background-color: var(--bg-color-grey);
-  position: relative; /* Added for delete button positioning */
+  position: relative;
+  /* Added for delete button positioning */
 }
 
 .tab.active {
   border-bottom: 5px solid rgb(252, 116, 116);
+  background-color: var(--bg-yellow);
   position: relative;
   z-index: 1;
 }
@@ -136,7 +140,7 @@ header {
 }
 
 .tab input:focus {
-  background-color: #fadeb1;
+  background-color: var(--bg-input);
 }
 
 /* Tab delete button */
@@ -156,8 +160,8 @@ header {
   justify-content: center;
   cursor: pointer;
   z-index: 5;
-  opacity: 0.7;
-  transition: opacity 0.2s;
+  opacity: 1;
+  transition: opacity 0.3s;
 }
 
 .tab-delete-button:hover {
@@ -226,7 +230,8 @@ header {
   flex-direction: row;
   flex-wrap: wrap;
   gap: 5px;
-  overflow-x: auto; /* Allow horizontal scrolling */
+  overflow-x: auto;
+  /* Allow horizontal scrolling */
 }
 
 .button {
@@ -238,8 +243,10 @@ header {
   flex-direction: column;
   align-items: center;
   cursor: grab;
-  width: 70px; /* Fixed width */
-  height: 140px; /* Fixed height (2:1 ratio) */
+  width: 70px;
+  /* Fixed width */
+  height: 140px;
+  /* Fixed height (2:1 ratio) */
   position: relative;
 }
 
@@ -247,7 +254,8 @@ header {
 .delete-button {
   position: absolute;
   top: 2px;
-  right: 25px; /* Position next to edit button */
+  right: 25px;
+  /* Position next to edit button */
   background-color: #e74c3c;
   color: white;
   border: none;
@@ -291,7 +299,8 @@ header {
   min-height: 40px !important;
   width: 100% !important;
   margin-bottom: 2px;
-  height: auto !important; /* Override fixed height */
+  height: auto !important;
+  /* Override fixed height */
 }
 
 .stacked-button-content {
@@ -300,7 +309,8 @@ header {
   align-items: center;
   width: 100%;
   padding: 2px;
-  white-space: nowrap; /* Prevent text wrapping */
+  white-space: nowrap;
+  /* Prevent text wrapping */
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -377,10 +387,12 @@ header {
   background-color: white;
   border: 1px solid #ddd;
   border-radius: 5px;
-  padding: 15px; /* Increased padding */
+  padding: 15px;
+  /* Increased padding */
   margin-top: 10px;
   display: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); /* Added shadow for better visibility */
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  /* Added shadow for better visibility */
   z-index: 1000 !important;
 }
 
@@ -397,7 +409,8 @@ header {
 .panel-content .button,
 .panel-content .stack,
 .panel-content .pulldown {
-  width: 85px; /* Fixed width for consistent sizing */
+  width: 85px;
+  /* Fixed width for consistent sizing */
   margin-bottom: 5px;
 }
 
@@ -532,7 +545,8 @@ header {
 
 /* Extension arrow info */
 .panel-extension-info {
-  display: none; /* Hide this element */
+  display: none;
+  /* Hide this element */
 }
 
 /* Extension Folder Preview */
@@ -712,8 +726,10 @@ header {
 }
 
 .stack .button-icon {
-  width: 18px; /* Reduced from 30px */
-  height: 18px; /* Reduced from 30px */
+  width: 18px;
+  /* Reduced from 30px */
+  height: 18px;
+  /* Reduced from 30px */
   min-width: 18px;
   margin-right: 4px;
   margin-bottom: 0;
@@ -758,7 +774,8 @@ header {
 /* Stack add button styles */
 .stack-add-button {
   width: 100%;
-  height: 20px !important; /* Match the stacked button height */
+  height: 20px !important;
+  /* Match the stacked button height */
   background-color: #f5f5f5;
   border: 1px dashed #ccc;
   border-radius: 3px;
@@ -785,14 +802,16 @@ header {
 .panel-content .button,
 .panel-content .stack,
 .panel-content .pulldown {
-  width: 85px; /* Fixed width for consistent sizing */
+  width: 85px;
+  /* Fixed width for consistent sizing */
   margin-bottom: 5px;
 }
 
 .stack .button,
 .pulldown-content .button {
   min-height: 30px;
-  width: 100%; /* Full width of parent */
+  width: 100%;
+  /* Full width of parent */
   margin-bottom: 5px;
   flex-direction: column;
 }
@@ -871,6 +890,7 @@ header {
   0% {
     transform: rotate(0deg);
   }
+
   100% {
     transform: rotate(360deg);
   }
