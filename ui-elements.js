@@ -1,10 +1,7 @@
-// UI Element creation and management for pyRevit Extension Builder
 const UIElements = {
-  // Store default icon paths
   defaultIconPath: "icon.png",
   defaultDarkIconPath: "icon.dark.png",
 
-  // Store loaded icon data
   defaultIconData: null,
   defaultDarkIconData: null,
 
@@ -12,7 +9,6 @@ const UIElements = {
    * Initialize by loading default icons
    */
   initialize() {
-    // Load default icons
     this.loadDefaultIcons();
   },
 
@@ -21,7 +17,6 @@ const UIElements = {
       "pulldownContentContainer"
     );
 
-    // If the pulldown content is already shown for this pulldown, hide it
     if (
       window.appState.activePulldown === pulldownId &&
       pulldownContentContainer.style.display === "block"
@@ -31,7 +26,6 @@ const UIElements = {
       return;
     }
 
-    // Otherwise show the content for this pulldown
     this.showPulldownContent(pulldownId, pulldownElement);
   },
 
@@ -39,7 +33,6 @@ const UIElements = {
    * Load default icons from the root
    */
   loadDefaultIcons() {
-    // Load default icon
     fetch(this.defaultIconPath)
       .then((response) => {
         if (!response.ok) {
@@ -56,7 +49,7 @@ const UIElements = {
         const reader = new FileReader();
         reader.onload = () => {
           this.defaultIconData = reader.result;
-          // Refresh UI to update all buttons with the default icon
+
           this.renderPanels();
         };
         reader.readAsDataURL(blob);
@@ -65,7 +58,6 @@ const UIElements = {
         console.error(`Error loading default icon:`, error);
       });
 
-    // Also load dark icon if needed
     fetch(this.defaultDarkIconPath)
       .then((response) => {
         if (!response.ok) {
@@ -98,7 +90,6 @@ const UIElements = {
       return element.iconData;
     }
 
-    // Use default icon if available, otherwise use placeholder
     return (
       this.defaultIconData ||
       "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
@@ -113,21 +104,18 @@ const UIElements = {
     panelElement.className = "panel";
     panelElement.dataset.panelId = panelId;
     panelElement.dataset.tabId = panel.tabId;
-    panelElement.style.position = "relative"; // For absolute positioning of delete button
+    panelElement.style.position = "relative";
 
-    // Create panel content
     const panelContent = document.createElement("div");
     panelContent.className = "panel-content";
     panelContent.id = `panelContent${panelId.replace("panel", "")}`;
 
-    // Add elements to panel
     panel.elements.forEach((elementId) => {
       const element = window.appState.elements[elementId];
       const elementElement = this.createElementElement(elementId, element);
       panelContent.appendChild(elementElement);
     });
 
-    // Create panel controls
     const panelControls = document.createElement("div");
     panelControls.className = "panel-controls";
     panelControls.innerHTML = `
@@ -139,26 +127,22 @@ const UIElements = {
             </button>
         `;
 
-    // Add event listeners to controls
     panelControls.querySelectorAll("button").forEach((button) => {
       button.addEventListener("click", window.EventHandlers.handlePanelAction);
     });
 
-    // Create panel name container
     const panelNameContainer = document.createElement("div");
     panelNameContainer.className = "panel-name-container";
     panelNameContainer.innerHTML = `<input type="text" class="panel-name" value="${panel.name}">`;
 
-    // Add event listener to panel name
     panelNameContainer
       .querySelector(".panel-name")
       .addEventListener("change", function () {
         const newName = this.value;
 
-        // Check for duplicate panel names in the same tab
         const tabId = panel.tabId;
         const isDuplicate = window.appState.tabs[tabId].panels.some((pid) => {
-          if (pid === panelId) return false; // Skip the current panel
+          if (pid === panelId) return false;
           return (
             window.appState.panels[pid].name.toLowerCase() ===
             newName.toLowerCase()
@@ -177,12 +161,10 @@ const UIElements = {
         window.FolderStructure.updateFolderPreview();
       });
 
-    // Assemble panel
     panelElement.appendChild(panelContent);
     panelElement.appendChild(panelControls);
     panelElement.appendChild(panelNameContainer);
 
-    // Add delete button to panel
     this.addPanelDeleteButton(panelElement, panelId);
 
     return panelElement;
@@ -210,7 +192,6 @@ const UIElements = {
                     <div class="button-name">${element.name}</div>
                 `;
 
-        // Add delete button
         this.addDeleteButton(elementElement, elementId);
         break;
 
@@ -229,15 +210,12 @@ const UIElements = {
                     <div class="button-name">${element.name}</div>
                 `;
 
-        // Add delete button for pulldown
         this.addDeleteButton(elementElement, elementId);
 
-        // Add click event for toggling pulldown content
         elementElement.addEventListener("click", (e) => {
           this.togglePulldownContent(elementId, elementElement);
         });
 
-        // Add explicit pulldown indicator/button
         const pulldownIndicator = document.createElement("div");
         pulldownIndicator.className = "pulldown-indicator";
         pulldownIndicator.innerHTML = "▼";
@@ -250,7 +228,7 @@ const UIElements = {
         pulldownIndicator.style.cursor = "pointer";
 
         pulldownIndicator.addEventListener("click", (e) => {
-          e.stopPropagation(); // Prevent parent click from firing
+          e.stopPropagation();
           this.togglePulldownContent(elementId, elementElement);
         });
 
@@ -264,7 +242,6 @@ const UIElements = {
         elementElement.dataset.type = "stack";
         elementElement.dataset.buttonId = elementId;
 
-        // Add stack children
         if (element.children && element.children.length > 0) {
           element.children.forEach((childId) => {
             const child = window.appState.elements[childId];
@@ -276,7 +253,6 @@ const UIElements = {
           });
         }
 
-        // Add "Add button" element if less than 3 buttons
         if (!element.children || element.children.length < 3) {
           const addButtonElement = document.createElement("div");
           addButtonElement.className = "stack-add-button";
@@ -289,16 +265,13 @@ const UIElements = {
           elementElement.appendChild(addButtonElement);
         }
 
-        // Add stack name
         const stackName = document.createElement("div");
         stackName.className = "stack-name";
         stackName.textContent = element.name;
         elementElement.appendChild(stackName);
 
-        // Add delete button for stack
         this.addDeleteButton(elementElement, elementId);
 
-        // Make stack name editable
         stackName.addEventListener("click", function () {
           const currentText = this.textContent;
           elementElement.classList.add("stack-edit-mode");
@@ -324,7 +297,6 @@ const UIElements = {
         break;
     }
 
-    // Add drag event listeners and button events
     if (elementElement) {
       window.DragDrop.setupElementDragEvents(elementElement);
       window.EventHandlers.initializeButtonEvents(elementElement);
@@ -341,9 +313,8 @@ const UIElements = {
     buttonElement.className = "button stacked-button";
     buttonElement.dataset.type = button.type;
     buttonElement.dataset.buttonId = buttonId;
-    buttonElement.draggable = true; // Make stack buttons draggable
+    buttonElement.draggable = true;
 
-    // Create a wrapper for the content with flexible width
     const contentWrapper = document.createElement("div");
     contentWrapper.className = "stacked-button-content";
     contentWrapper.style.display = "flex";
@@ -352,7 +323,6 @@ const UIElements = {
     contentWrapper.style.width = "100%";
     contentWrapper.style.overflow = "hidden";
 
-    // Icon with fixed width
     const iconDiv = document.createElement("div");
     iconDiv.className = "button-icon";
     iconDiv.style.minWidth = "18px";
@@ -363,7 +333,6 @@ const UIElements = {
       button
     )}" alt="Button Icon">`;
 
-    // Name with flexible width
     const nameDiv = document.createElement("div");
     nameDiv.className = "button-name";
     nameDiv.style.overflow = "hidden";
@@ -377,26 +346,21 @@ const UIElements = {
     buttonElement.appendChild(contentWrapper);
 
     if (button.type === "pulldown") {
-      // Create pulldown indicator
       const pulldownIndicator = document.createElement("span");
       pulldownIndicator.className = "pulldown-indicator";
       pulldownIndicator.innerHTML = "▼";
       pulldownIndicator.title = "Open Pulldown Content";
 
-      // Add click handler to show pulldown content
       pulldownIndicator.addEventListener("click", (e) => {
         e.stopPropagation();
         window.UIElements.togglePulldownContent(buttonId);
       });
 
-      // Add to button
       contentWrapper.appendChild(pulldownIndicator);
     }
 
-    // Add delete button
     this.addDeleteButton(buttonElement, buttonId);
 
-    // Make button name editable
     nameDiv.addEventListener("click", function (e) {
       e.stopPropagation();
       const currentText = this.textContent;
@@ -418,13 +382,11 @@ const UIElements = {
       });
     });
 
-    // Double-click to edit
     buttonElement.addEventListener("dblclick", (e) => {
       e.stopPropagation();
       window.ModalHandlers.editElement(buttonId);
     });
 
-    // Add drag event listeners
     window.DragDrop.setupElementDragEvents(buttonElement);
 
     return buttonElement;
@@ -440,7 +402,6 @@ const UIElements = {
       "pulldownContentContainer"
     );
 
-    // Create content for pulldown
     pulldownContentContainer.innerHTML = "";
 
     const contentDiv = document.createElement("div");
@@ -451,7 +412,6 @@ const UIElements = {
     label.textContent = "PULLDOWN CONTENT";
     contentDiv.appendChild(label);
 
-    // Add pulldown buttons
     if (pulldown.children && pulldown.children.length > 0) {
       pulldown.children.forEach((childId) => {
         const child = window.appState.elements[childId];
@@ -460,7 +420,6 @@ const UIElements = {
       });
     }
 
-    // Add button to add new buttons to pulldown
     const addButton = document.createElement("button");
     addButton.className = "add-button";
     addButton.innerHTML = '<span class="plus">+</span> NEW BUTTON';
@@ -469,7 +428,6 @@ const UIElements = {
     });
     contentDiv.appendChild(addButton);
 
-    // Add a "Close Pulldown" button
     const closeButton = document.createElement("button");
     closeButton.className = "add-button";
     closeButton.style.marginTop = "10px";
@@ -485,75 +443,43 @@ const UIElements = {
     pulldownContentContainer.appendChild(contentDiv);
     pulldownContentContainer.style.display = "block";
 
-    // Position pulldown content under the pulldown button
     if (pulldownElement) {
       const rect = pulldownElement.getBoundingClientRect();
       pulldownContentContainer.style.position = "absolute";
-      pulldownContentContainer.style.top = rect.bottom + 5 + "px"; // Added 5px gap
+      pulldownContentContainer.style.top = rect.bottom + 5 + "px";
       pulldownContentContainer.style.left = rect.left + "px";
-      pulldownContentContainer.style.zIndex = "1000"; // Set lower z-index than modal
+      pulldownContentContainer.style.zIndex = "1000";
     }
   },
   addTabDeleteButton: function () {
-    // Add delete buttons to all tabs
     document.querySelectorAll(".tab").forEach((tabElement) => {
-      // Skip if already has a delete button
       if (tabElement.querySelector(".tab-delete-button")) return;
 
       const tabId = tabElement.dataset.tabId;
 
-      // Create delete button
       const deleteButton = document.createElement("button");
       deleteButton.className = "tab-delete-button";
       deleteButton.innerHTML = "";
       deleteButton.title = "Delete Tab";
-      deleteButton.style.position = "absolute";
-      deleteButton.style.top = "2px";
-      deleteButton.style.right = "2px";
-      deleteButton.style.backgroundColor = "#e74c3c";
-      deleteButton.style.color = "white";
-      deleteButton.style.border = "none";
-      deleteButton.style.borderRadius = "50%";
-      deleteButton.style.width = "18px";
-      deleteButton.style.height = "18px";
-      deleteButton.style.fontSize = "9px";
-      deleteButton.style.display = "flex";
-      deleteButton.style.alignItems = "center";
-      deleteButton.style.justifyContent = "center";
-      deleteButton.style.cursor = "pointer";
-      deleteButton.style.zIndex = "5";
-      deleteButton.style.opacity = "0.7";
-      deleteButton.style.transition = "opacity 0.2s";
 
       deleteButton.addEventListener("click", (e) => {
         e.stopPropagation();
 
-        // Check if this is the last tab
         if (Object.keys(window.appState.tabs).length <= 1) {
           alert("Cannot delete the last tab. Add another tab first.");
           return;
         }
 
-        // Ask for confirmation
-        if (
-          !confirm(
-            `Are you sure you want to delete this tab and all its panels and elements?`
-          )
-        ) {
-          return;
-        }
-
+        // Removed confirmation dialog and performing action directly
         const tab = window.appState.tabs[tabId];
 
-        // Delete all panels and their elements
         tab.panels.forEach((panelId) => {
           const panel = window.appState.panels[panelId];
 
-          // Delete all elements in the panel
           if (panel && panel.elements) {
             panel.elements.forEach((elementId) => {
               const element = window.appState.elements[elementId];
-              // If element is a container (stack or pulldown), also delete its children
+
               if (
                 element &&
                 (element.type === "stack" || element.type === "pulldown") &&
@@ -567,27 +493,21 @@ const UIElements = {
             });
           }
 
-          // Delete panel
           delete window.appState.panels[panelId];
         });
 
-        // Delete tab
         delete window.appState.tabs[tabId];
 
-        // Activate another tab
         const remainingTabIds = Object.keys(window.appState.tabs);
         if (remainingTabIds.length > 0) {
           window.EventHandlers.activateTab(remainingTabIds[0]);
         }
 
-        // Update UI: Remove tab element from DOM
         tabElement.remove();
 
-        // Update folder preview
         window.FolderStructure.updateFolderPreview();
       });
 
-      // Add hover effect
       deleteButton.addEventListener("mouseover", function () {
         this.style.opacity = "1";
       });
@@ -596,10 +516,8 @@ const UIElements = {
         this.style.opacity = "0.7";
       });
 
-      // Make the tab position relative for absolute positioning of the delete button
       tabElement.style.position = "relative";
 
-      // Add button to tab
       tabElement.appendChild(deleteButton);
     });
   },
@@ -609,22 +527,6 @@ const UIElements = {
     deleteButton.innerHTML = "";
     deleteButton.title = "Delete Panel";
     deleteButton.style.position = "absolute";
-    deleteButton.style.top = "5px";
-    deleteButton.style.right = "5px";
-    deleteButton.style.backgroundColor = "#e74c3c";
-    deleteButton.style.color = "white";
-    deleteButton.style.border = "none";
-    deleteButton.style.borderRadius = "50%";
-    deleteButton.style.width = "20px";
-    deleteButton.style.height = "20px";
-    deleteButton.style.fontSize = "10px";
-    deleteButton.style.display = "flex";
-    deleteButton.style.alignItems = "center";
-    deleteButton.style.justifyContent = "center";
-    deleteButton.style.cursor = "pointer";
-    deleteButton.style.zIndex = "5";
-    deleteButton.style.opacity = "0.7";
-    deleteButton.style.transition = "opacity 0.2s";
 
     deleteButton.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -635,7 +537,6 @@ const UIElements = {
       const tabId = panel.tabId;
       const tab = window.appState.tabs[tabId];
 
-      // Check if this is the last panel in the tab
       if (tab.panels.length <= 1) {
         alert(
           "Cannot delete the last panel in a tab. Add another panel first or delete the entire tab."
@@ -643,20 +544,11 @@ const UIElements = {
         return;
       }
 
-      // Ask for confirmation
-      if (
-        !confirm(
-          `Are you sure you want to delete this panel and all its elements?`
-        )
-      ) {
-        return;
-      }
-
-      // Delete all elements in the panel
+      // Removed confirmation dialog and performing action directly
       if (panel.elements && panel.elements.length > 0) {
         panel.elements.forEach((elementId) => {
           const element = window.appState.elements[elementId];
-          // If element is a container (stack or pulldown), also delete its children
+
           if (
             element &&
             (element.type === "stack" || element.type === "pulldown") &&
@@ -670,20 +562,15 @@ const UIElements = {
         });
       }
 
-      // Remove panel from tab
       tab.panels = tab.panels.filter((id) => id !== panelId);
 
-      // Delete panel
       delete window.appState.panels[panelId];
 
-      // Update UI
       window.UIElements.renderPanels();
 
-      // Update folder preview
       window.FolderStructure.updateFolderPreview();
     });
 
-    // Add hover effect
     deleteButton.addEventListener("mouseover", function () {
       this.style.opacity = "1";
     });
@@ -700,54 +587,20 @@ const UIElements = {
     deleteButton.innerHTML = "";
     deleteButton.title = "Delete Element";
 
-    // Position at top right corner
-    deleteButton.style.position = "absolute";
-    deleteButton.style.top = "2px";
-    deleteButton.style.right = "2px";
-
-    deleteButton.style.backgroundColor = "#e74c3c";
-    deleteButton.style.color = "white";
-    deleteButton.style.border = "none";
-    deleteButton.style.borderRadius = "50%";
-    deleteButton.style.width = "7px";
-    deleteButton.style.height = "7px";
-    deleteButton.style.fontSize = "5px";
-    deleteButton.style.display = "flex";
-    deleteButton.style.alignItems = "center";
-    deleteButton.style.justifyContent = "center";
-    deleteButton.style.cursor = "pointer";
-    deleteButton.style.opacity = "0.7";
-    deleteButton.style.transition = "opacity 0.2s";
-
     deleteButton.addEventListener("click", (e) => {
       e.stopPropagation();
       const element = window.appState.elements[elementId];
 
-      // Ask for confirmation
-      if (!confirm(`Are you sure you want to delete this ${element.type}?`)) {
-        return;
-      }
-
-      // Handle different elements differently
+      // Removed confirmation dialog and performing action directly
       if (element.type === "stack" || element.type === "pulldown") {
-        // For stacks and pulldowns, also delete children
         if (element.children && element.children.length > 0) {
-          if (
-            !confirm(
-              `This ${element.type} contains ${element.children.length} button(s). These will also be deleted. Continue?`
-            )
-          ) {
-            return;
-          }
-
-          // Delete all children
+          // Removed confirmation dialog for child elements
           element.children.forEach((childId) => {
             delete window.appState.elements[childId];
           });
         }
       }
 
-      // Remove from container (panel or parent element)
       if (element.panelId) {
         const panel = window.appState.panels[element.panelId];
         panel.elements = panel.elements.filter((id) => id !== elementId);
@@ -756,17 +609,13 @@ const UIElements = {
         parent.children = parent.children.filter((id) => id !== elementId);
       }
 
-      // Delete the element itself
       delete window.appState.elements[elementId];
 
-      // Update UI
       window.UIElements.renderPanels();
 
-      // Update folder preview
       window.FolderStructure.updateFolderPreview();
     });
 
-    // Add hover effect
     deleteButton.addEventListener("mouseover", function () {
       this.style.opacity = "1";
     });
@@ -786,40 +635,32 @@ const UIElements = {
     const panelIds = window.appState.tabs[tabId].panels;
     const ribbonContainer = document.getElementById("ribbonContainer");
 
-    // Clear ribbon container
     ribbonContainer.innerHTML = "";
 
-    // Add panels
     panelIds.forEach((panelId) => {
       const panel = window.appState.panels[panelId];
       const panelElement = this.createPanelElement(panelId, panel);
       ribbonContainer.appendChild(panelElement);
     });
 
-    // Update tab delete buttons
     this.addTabDeleteButton();
   },
   setupDocumentClickHandler() {
-    // Add click handler to document to close pulldown content when clicking outside
     document.addEventListener("click", (e) => {
       const pulldownContentContainer = document.getElementById(
         "pulldownContentContainer"
       );
 
-      // If pulldown content is open and click is outside
       if (
         pulldownContentContainer &&
         pulldownContentContainer.style.display === "block"
       ) {
-        // Check if click is inside pulldown content
         if (!pulldownContentContainer.contains(e.target)) {
-          // Check if click is on a pulldown button (those have their own click handlers)
           const clickedPulldown = e.target.closest(".pulldown");
           if (
             !clickedPulldown ||
             clickedPulldown.dataset.buttonId !== window.appState.activePulldown
           ) {
-            // Hide pulldown content
             pulldownContentContainer.style.display = "none";
             window.appState.activePulldown = null;
           }
@@ -829,7 +670,4 @@ const UIElements = {
   },
 };
 
-// Export UI Elements to be used by other modules
 window.UIElements = UIElements;
-
-

@@ -379,10 +379,10 @@ const EventHandlers = {
    */
   // Modify this section in your event-handlers.js file
 
-/**
- * Initialize all event handlers for the application
- */
-initializeApp() {
+  /**
+   * Initialize all event handlers for the application
+   */
+  initializeApp() {
     // DOM elements
     const extensionNameInput = document.getElementById("extensionName");
 
@@ -503,15 +503,21 @@ initializeApp() {
 
     // Setup drag and drop functionality
     window.DragDrop.setupDragAndDrop();
-    
+
     // Add tab delete buttons
-    if (window.UIElements && typeof window.UIElements.addTabDeleteButton === 'function') {
-        window.UIElements.addTabDeleteButton();
+    if (
+      window.UIElements &&
+      typeof window.UIElements.addTabDeleteButton === "function"
+    ) {
+      window.UIElements.addTabDeleteButton();
     }
-    
+
     // Setup document click handler for closing pulldowns
-    if (window.UIElements && typeof window.UIElements.setupDocumentClickHandler === 'function') {
-        window.UIElements.setupDocumentClickHandler();
+    if (
+      window.UIElements &&
+      typeof window.UIElements.setupDocumentClickHandler === "function"
+    ) {
+      window.UIElements.setupDocumentClickHandler();
     }
 
     // Log initialization success

@@ -1,16 +1,31 @@
 /* Global Styles */
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-}
-
 :root {
   --bg-color-grey: #ffffff;
   --bg-yellow: #fff0ac;
   --bg-bright-yellow: #ffe600;
   --bg-input: #f9f9f9;
+  --border-color: #ddd;
+  --delete-btn-color: #e74c3c;
+  --delete-btn-hover: #c0392b;
+  --edit-btn-color: #6495ed;
+  --edit-btn-hover: #4169e1;
+  --text-color: #333;
+  --text-secondary: #555;
+  --border-radius-sm: 3px;
+  --border-radius-md: 5px;
+  --border-radius-lg: 10px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --bt-delete-size: 15px;
+  --bt-delete-size-small: 8px;
+  --bt-delete-offset-big: 4px;
+  --bt-delete-offset-small: 2px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 body {
@@ -37,7 +52,7 @@ header {
 
 .logo h1 {
   font-size: 2.5rem;
-  color: #333;
+  color: var(--text-color);
 }
 
 .logo span {
@@ -47,18 +62,29 @@ header {
   margin-top: -5px;
 }
 
-.download-button button {
+/* Button Styles */
+.download-button {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.download-button button,
+.save-button,
+.load-button {
   background-color: var(--bg-bright-yellow);
   color: rgb(22, 22, 22);
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--shadow);
   padding: 10px 20px;
   font-size: 1rem;
-  border-radius: 10px;
+  border-radius: var(--border-radius-lg);
   cursor: pointer;
   display: flex;
   align-items: center;
+  justify-content: space-between;
   font-weight: bold;
   transition: background-color 0.3s;
+  width: 100%;
 }
 
 .download-button button:hover {
@@ -67,10 +93,28 @@ header {
   color: grey;
 }
 
-.download-icon {
+.download-icon,
+.save-icon,
+.load-icon {
   margin-left: 10px;
   font-weight: bold;
   font-size: 1.2rem;
+}
+
+.save-button,
+.load-button {
+  background-color: #5c5f65;
+  color: white;
+}
+
+.save-button:hover {
+  background-color: #4caf50;
+  color: white;
+}
+
+.load-button:hover {
+  background-color: #2196f3;
+  color: white;
 }
 
 /* Extension Name */
@@ -78,7 +122,7 @@ header {
   background-color: var(--bg-yellow);
   padding: 15px;
   margin-bottom: 10px;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   border: 2px solid var(--bg-bright-yellow);
   color: #444;
   width: 500px;
@@ -93,7 +137,6 @@ header {
   width: 100%;
   padding: 5px;
   margin-left: 5px;
-  /* outline: 2px solid #ffea00; */
 }
 
 .extension-name-container input:focus {
@@ -104,7 +147,7 @@ header {
 .tabs-container {
   display: flex;
   align-items: center;
-  margin-bottom: 0px;
+  margin-bottom: 0;
 }
 
 .tabs {
@@ -116,11 +159,10 @@ header {
 .tab {
   padding: 10px 15px;
   border-radius: 5px 5px 0 0;
-  border: 2px solid #ddd;
+  border: 2px solid var(--border-color);
   border-bottom: none;
   cursor: pointer;
   position: relative;
-  /* Added for delete button positioning */
 }
 
 .tab.active {
@@ -133,40 +175,14 @@ header {
 .tab input {
   border: none;
   font-size: 0.9rem;
-  color: #333;
+  color: var(--text-color);
   font-weight: bold;
   width: 100px;
-  background-color: var(--bg-grey);
+  background-color: transparent;
 }
 
 .tab input:focus {
   background-color: var(--bg-input);
-}
-
-/* Tab delete button */
-.tab-delete-button {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 18px;
-  height: 18px;
-  font-size: 9px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-  opacity: 1;
-  transition: opacity 0.3s;
-}
-
-.tab-delete-button:hover {
-  opacity: 1;
-  background-color: #c0392b;
 }
 
 /* Ribbon Styles */
@@ -176,10 +192,10 @@ header {
 }
 
 .ribbon {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   background-color: var(--bg-color-grey);
   padding: 10px;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   flex-grow: 1;
   display: flex;
   gap: 10px;
@@ -187,39 +203,13 @@ header {
 }
 
 .panel {
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
   padding: 5px;
   min-width: 120px;
   display: flex;
   flex-direction: column;
   position: relative;
-}
-
-/* Panel delete button */
-.panel-delete-button {
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.panel-delete-button:hover {
-  opacity: 1;
-  background-color: #c0392b;
 }
 
 .panel-content {
@@ -231,190 +221,34 @@ header {
   flex-wrap: wrap;
   gap: 5px;
   overflow-x: auto;
-  /* Allow horizontal scrolling */
+}
+
+/* Button, Stack, and Pulldown common styles */
+.button,
+.stack,
+.pulldown {
+  background-color: #f9f9f9;
+  border: 1px dashed #ccc;
+  border-radius: var(--border-radius-sm);
+  padding: 5px;
+  cursor: grab;
+  position: relative;
 }
 
 .button {
-  background-color: #f9f9f9;
-  border: 1px dashed #ccc;
-  border-radius: 3px;
-  padding: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  cursor: grab;
-  width: 70px;
-  /* Fixed width */
-  height: 140px;
-  /* Fixed height (2:1 ratio) */
-  position: relative;
-}
-
-/* Delete button for elements */
-.delete-button {
-  position: absolute;
-  top: 2px;
-  right: 25px;
-  /* Position next to edit button */
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.delete-button:hover {
-  opacity: 1;
-  background-color: #c0392b;
-}
-
-/* Stack styles */
-.stack {
-  background-color: #f9f9f9;
-  border: 1px dashed #ccc;
-  border-radius: 3px;
-  padding: 5px;
-  display: flex;
-  flex-direction: column;
-  cursor: grab;
-  gap: 2px;
-  min-height: 40px;
-  height: auto;
-  position: relative;
-  width: auto !important;
-  min-width: 85px;
-  max-width: 150px;
-}
-
-/* Fix for stacked buttons - prevent text wrapping */
-.stacked-button {
-  min-height: 40px !important;
-  width: 100% !important;
-  margin-bottom: 2px;
-  height: auto !important;
-  /* Override fixed height */
-}
-
-.stacked-button-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  padding: 2px;
-  white-space: nowrap;
-  /* Prevent text wrapping */
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Make stack extend horizontally when needed */
-.stack .button-name {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  flex-grow: 1;
-  text-align: left;
-}
-
-/* Button icon proportions */
-.button-icon {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-/* Improve stack visuals */
-.stack .button {
-  min-height: 30px;
-  width: 100%;
-  margin-bottom: 2px;
-}
-
-.stack .button.stacked-button {
-  width: 100% !important;
-  min-height: 24px !important;
-  padding: 2px 5px;
-}
-
-.stack .stacked-button-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  padding: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Fix for pulldown elements */
-.pulldown {
   width: 70px;
   height: 140px;
-  position: relative;
 }
 
-/* Pulldown indicator */
-.pulldown-indicator {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  font-size: 10px;
-  color: #555;
-  padding: 2px;
-  cursor: pointer;
-  background-color: #f0f0f0;
-  border-radius: 2px;
-  transition: background-color 0.2s;
-}
-
-.pulldown-indicator:hover {
-  background-color: #ddd;
-}
-
-.pulldown-content-container {
-  background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
-  padding: 15px;
-  /* Increased padding */
-  margin-top: 10px;
-  display: none;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
-  /* Added shadow for better visibility */
-  z-index: 1000 !important;
-}
-
-.pulldown-content {
-  min-width: 180px !important;
-  width: auto !important;
-  max-width: 300px;
-  margin: 0 auto;
-  border: 1px solid #eee;
-  padding: 5px;
-}
-
-/* Fix for panel element sizing */
-.panel-content .button,
 .panel-content .stack,
 .panel-content .pulldown {
   width: 85px;
-  /* Fixed width for consistent sizing */
   margin-bottom: 5px;
 }
 
-/* Consistent sizing for buttons */
 .button-icon {
   width: 50px;
   height: 50px;
@@ -433,35 +267,204 @@ header {
 .button-name {
   text-align: center;
   font-size: 0.8rem;
-  color: #e74c3c;
+  color: var(--delete-btn-color);
   width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
+/* Delete Button Styles - Unified */
+.delete-button {
+  width: var(--bt-delete-size-small);
+  height: var(--bt-delete-size-small);
+  top: var(--bt-delete-offset-small);
+  right: var(--bt-delete-offset-small);
+}
+
+.tab-delete-button,
+.panel-delete-button {
+  width: var(--bt-delete-size);
+  height: var(--bt-delete-size);
+  top: var(--bt-delete-offset-big);
+  right: var(--bt-delete-offset-big);
+}
+
+.delete-button,
+.tab-delete-button,
+.panel-delete-button {
+  position: absolute;
+
+  background-color: var(--delete-btn-color);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0.7;
+  transition: opacity 0.2s, background-color 0.2s;
+  font-size: calc(var(--bt-delete-size) * 0.5);
+  z-index: 5;
+}
+
+.delete-button:hover,
+.tab-delete-button:hover,
+.panel-delete-button:hover {
+  opacity: 1;
+  background-color: var(--delete-btn-hover);
+}
+
+.stack {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-height: 40px;
+  height: auto;
+  width: auto !important;
+  min-width: 85px;
+  max-width: max-content; /* Change from fixed 150px to max-content */
+  padding-right: 10px;
+}
+
+.stack .button {
+  min-height: 30px;
+  width: 100%;
+  margin-bottom: 2px;
+}
+
+.stack .button-icon {
+  width: 18px;
+  height: 18px;
+  min-width: 18px;
+  margin-right: 4px;
+  margin-bottom: 0;
+}
+
 .stack-name {
   text-align: center;
   font-size: 0.8rem;
-  color: #555;
+  color: var(--text-secondary);
   padding: 2px;
   background-color: #eee;
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   margin-top: auto;
+}
+
+.stacked-button {
+  min-height: 40px !important;
+  width: auto !important; /* Changed from 100% to auto */
+  min-width: 100% !important; /* Ensure it takes at least the full width */
+  margin-bottom: 2px;
+  height: auto !important;
+}
+
+.stacked-button-content {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  width: 100%;
+  padding: 2px;
+  padding-right: 20px;
+  white-space: nowrap;
+}
+
+.stack .button-name {
+  white-space: normal; /* Allow text to wrap */
+  word-break: break-word; /* Break long words if needed */
+  flex-grow: 1;
+  text-align: left;
+  margin-right: 5px;
+}
+
+.stack .button.stacked-button {
+  width: auto !important; /* Changed from 100% to auto */
+  min-width: 100% !important; /* Ensure it takes at least full width */
+  min-height: 24px !important;
+  padding: 2px 5px;
+  height: auto !important; /* Ensures height adapts to content */
+}
+
+.stack-add-button {
+  width: 100%;
+  height: 20px !important;
+  background-color: #f5f5f5;
+  border: 1px dashed #ccc;
+  border-radius: var(--border-radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  margin-top: 2px;
+  font-size: 0.7rem;
+  color: var(--edit-btn-color);
+}
+
+.stack-add-button:hover {
+  background-color: #e5e5e5;
+}
+
+.stack-edit-mode .stack-name input {
+  width: 100%;
+  font-size: 0.8rem;
+  padding: 2px;
 }
 
 /* Pulldown styles */
 .pulldown {
-  background-color: #f9f9f9;
-  border: 1px dashed #ccc;
-  border-radius: 3px;
-  padding: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  cursor: grab;
   min-height: 90px;
-  position: relative;
+  width: 70px;
+  height: 140px;
+}
+
+.pulldown-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  font-size: 10px;
+  color: var(--text-secondary);
+  padding: 2px;
+  /* padding-right: 10px; */
+  margin-right: 10px;
+  cursor: pointer;
+  background-color: var(--bg-color-grey);
+  border-radius: var(--border-radius-sm);
+  transition: background-color 0.2s;
+}
+
+.pulldown-indicator:hover {
+  background-color: #ddd;
+}
+
+.pulldown-content-container {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 15px;
+  margin-top: 10px;
+  display: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+  z-index: 1000 !important;
+}
+
+.pulldown-content {
+  min-width: 180px !important;
+  width: auto !important;
+  max-width: 300px;
+  margin: 0 auto;
+  border: 1px solid #eee;
+  padding: 5px;
+}
+
+.pulldown-label {
+  text-align: center;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  margin-bottom: 5px;
 }
 
 .pulldown-content .button {
@@ -476,13 +479,6 @@ header {
   text-overflow: ellipsis;
   white-space: nowrap;
   width: auto;
-}
-
-.pulldown-label {
-  text-align: center;
-  font-size: 0.8rem;
-  color: #555;
-  margin-bottom: 5px;
 }
 
 /* Panel controls */
@@ -505,7 +501,7 @@ header {
   font-size: 0.8rem;
   text-align: center;
   width: 100%;
-  color: #333;
+  color: var(--text-color);
 }
 
 .panel-name:focus {
@@ -513,14 +509,18 @@ header {
   background-color: #f9f9f9;
 }
 
+.panel-extension-info {
+  display: none;
+}
+
 /* Add buttons */
 .add-button {
-  background-color: #6495ed;
+  background-color: var(--edit-btn-color);
   color: white;
   border: none;
   padding: 5px 10px;
   font-size: 0.8rem;
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -528,7 +528,7 @@ header {
 }
 
 .add-button:hover {
-  background-color: #4169e1;
+  background-color: var(--edit-btn-hover);
 }
 
 .plus {
@@ -543,17 +543,11 @@ header {
   justify-content: flex-end;
 }
 
-/* Extension arrow info */
-.panel-extension-info {
-  display: none;
-  /* Hide this element */
-}
-
 /* Extension Folder Preview */
 .extension-preview {
   background-color: white;
-  border: 1px solid #ddd;
-  border-radius: 5px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
   overflow: hidden;
   margin-top: 20px;
 }
@@ -562,13 +556,13 @@ header {
   background-color: #eee;
   padding: 10px;
   font-weight: bold;
-  color: #333;
-  border-bottom: 1px solid #ddd;
+  color: var(--text-color);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .preview-content {
   padding: 15px;
-  color: #555;
+  color: var(--text-secondary);
   font-family: monospace;
   line-height: 1.5;
   white-space: pre;
@@ -591,7 +585,7 @@ header {
   background-color: white;
   margin: 5% auto;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   width: 600px;
   max-width: 90%;
   position: relative;
@@ -607,7 +601,7 @@ header {
 }
 
 .close-modal:hover {
-  color: #333;
+  color: var(--text-color);
 }
 
 .button-type-selector {
@@ -621,9 +615,9 @@ header {
 }
 
 .button-type {
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   padding: 10px;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   cursor: pointer;
   text-align: center;
   flex: 1;
@@ -647,15 +641,15 @@ header {
   display: block;
   margin-bottom: 5px;
   font-weight: bold;
-  color: #555;
+  color: var(--text-secondary);
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
   padding: 8px;
-  border: 1px solid #ddd;
-  border-radius: 3px;
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
 }
 
 .form-group input:focus,
@@ -673,7 +667,7 @@ header {
 .icon-preview {
   width: 64px;
   height: 64px;
-  border: 1px solid #ddd;
+  border: 1px solid var(--border-color);
   display: flex;
   justify-content: center;
   align-items: center;
@@ -695,7 +689,7 @@ header {
 .modal-actions button {
   padding: 8px 15px;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
 }
 
@@ -709,6 +703,13 @@ header {
   color: white;
 }
 
+/* Code input styles */
+.code-input textarea {
+  font-family: monospace;
+  min-height: 100px;
+  resize: vertical;
+}
+
 /* Drag and drop styling */
 .dragging {
   opacity: 0.5;
@@ -720,139 +721,9 @@ header {
   border: 2px dashed #3498db !important;
 }
 
-/* Stack button styles */
-.stack .button {
-  min-height: 30px;
-}
-
-.stack .button-icon {
-  width: 18px;
-  /* Reduced from 30px */
-  height: 18px;
-  /* Reduced from 30px */
-  min-width: 18px;
-  margin-right: 4px;
-  margin-bottom: 0;
-}
-
 /* Make text unselectable during drag */
 .no-select {
   user-select: none;
-}
-
-/* Code input styles */
-.code-input textarea {
-  font-family: monospace;
-  min-height: 100px;
-  resize: vertical;
-}
-
-/* Edit button styles */
-.edit-button {
-  position: absolute;
-  top: 2px;
-  right: 2px;
-  background-color: #6495ed;
-  color: white;
-  border: none;
-  border-radius: 50%;
-  width: 20px;
-  height: 20px;
-  font-size: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s;
-}
-
-.edit-button:hover {
-  opacity: 1;
-}
-
-/* Stack add button styles */
-.stack-add-button {
-  width: 100%;
-  height: 20px !important;
-  /* Match the stacked button height */
-  background-color: #f5f5f5;
-  border: 1px dashed #ccc;
-  border-radius: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  margin-top: 2px;
-  font-size: 0.7rem;
-  color: #6495ed;
-}
-
-.stack-add-button:hover {
-  background-color: #e5e5e5;
-}
-
-/* Stack editing styles */
-.stack-edit-mode .stack-name input {
-  width: 100%;
-  font-size: 0.8rem;
-  padding: 2px;
-}
-
-.panel-content .button,
-.panel-content .stack,
-.panel-content .pulldown {
-  width: 85px;
-  /* Fixed width for consistent sizing */
-  margin-bottom: 5px;
-}
-
-.stack .button,
-.pulldown-content .button {
-  min-height: 30px;
-  width: 100%;
-  /* Full width of parent */
-  margin-bottom: 5px;
-  flex-direction: column;
-}
-
-/* Save and Load button styles */
-.download-button {
-  display: flex;
-  gap: 10px;
-}
-
-.save-button,
-.load-button {
-  background-color: #5c5f65;
-  color: rgb(22, 22, 22);
-  border: black;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 10px 20px;
-  font-size: 1rem;
-  border-radius: 10px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  font-weight: bold;
-  transition: background-color 0.3s;
-}
-
-.save-button:hover {
-  background-color: #4caf50;
-  color: white;
-}
-
-.load-button:hover {
-  background-color: #2196f3;
-  color: white;
-}
-
-.save-icon,
-.load-icon {
-  margin-left: 10px;
-  font-weight: bold;
-  font-size: 1.2rem;
 }
 
 /* Loading overlay styles */
@@ -872,7 +743,7 @@ header {
 .loading-content {
   background-color: white;
   padding: 20px;
-  border-radius: 5px;
+  border-radius: var(--border-radius-md);
   text-align: center;
 }
 
@@ -890,7 +761,6 @@ header {
   0% {
     transform: rotate(0deg);
   }
-
   100% {
     transform: rotate(360deg);
   }
