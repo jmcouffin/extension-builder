@@ -1,12 +1,13 @@
 /* Global Styles */
 :root {
-  --bg-color-grey: #ffffff;
-  --bg-yellow: #fff0ac;
-  --bg-bright-yellow: #ffe600;
-  --bg-input: #f9f9f9;
-  --border-color: #ddd;
-  --delete-btn-color: #e74c3c;
-  --delete-btn-hover: #c0392b;
+  --bg-main-color: #320452;
+  --bg-color-grey: #381153;
+  --bg-yellow: #ffd000;
+  --bg-bright-yellow: rgb(255, 0, 200);
+  --bg-input: #411f1f;
+  --border-color: rgb(255, 0, 200);
+  --delete-btn-color: #c0392b;
+  --delete-btn-hover: #e74c3c;
   --edit-btn-color: #6495ed;
   --edit-btn-hover: #4169e1;
   --text-color: #333;
@@ -25,11 +26,11 @@
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  font-family: "Pixelcraft", sans-serif;
 }
 
 body {
-  background-color: #ffffff;
+  background-color: var(--bg-main-color);
   padding: 20px;
 }
 
@@ -50,9 +51,9 @@ header {
   margin-right: 20px;
 }
 
-.logo h1 {
-  font-size: 2.5rem;
-  color: var(--text-color);
+h1 {
+  font-size: 5rem;
+  color: rgb(211, 143, 143);
 }
 
 .logo span {
@@ -76,7 +77,7 @@ header {
   color: rgb(22, 22, 22);
   box-shadow: var(--shadow);
   padding: 10px 20px;
-  font-size: 1rem;
+  font-size: 1.5rem;
   border-radius: var(--border-radius-lg);
   cursor: pointer;
   display: flex;
@@ -115,32 +116,6 @@ header {
 .load-button:hover {
   background-color: #2196f3;
   color: white;
-}
-
-/* Extension Name */
-.extension-name-container {
-  background-color: var(--bg-yellow);
-  padding: 15px;
-  margin-bottom: 10px;
-  border-radius: var(--border-radius-md);
-  border: 2px solid var(--bg-bright-yellow);
-  color: #444;
-  width: 500px;
-  font-weight: bold;
-}
-
-.extension-name-container input {
-  border: none;
-  background-color: var(--bg-yellow);
-  font-size: 2rem;
-  color: #757575;
-  width: 100%;
-  padding: 5px;
-  margin-left: 5px;
-}
-
-.extension-name-container input:focus {
-  background-color: var(--bg-input);
 }
 
 /* Tabs Styles */
@@ -303,8 +278,8 @@ header {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  opacity: 0.7;
-  transition: opacity 0.2s, background-color 0.2s;
+  opacity: 1;
+  transition: background-color 0.1s;
   font-size: calc(var(--bt-delete-size) * 0.5);
   z-index: 5;
 }
@@ -545,7 +520,7 @@ header {
 
 /* Extension Folder Preview */
 .extension-preview {
-  background-color: white;
+  background-color: var(--bg-color-grey);
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
   overflow: hidden;
@@ -553,7 +528,7 @@ header {
 }
 
 .preview-header {
-  background-color: #eee;
+  background-color: var(--bg-bright-yellow);
   padding: 10px;
   font-weight: bold;
   color: var(--text-color);
@@ -563,7 +538,6 @@ header {
 .preview-content {
   padding: 15px;
   color: var(--text-secondary);
-  font-family: monospace;
   line-height: 1.5;
   white-space: pre;
   overflow-x: auto;
@@ -705,7 +679,6 @@ header {
 
 /* Code input styles */
 .code-input textarea {
-  font-family: monospace;
   min-height: 100px;
   resize: vertical;
 }
@@ -764,4 +737,67 @@ header {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.pixel-container {
+  position: relative;
+  padding: 3px;
+  display: inline-block;
+  color: #444;
+  width: 600px;
+  font-weight: bold;
+}
+.pixel-container input {
+  border: none;
+  background-color: var(--bg-main-color);
+  font-size: 2rem;
+  color: pink;
+  width: 100%;
+  padding: 5px;
+  margin-left: 5px;
+}
+
+.pixel-container input:focus {
+  background-color: var(--bg-input);
+}
+
+.pixel-border {
+  position: relative;
+  border: 20px solid transparent;
+  background-clip: padding-box;
+  filter: drop-shadow(15px 0 20px rgba(236, 72, 153, 0.6));
+}
+
+.pixel-border::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(to bottom right, #ec4899, #9d174d);
+  z-index: -1;
+  clip-path: polygon(
+    0% 3px,
+    3px 3px,
+    3px 0%,
+    calc(100% - 3px) 0%,
+    calc(100% - 3px) 3px,
+    100% 3px,
+    100% calc(100% - 3px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 3px) 100%,
+    3px 100%,
+    3px calc(100% - 3px),
+    0 calc(100% - 3px)
+  );
+}
+
+.pixel-content {
+  padding: 15px 30px;
+  background-color: var(--bg-main-color);
+  color: #e4c3d9;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 1px;
 }
