@@ -9,13 +9,25 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link href="https://fonts.cdnfonts.com/css/pixelcraft-2" rel="stylesheet">
 
+
 </head>
 
 <body>
     <header>
+        <div class="audio-container">
+            <button id="audioBtn" class="audio-btn" aria-label="Pause music">
+                <svg class="play-icon" viewBox="0 0 24 24" style="display:none;">
+                    <path d="M8 5v14l11-7z" />
+                </svg>
+                <svg class="pause-icon" viewBox="0 0 24 24">
+                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
+                </svg>
+            </button>
+            <p id="statusText" class="status-text">Now Playing</p>
+        </div>
         <div class="logo">
             <img src="logo.png" alt="pyRevit Logo">
-            <h1>pyRevit<span>extension builder</span></h1>
+            <h1 class="glowing-text-title">pyRevit<span class="glowing-text-title">extension builder</span></h1>
         </div>
         <div class="download-button">
             <div class="pixel-container">
@@ -47,12 +59,13 @@
         <div class="pixel-container">
             <div class="pixel-border">
                 <div class="pixel-content">
-                    <div><input class="glowing-text" type="text" id="extensionName" value="Your Extension Name"></div>
+                    <div><input class="glowing-text" type="text" id="extensionName" value="Extension Name"></div>
 
                 </div>
             </div>
         </div>
     </div>
+
 
 
     <main>
@@ -154,7 +167,7 @@
             <div class="form-group">
                 <label for="buttonIcon">Icon:</label>
                 <div class="icon-upload">
-                    <input type="file" id="buttonIcon" accept="image/*">
+                    <input type="file" id="buttonIcon" accept="image/png">
                     <div class="icon-preview" id="iconPreview">
                         <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
                             alt="Default Icon">
@@ -193,6 +206,57 @@
     <!-- Add the new save-load.js file -->
     <script src="save-load.js"></script>
     <script src="app.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const audioBtn = document.getElementById('audioBtn');
+            const statusText = document.getElementById('statusText');
+            const audio = new Audio('the-return-of-the-8-bit-era-301292.mp3');
+            let isPlaying = true;
+
+            // Play automatically
+            audio.play().then(() => {
+                playIcon.style.display = 'none';
+                pauseIcon.style.display = 'block';
+                audioBtn.setAttribute('aria-label', 'Pause music');
+                statusText.textContent = 'Now Playing';
+            }).catch(error => {
+                // Autoplay might be blocked by browser
+                console.log('Autoplay prevented:', error);
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                isPlaying = false;
+            });
+
+            const playIcon = audioBtn.querySelector('.play-icon');
+            const pauseIcon = audioBtn.querySelector('.pause-icon');
+
+            audioBtn.addEventListener('click', function () {
+                if (isPlaying) {
+                    audio.pause();
+                    playIcon.style.display = 'block';
+                    pauseIcon.style.display = 'none';
+                    audioBtn.setAttribute('aria-label', 'Play music');
+                    statusText.textContent = 'Click to Play';
+                    isPlaying = false;
+                } else {
+                    audio.play();
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                    audioBtn.setAttribute('aria-label', 'Pause music');
+                    statusText.textContent = 'Now Playing';
+                    isPlaying = true;
+                }
+            });
+
+            audio.addEventListener('ended', function () {
+                playIcon.style.display = 'block';
+                pauseIcon.style.display = 'none';
+                audioBtn.setAttribute('aria-label', 'Play music');
+                statusText.textContent = 'Click to Play';
+                isPlaying = false;
+            });
+        });
+    </script>
 </body>
 
 </html>
