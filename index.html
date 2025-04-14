@@ -121,142 +121,148 @@
             <!-- Pulldown content will be shown here when needed -->
         </div>
     </main>
+    <div class="pixel-container">
+        <div class="pixel-border">
 
-    <div class="extension-preview">
-        <div class="preview-header">EXTENSION FOLDER PREVIEW</div>
-        <div class="preview-content" id="folderPreview">
-            <!-- Folder structure preview will be populated by JavaScript -->
+            <div class="extension-preview">
+                <div class="preview-header">EXTENSION FOLDER PREVIEW</div>
+                <div class="preview-content" id="folderPreview">
+                    <!-- Folder structure preview will be populated by JavaScript -->
+                </div>
+
+
+            </div>
         </div>
     </div>
 
-    <!-- Modal for button creation -->
-    <div class="modal" id="buttonModal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2>Create New Element</h2>
+        <!-- Modal for button creation -->
+        <div class="modal" id="buttonModal">
+            <div class="modal-content">
+                <span class="close-modal">&times;</span>
+                <h2>Create New Element</h2>
 
-            <div class="button-type-selector">
-                <h3>Element Type:</h3>
-                <div class="button-types">
-                    <div class="button-type selected" data-type="pushbutton">
-                        <div class="type-icon">🔘</div>
-                        <div class="type-name">Push Button</div>
-                    </div>
-                    <div class="button-type" data-type="pulldown">
-                        <div class="type-icon">🔽</div>
-                        <div class="type-name">Pulldown</div>
+                <div class="button-type-selector">
+                    <h3>Element Type:</h3>
+                    <div class="button-types">
+                        <div class="button-type selected" data-type="pushbutton">
+                            <div class="type-icon">🔘</div>
+                            <div class="type-name">Push Button</div>
+                        </div>
+                        <div class="button-type" data-type="pulldown">
+                            <div class="type-icon">🔽</div>
+                            <div class="type-name">Pulldown</div>
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="buttonName">Name (Required):</label>
-                <input type="text" id="buttonName" required>
-            </div>
+                <div class="form-group">
+                    <label for="buttonName">Name (Required):</label>
+                    <input type="text" id="buttonName" required>
+                </div>
 
-            <div class="form-group">
-                <label for="buttonTitle">Title (Optional):</label>
-                <input type="text" id="buttonTitle">
-            </div>
+                <div class="form-group">
+                    <label for="buttonTitle">Title (Optional):</label>
+                    <input type="text" id="buttonTitle">
+                </div>
 
-            <div class="form-group">
-                <label for="buttonTooltip">Tooltip (Optional):</label>
-                <input type="text" id="buttonTooltip">
-            </div>
+                <div class="form-group">
+                    <label for="buttonTooltip">Tooltip (Optional):</label>
+                    <input type="text" id="buttonTooltip">
+                </div>
 
-            <div class="form-group">
-                <label for="buttonIcon">Icon:</label>
-                <div class="icon-upload">
-                    <input type="file" id="buttonIcon" accept="image/png">
-                    <div class="icon-preview" id="iconPreview">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
-                            alt="Default Icon">
+                <div class="form-group">
+                    <label for="buttonIcon">Icon:</label>
+                    <div class="icon-upload">
+                        <input type="file" id="buttonIcon" accept="image/png">
+                        <div class="icon-preview" id="iconPreview">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
+                                alt="Default Icon">
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <div class="form-group code-input">
-                <label for="buttonCode">Python Code (Optional):</label>
-                <textarea id="buttonCode" rows="4" placeholder="# Your Python code here..."></textarea>
-            </div>
+                <div class="form-group code-input">
+                    <label for="buttonCode">Python Code (Optional):</label>
+                    <textarea id="buttonCode" rows="4" placeholder="# Your Python code here..."></textarea>
+                </div>
 
-            <div class="modal-actions">
-                <button id="createButton">Create</button>
-                <button class="cancel-button">Cancel</button>
+                <div class="modal-actions">
+                    <button id="createButton">Create</button>
+                    <button class="cancel-button">Cancel</button>
+                </div>
             </div>
         </div>
-    </div>
 
-    <!-- Loading overlay for operations -->
-    <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-        <div class="loading-content">
-            <div class="spinner"></div>
-            <div id="loadingMessage">Loading...</div>
+        <!-- Loading overlay for operations -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <div id="loadingMessage">Loading...</div>
+            </div>
         </div>
-    </div>
 
-    <!-- Load scripts in correct order with proper dependencies -->
-    <script src="template.js"></script>
-    <script src="state.js"></script>
-    <script src="folder-structure.js"></script>
-    <script src="drag-drop.js"></script>
-    <script src="ui-elements.js"></script>
-    <script src="modal-handlers.js"></script>
-    <script src="event-handlers.js"></script>
-    <!-- Add the new save-load.js file -->
-    <script src="save-load.js"></script>
-    <script src="app.js"></script>
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const audioBtn = document.getElementById('audioBtn');
-            const statusText = document.getElementById('statusText');
-            const audio = new Audio('the-return-of-the-8-bit-era-301292.mp3');
-            let isPlaying = true;
+        <!-- Load scripts in correct order with proper dependencies -->
+        <script src="template.js"></script>
+        <script src="state.js"></script>
+        <script src="folder-structure.js"></script>
+        <script src="drag-drop.js"></script>
+        <script src="ui-elements.js"></script>
+        <script src="modal-handlers.js"></script>
+        <script src="event-handlers.js"></script>
+        <!-- Add the new save-load.js file -->
+        <script src="save-load.js"></script>
+        <script src="app.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                const audioBtn = document.getElementById('audioBtn');
+                const statusText = document.getElementById('statusText');
+                const audio = new Audio('the-return-of-the-8-bit-era-301292.mp3');
+                let isPlaying = true;
 
-            // Play automatically
-            audio.play().then(() => {
-                playIcon.style.display = 'none';
-                pauseIcon.style.display = 'block';
-                audioBtn.setAttribute('aria-label', 'Pause music');
-                statusText.textContent = 'Now Playing';
-            }).catch(error => {
-                // Autoplay might be blocked by browser
-                console.log('Autoplay prevented:', error);
-                playIcon.style.display = 'block';
-                pauseIcon.style.display = 'none';
-                isPlaying = false;
-            });
+                // Play automatically
+                audio.play().then(() => {
+                    playIcon.style.display = 'none';
+                    pauseIcon.style.display = 'block';
+                    audioBtn.setAttribute('aria-label', 'Pause music');
+                    statusText.textContent = 'Now Playing';
+                }).catch(error => {
+                    // Autoplay might be blocked by browser
+                    console.log('Autoplay prevented:', error);
+                    playIcon.style.display = 'block';
+                    pauseIcon.style.display = 'none';
+                    isPlaying = false;
+                });
 
-            const playIcon = audioBtn.querySelector('.play-icon');
-            const pauseIcon = audioBtn.querySelector('.pause-icon');
+                const playIcon = audioBtn.querySelector('.play-icon');
+                const pauseIcon = audioBtn.querySelector('.pause-icon');
 
-            audioBtn.addEventListener('click', function () {
-                if (isPlaying) {
-                    audio.pause();
+                audioBtn.addEventListener('click', function () {
+                    if (isPlaying) {
+                        audio.pause();
+                        playIcon.style.display = 'block';
+                        pauseIcon.style.display = 'none';
+                        audioBtn.setAttribute('aria-label', 'Play music');
+                        statusText.textContent = 'Click to Play';
+                        isPlaying = false;
+                    } else {
+                        audio.play();
+                        playIcon.style.display = 'none';
+                        pauseIcon.style.display = 'block';
+                        audioBtn.setAttribute('aria-label', 'Pause music');
+                        statusText.textContent = 'Now Playing';
+                        isPlaying = true;
+                    }
+                });
+
+                audio.addEventListener('ended', function () {
                     playIcon.style.display = 'block';
                     pauseIcon.style.display = 'none';
                     audioBtn.setAttribute('aria-label', 'Play music');
                     statusText.textContent = 'Click to Play';
                     isPlaying = false;
-                } else {
-                    audio.play();
-                    playIcon.style.display = 'none';
-                    pauseIcon.style.display = 'block';
-                    audioBtn.setAttribute('aria-label', 'Pause music');
-                    statusText.textContent = 'Now Playing';
-                    isPlaying = true;
-                }
+                });
             });
-
-            audio.addEventListener('ended', function () {
-                playIcon.style.display = 'block';
-                pauseIcon.style.display = 'none';
-                audioBtn.setAttribute('aria-label', 'Play music');
-                statusText.textContent = 'Click to Play';
-                isPlaying = false;
-            });
-        });
-    </script>
+        </script>
 </body>
 
 </html>

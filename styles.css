@@ -1,4 +1,6 @@
+/* ===== VARIABLES ===== */
 :root {
+  /* Colors */
   --bg-main-color: #320452;
   --bg-color-grey: #381153;
   --bg-yellow: #ffd000;
@@ -12,6 +14,9 @@
   --text-color: #333;
   --text-pink: #ff69b4;
   --text-secondary: #555;
+  --title-color: rgb(211, 143, 143);
+  
+  /* Sizing and Spacing */
   --border-radius-sm: 3px;
   --border-radius-md: 5px;
   --border-radius-lg: 10px;
@@ -20,9 +25,9 @@
   --bt-delete-size-small: 8px;
   --bt-delete-offset-big: 4px;
   --bt-delete-offset-small: 2px;
-  --title-color: rgb(211, 143, 143);
 }
 
+/* ===== RESET & BASE STYLES ===== */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -35,6 +40,7 @@ body {
   padding: 20px;
 }
 
+/* ===== HEADER SECTION ===== */
 header {
   display: flex;
   justify-content: space-between;
@@ -56,25 +62,6 @@ h1 {
   color: var(--title-color);
 }
 
-.extension-name {
-  font-size: 2rem;
-  color: var(--text-pink);
-  font-weight: bold;
-  text-align: center;
-  margin-top: -10px;
-  margin-bottom: 10px;
-}
-
-.extension-name .pixel-container {
-  width: 100%;
-  max-width: 100%;
-  /* margin: 0 auto; */
-}
-
-.extension-name .pixel-content input {
-  width: 100%;
-}
-
 .logo span {
   display: block;
   font-size: 1.2rem;
@@ -82,15 +69,64 @@ h1 {
   margin-top: -5px;
 }
 
+/* Audio controls */
+.audio-container {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  position: absolute;
+  top: 20px;
+  left: 20px;
+}
+
+.audio-btn {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  position: relative;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.audio-btn:hover {
+  background-color: var(--title-color);
+}
+
+.audio-btn:active {
+  background-color: var(--bg-pink);
+}
+
+.audio-btn svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+.status-text {
+  margin: 0 0 5px 15px;
+  color: var(--bg-yellow);
+  font-size: 10px;
+}
+
+/* Download Buttons */
 .download-button {
   display: flex;
   flex-direction: column;
-  gap: 5px; /* Reduce this value from 10px to 5px */
+  gap: 5px;
   align-items: flex-end;
 }
 
 .download-button .pixel-container {
-  margin-bottom: 0;
+  margin-bottom: 0px;
+  width: auto;
+  max-width: fit-content;
 }
 
 .download-button button,
@@ -102,9 +138,8 @@ h1 {
   font-size: 0.8rem;
   cursor: pointer;
   display: flex;
-  align-items: center; /* This ensures vertical centering */
+  align-items: center;
   justify-content: space-between;
-  /* font-weight: bold; */
   transition: background-color 0.3s;
   width: auto;
   min-width: 150px;
@@ -119,6 +154,10 @@ h1 {
   color: grey;
 }
 
+.download-button button {
+  width: 100%;
+}
+
 .download-icon,
 .save-icon,
 .load-icon {
@@ -130,6 +169,41 @@ h1 {
   justify-content: center;
 }
 
+.download-button .pixel-border {
+  filter: drop-shadow(5px 0 10px rgba(236, 72, 153, 0.6)) !important;
+}
+
+/* ===== EXTENSION NAME ===== */
+.extension-name {
+  font-size: 2rem;
+  color: var(--text-pink);
+  font-weight: bold;
+  text-align: center;
+  margin-top: 0px;
+  margin-bottom: 10px;
+}
+
+#extensionName {
+  width: 100%;
+  padding: 5px;
+  color: var(--text-pink);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  font-size: 2rem;
+  text-align: center;
+  margin: 0px 5px 5px 5px;
+}
+
+.extension-name .pixel-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.extension-name .pixel-content input {
+  width: 100%;
+}
+
+/* ===== TABS SECTION ===== */
 .tabs-container {
   display: flex;
   align-items: center;
@@ -149,6 +223,7 @@ h1 {
   border-bottom: none;
   cursor: pointer;
   position: relative;
+  min-width: max-content;
 }
 
 .tab.active {
@@ -164,20 +239,19 @@ h1 {
   letter-spacing: 2px;
   color: var(--text-pink);
   font-weight: bold;
-  width: 100px;
+  width: auto;
+  min-width: 100px;
   background-color: transparent;
 }
 
-.tab input:focus {
-}
-
+/* ===== RIBBON SECTION ===== */
 .ribbon-container {
   display: flex;
   margin-bottom: 20px;
 }
 
 .ribbon {
-  border: 1px solid var(--border-color);
+  border: var(--border-radius-sm) solid var(--border-color);
   background-color: var(--bg-color-grey);
   padding: 10px;
   border-radius: var(--border-radius-md);
@@ -185,11 +259,11 @@ h1 {
   display: flex;
   gap: 10px;
   min-height: 200px;
-  border: var(--border-radius-sm) solid var(--border-color);
 }
 
+/* ===== PANEL STYLES ===== */
 .panel {
-  border: 1px solid var(--border-color);
+  border: var(--border-radius-sm) solid var(--border-color);
   border-radius: var(--border-radius-sm);
   padding: 5px;
   min-width: 120px;
@@ -209,6 +283,45 @@ h1 {
   overflow-x: auto;
 }
 
+.panel-controls {
+  display: flex;
+  gap: 5px;
+  padding: 5px;
+  border-top: 1px solid var(--text-pink);
+  justify-content: space-around;
+}
+
+.panel-name-container {
+  text-align: center;
+  padding: 5px;
+  border-top: 1px solid var(--text-pink);
+  margin-top: 5px;
+}
+
+.panel-name {
+  border: none;
+  font-size: 0.8rem;
+  text-align: center;
+  width: 100%;
+  color: var(--text-pink);
+  background-color: transparent;
+}
+
+.panel-name:focus {
+  outline: 1px solid #3498db;
+}
+
+.panel-extension-info {
+  display: none;
+}
+
+.add-panel-container {
+  margin-top: 10px;
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ===== BUTTON STYLES ===== */
 .button,
 .stack,
 .pulldown {
@@ -274,6 +387,7 @@ h1 {
   padding: 2px;
 }
 
+/* Delete Buttons */
 .delete-button {
   width: var(--bt-delete-size-small);
   height: var(--bt-delete-size-small);
@@ -314,6 +428,7 @@ h1 {
   background-color: var(--delete-btn-hover);
 }
 
+/* ===== STACK STYLES ===== */
 .stack {
   display: flex;
   flex-direction: column;
@@ -401,7 +516,6 @@ h1 {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  /* margin-top: 2px; */
   font-size: 0.7rem;
   padding: 0px 5px 5px 5px;
   color: var(--text-pink);
@@ -419,6 +533,7 @@ h1 {
   color: var(--text-pink);
 }
 
+/* ===== PULLDOWN STYLES ===== */
 .pulldown {
   display: flex;
   flex-direction: column;
@@ -435,7 +550,6 @@ h1 {
   font-size: 10px;
   color: var(--text-secondary);
   padding: 2px;
-
   margin-right: 10px;
   cursor: pointer;
   background-color: var(--bg-color-grey);
@@ -488,38 +602,7 @@ h1 {
   width: auto;
 }
 
-.panel-controls {
-  display: flex;
-  gap: 5px;
-  padding: 5px;
-  border-top: 1px solid var(--text-pink);
-  justify-content: space-around;
-}
-
-.panel-name-container {
-  text-align: center;
-  padding: 5px;
-  border-top: 1px solid var(--text-pink);
-  margin-top: 5px;
-}
-
-.panel-name {
-  border: none;
-  font-size: 0.8rem;
-  text-align: center;
-  width: 100%;
-  color: var(--text-pink);
-  background-color: transparent;
-}
-
-.panel-name:focus {
-  outline: 1px solid #3498db;
-}
-
-.panel-extension-info {
-  display: none;
-}
-
+/* ===== ADD BUTTON STYLES ===== */
 .add-button {
   background-color: transparent;
   color: var(--text-pink);
@@ -543,18 +626,11 @@ h1 {
   font-weight: bold;
 }
 
-.add-panel-container {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-end;
-}
-
+/* ===== EXTENSION PREVIEW ===== */
 .extension-preview {
   background-color: var(--bg-color-grey);
-  border: var(--border-radius-md) solid var(--border-color);
-  border-radius: var(--border-radius-md);
   overflow: hidden;
-  margin-top: 20px;
+  width: 100%;
 }
 
 .preview-header {
@@ -572,8 +648,37 @@ h1 {
   line-height: 1.5;
   white-space: pre;
   overflow-x: auto;
+  width: 100%;
 }
 
+/* Extension preview specific overrides */
+.extension-preview .pixel-container,
+.preview-content .pixel-container {
+  width: 100%;
+  max-width: 100%;
+}
+
+.extension-preview .pixel-border {
+  width: 100%;
+}
+
+/* Special override for the extension preview section */
+main + .pixel-container {
+  width: 100%;
+  max-width: 100%;
+  display: block;
+}
+
+main + .pixel-container .pixel-border {
+  width: 100%;
+}
+
+main + .pixel-container .extension-preview,
+main + .pixel-container .preview-content {
+  width: 100%;
+}
+
+/* ===== MODAL STYLES ===== */
 .modal {
   display: none;
   position: fixed;
@@ -609,6 +714,7 @@ h1 {
   color: var(--text-color);
 }
 
+/* Button Type Selector */
 .button-type-selector {
   margin: 20px 0;
 }
@@ -640,6 +746,7 @@ h1 {
   margin-bottom: 5px;
 }
 
+/* Form Styles */
 .form-group {
   margin-bottom: 15px;
 }
@@ -647,7 +754,6 @@ h1 {
 .form-group label {
   display: block;
   margin-bottom: 5px;
-  /* font-weight: bold;  */
   letter-spacing: 3px;
   color: var(--bg-pink);
 }
@@ -721,6 +827,114 @@ h1 {
   color: var(--text-pink);
 }
 
+/* ===== PIXEL CONTAINER STYLES ===== */
+.pixel-container {
+  position: relative;
+  padding: 3px;
+  display: inline-block;
+  color: #444;
+  width: 600px;
+  font-weight: bold;
+}
+
+.pixel-container input {
+  border: none;
+  background-color: var(--bg-main-color);
+  font-size: 2rem;
+  color: var(--text-pink);
+  width: 100%;
+  padding: 5px;
+  margin-left: 5px;
+}
+
+.pixel-container input:focus {
+  background-color: var(--bg-input);
+}
+
+.pixel-border {
+  position: relative;
+  border: 10px solid transparent;
+  background-clip: padding-box;
+  filter: drop-shadow(15px 0 20px rgba(236, 72, 153, 0.6));
+}
+
+.pixel-border::before {
+  content: "";
+  position: absolute;
+  top: -3px;
+  left: -3px;
+  right: -3px;
+  bottom: -3px;
+  background: linear-gradient(to bottom right, #ec4899, #9d174d);
+  z-index: -1;
+  clip-path: polygon(
+    0% 3px,
+    3px 3px,
+    3px 0%,
+    calc(100% - 3px) 0%,
+    calc(100% - 3px) 3px,
+    100% 3px,
+    100% calc(100% - 3px),
+    calc(100% - 3px) calc(100% - 3px),
+    calc(100% - 3px) 100%,
+    3px 100%,
+    3px calc(100% - 3px),
+    0 calc(100% - 3px)
+  );
+}
+
+.pixel-content {
+  padding: 15px 15px;
+  background-color: var(--bg-main-color);
+  color: #e4c3d9;
+  font-size: 28px;
+}
+
+/* ===== FILE INPUT STYLES ===== */
+input[type="file"] {
+  color: var(--text-pink);
+  background-color: var(--bg-main-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 8px;
+  width: 100%;
+}
+
+::-webkit-file-upload-button {
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
+  border: none;
+  padding: 6px 12px;
+  margin-right: 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+::-webkit-file-upload-button:hover {
+  background-color: var(--bg-input);
+  border: 2px solid var(--bg-pink);
+  color: grey;
+}
+
+::file-selector-button {
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
+  border: none;
+  padding: 6px 12px;
+  margin-right: 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+::file-selector-button:hover {
+  background-color: var(--bg-input);
+  border: 2px solid var(--bg-pink);
+  color: grey;
+}
+
+/* ===== UTILITY CLASSES ===== */
 .dragging {
   opacity: 0.5;
   border: 2px solid #3498db !important;
@@ -735,6 +949,7 @@ h1 {
   user-select: none;
 }
 
+/* ===== LOADING OVERLAY ===== */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -774,135 +989,7 @@ h1 {
   }
 }
 
-.pixel-container {
-  position: relative;
-  padding: 3px;
-  display: inline-block;
-  color: #444;
-  width: 600px;
-  font-weight: bold;
-}
-.pixel-container input {
-  border: none;
-  background-color: var(--bg-main-color);
-  font-size: 2rem;
-  color: var(--text-pink);
-  width: 100%;
-  padding: 5px;
-  margin-left: 5px;
-}
-
-.download-button .pixel-container {
-  margin-bottom: 0px;
-  width: auto;
-}
-
-.pixel-container input:focus {
-  background-color: var(--bg-input);
-}
-
-.pixel-border {
-  position: relative;
-  border: 10px solid transparent;
-  background-clip: padding-box;
-  filter: drop-shadow(15px 0 20px rgba(236, 72, 153, 0.6));
-}
-
-.pixel-border::before {
-  content: "";
-  position: absolute;
-  top: -3px;
-  left: -3px;
-  right: -3px;
-  bottom: -3px;
-  background: linear-gradient(to bottom right, #ec4899, #9d174d);
-  z-index: -1;
-  clip-path: polygon(
-    0% 3px,
-    3px 3px,
-    3px 0%,
-    calc(100% - 3px) 0%,
-    calc(100% - 3px) 3px,
-    100% 3px,
-    100% calc(100% - 3px),
-    calc(100% - 3px) calc(100% - 3px),
-    calc(100% - 3px) 100%,
-    3px 100%,
-    3px calc(100% - 3px),
-    0 calc(100% - 3px)
-  );
-}
-
-.download-button .pixel-border {
-  filter: drop-shadow(5px 0 10px rgba(236, 72, 153, 0.6)) !important;
-}
-.pixel-content {
-  padding: 15px 15px;
-  background-color: var(--bg-main-color);
-  color: #e4c3d9;
-  font-size: 28px;
-}
-
-.download-button .pixel-container {
-  margin-bottom: 10px;
-  width: auto;
-  max-width: fit-content;
-}
-
-.download-button button {
-  width: 100%;
-}
-
-/* Add this to your styles.css file */
-
-/* Style the file input */
-input[type="file"] {
-  color: var(--text-pink);
-  background-color: var(--bg-main-color);
-  border: 1px solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  padding: 8px;
-  width: 100%;
-}
-
-/* Custom styling for the file input button */
-::-webkit-file-upload-button {
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
-  border: none;
-  padding: 6px 12px;
-  margin-right: 10px;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* Hover state for the button */
-::-webkit-file-upload-button:hover {
-  background-color: var(--bg-input);
-  border: 2px solid var(--bg-pink);
-  color: grey;
-}
-
-/* Firefox styling */
-::file-selector-button {
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
-  border: none;
-  padding: 6px 12px;
-  margin-right: 10px;
-  border-radius: var(--border-radius-sm);
-  cursor: pointer;
-  font-weight: bold;
-}
-
-/* Hover state for Firefox */
-::file-selector-button:hover {
-  background-color: var(--bg-input);
-  border: 2px solid var(--bg-pink);
-  color: grey;
-}
-
+/* ===== ANIMATIONS ===== */
 @keyframes textGlow {
   0% {
     text-shadow: 0 0 5px var(--bg-pink), 0 0 10px var(--bg-pink),
@@ -931,49 +1018,4 @@ input[type="file"] {
 .glowing-text-title {
   animation: textGlow 8s infinite;
   color: var(--bg-yellow);
-}
-
-.audio-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  position: relative;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.audio-btn:hover {
-  background-color: var(--title-color);
-}
-
-.audio-btn:active {
-  background-color: var(--bg-pink);
-}
-
-.audio-btn svg {
-  width: 12px;
-  height: 12px;
-  fill: currentColor;
-}
-
-.audio-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  position: absolute;
-  top: 20px;
-  left: 20px;
-}
-
-.status-text {
-  margin: 0 0 5px 15px;
-  color: var(--bg-yellow);
-  font-size: 10px;
 }
