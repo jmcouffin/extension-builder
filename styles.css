@@ -65,6 +65,16 @@ h1 {
   margin-bottom: 10px;
 }
 
+.extension-name .pixel-container {
+  width: 100%;
+  max-width: 100%;
+  /* margin: 0 auto; */
+}
+
+.extension-name .pixel-content input {
+  width: 100%;
+}
+
 .logo span {
   display: block;
   font-size: 1.2rem;
@@ -76,7 +86,7 @@ h1 {
   display: flex;
   flex-direction: column;
   gap: 5px; /* Reduce this value from 10px to 5px */
-  align-items: flex-end
+  align-items: flex-end;
 }
 
 .download-button .pixel-container {
@@ -88,8 +98,8 @@ h1 {
 .load-button {
   background-color: var(--bg-pink);
   color: var(--bg-yellow);
-  padding: 6px 10px;
-  font-size: .8rem;
+  padding: 0px 10px 6px 10px;
+  font-size: 0.8rem;
   cursor: pointer;
   display: flex;
   align-items: center; /* This ensures vertical centering */
@@ -175,6 +185,7 @@ h1 {
   display: flex;
   gap: 10px;
   min-height: 200px;
+  border: var(--border-radius-sm) solid var(--border-color);
 }
 
 .panel {
@@ -253,6 +264,16 @@ h1 {
   -webkit-box-orient: vertical;
 }
 
+.button-name input {
+  background-color: transparent;
+  color: var(--text-pink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 0.8rem;
+  width: 100%;
+  height: auto;
+  padding: 2px;
+}
+
 .delete-button {
   width: var(--bt-delete-size-small);
   height: var(--bt-delete-size-small);
@@ -323,7 +344,7 @@ h1 {
   text-align: center;
   font-size: 0.8rem;
   color: var(--text-pink);
-  padding: 2px;
+  padding: 0.5px;
   background-color: transparent;
   border-radius: var(--border-radius-sm);
   margin-top: auto;
@@ -372,7 +393,7 @@ h1 {
 
 .stack-add-button {
   width: 100%;
-  height: 25px !important;
+  height: 35px !important;
   background-color: var(--bg-color-grey);
   border: 1px solid var(--bg-yellow);
   border-radius: var(--border-radius-sm);
@@ -380,8 +401,9 @@ h1 {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  margin-top: 2px;
+  /* margin-top: 2px; */
   font-size: 0.7rem;
+  padding: 0px 5px 5px 5px;
   color: var(--text-pink);
 }
 
@@ -470,6 +492,7 @@ h1 {
   display: flex;
   gap: 5px;
   padding: 5px;
+  border-top: 1px solid var(--text-pink);
   justify-content: space-around;
 }
 
@@ -501,7 +524,7 @@ h1 {
   background-color: transparent;
   color: var(--text-pink);
   border: 1px solid var(--bg-yellow);
-  padding: 5px 5px;
+  padding: 0px 5px 6px 5px;
   font-size: 0.8rem;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
@@ -528,7 +551,7 @@ h1 {
 
 .extension-preview {
   background-color: var(--bg-color-grey);
-  border: 1px solid var(--border-color);
+  border: var(--border-radius-md) solid var(--border-color);
   border-radius: var(--border-radius-md);
   overflow: hidden;
   margin-top: 20px;
@@ -674,7 +697,7 @@ h1 {
 }
 
 .modal-actions button {
-  padding: 8px 15px;
+  padding: 0px 5px 5px 5px;
   border: none;
   border-radius: var(--border-radius-sm);
   border: 1px solid var(--border-color);

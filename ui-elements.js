@@ -120,10 +120,10 @@ const UIElements = {
     panelControls.className = "panel-controls";
     panelControls.innerHTML = `
             <button class="add-button" data-panel-id="${panelId}" data-action="add-button">
-                <span class="plus">+</span> NEW BUTTON
+                <span class="plus">+</span>BUTTON
             </button>
             <button class="add-button" data-panel-id="${panelId}" data-action="add-stack">
-                <span class="plus">+</span> NEW STACK
+                <span class="plus">+</span>STACK
             </button>
         `;
 
