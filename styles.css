@@ -1,9 +1,8 @@
-/* Global Styles */
 :root {
   --bg-main-color: #320452;
   --bg-color-grey: #381153;
   --bg-yellow: #ffd000;
-  --bg-bright-yellow: rgb(255, 0, 200);
+  --bg-pink: rgb(255, 0, 200);
   --bg-input: #411f1f;
   --border-color: rgb(255, 0, 200);
   --delete-btn-color: #c0392b;
@@ -11,6 +10,7 @@
   --edit-btn-color: #6495ed;
   --edit-btn-hover: #4169e1;
   --text-color: #333;
+  --text-pink: #ff69b4;
   --text-secondary: #555;
   --border-radius-sm: 3px;
   --border-radius-md: 5px;
@@ -20,6 +20,7 @@
   --bt-delete-size-small: 8px;
   --bt-delete-offset-big: 4px;
   --bt-delete-offset-small: 2px;
+  --title-color: rgb(211, 143, 143);
 }
 
 * {
@@ -34,7 +35,6 @@ body {
   padding: 20px;
 }
 
-/* Header Styles */
 header {
   display: flex;
   justify-content: space-between;
@@ -53,7 +53,16 @@ header {
 
 h1 {
   font-size: 5rem;
-  color: rgb(211, 143, 143);
+  color: var(--title-color);
+}
+
+.extension-name {
+  font-size: 2rem;
+  color: var(--text-pink);
+  font-weight: bold;
+  text-align: center;
+  margin-top: -10px;
+  margin-bottom: 10px;
 }
 
 .logo span {
@@ -63,34 +72,39 @@ h1 {
   margin-top: -5px;
 }
 
-/* Button Styles */
 .download-button {
   display: flex;
   flex-direction: column;
   gap: 10px;
+  align-items: flex-end;
+}
+
+.download-button .pixel-container {
+  margin-bottom: 10px;
 }
 
 .download-button button,
 .save-button,
 .load-button {
-  background-color: var(--bg-bright-yellow);
-  color: rgb(22, 22, 22);
-  box-shadow: var(--shadow);
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
   padding: 10px 20px;
-  font-size: 1.5rem;
-  border-radius: var(--border-radius-lg);
+  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: space-between;
   font-weight: bold;
   transition: background-color 0.3s;
-  width: 100%;
+  width: auto;
+  min-width: 200px;
+  max-width: 300px;
+  border: none;
 }
 
 .download-button button:hover {
-  border: 2px solid var(--bg-bright-yellow);
-  background-color: var(--bg-yellow);
+  border: 2px solid var(--bg-pink);
+  background-color: var(--bg-input);
   color: grey;
 }
 
@@ -102,23 +116,6 @@ h1 {
   font-size: 1.2rem;
 }
 
-.save-button,
-.load-button {
-  background-color: #5c5f65;
-  color: white;
-}
-
-.save-button:hover {
-  background-color: #4caf50;
-  color: white;
-}
-
-.load-button:hover {
-  background-color: #2196f3;
-  color: white;
-}
-
-/* Tabs Styles */
 .tabs-container {
   display: flex;
   align-items: center;
@@ -141,26 +138,25 @@ h1 {
 }
 
 .tab.active {
-  border-bottom: 5px solid rgb(252, 116, 116);
-  background-color: var(--bg-yellow);
+  border-bottom: 5px solid var(--bg-yellow);
+  background-color: transparent;
   position: relative;
   z-index: 1;
 }
 
 .tab input {
   border: none;
-  font-size: 0.9rem;
-  color: var(--text-color);
+  font-size: 1rem;
+  letter-spacing: 2px;
+  color: var(--text-pink);
   font-weight: bold;
   width: 100px;
   background-color: transparent;
 }
 
 .tab input:focus {
-  background-color: var(--bg-input);
 }
 
-/* Ribbon Styles */
 .ribbon-container {
   display: flex;
   margin-bottom: 20px;
@@ -198,11 +194,10 @@ h1 {
   overflow-x: auto;
 }
 
-/* Button, Stack, and Pulldown common styles */
 .button,
 .stack,
 .pulldown {
-  background-color: #f9f9f9;
+  background-color: rgb(124, 41, 124);
   border: 1px dashed #ccc;
   border-radius: var(--border-radius-sm);
   padding: 5px;
@@ -215,7 +210,7 @@ h1 {
   flex-direction: column;
   align-items: center;
   width: 70px;
-  height: 140px;
+  height: 152px;
 }
 
 .panel-content .stack,
@@ -240,16 +235,20 @@ h1 {
 }
 
 .button-name {
+  color: var(--text-pink);
   text-align: center;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 0.8rem;
-  color: var(--delete-btn-color);
   width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  height: 6em;
   overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: -webkit-box;
+  -webkit-line-clamp: 5;
+  -webkit-box-orient: vertical;
 }
 
-/* Delete Button Styles - Unified */
 .delete-button {
   width: var(--bt-delete-size-small);
   height: var(--bt-delete-size-small);
@@ -269,7 +268,6 @@ h1 {
 .tab-delete-button,
 .panel-delete-button {
   position: absolute;
-
   background-color: var(--delete-btn-color);
   color: white;
   border: none;
@@ -299,7 +297,7 @@ h1 {
   height: auto;
   width: auto !important;
   min-width: 85px;
-  max-width: max-content; /* Change from fixed 150px to max-content */
+  max-width: max-content;
   padding-right: 10px;
 }
 
@@ -310,27 +308,27 @@ h1 {
 }
 
 .stack .button-icon {
-  width: 18px;
-  height: 18px;
-  min-width: 18px;
-  margin-right: 4px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
+  margin-right: 8px;
   margin-bottom: 0;
 }
 
 .stack-name {
   text-align: center;
   font-size: 0.8rem;
-  color: var(--text-secondary);
+  color: var(--text-pink);
   padding: 2px;
-  background-color: #eee;
+  background-color: transparent;
   border-radius: var(--border-radius-sm);
   margin-top: auto;
 }
 
 .stacked-button {
   min-height: 40px !important;
-  width: auto !important; /* Changed from 100% to auto */
-  min-width: 100% !important; /* Ensure it takes at least the full width */
+  width: auto !important;
+  min-width: 100% !important;
   margin-bottom: 2px;
   height: auto !important;
 }
@@ -346,26 +344,33 @@ h1 {
 }
 
 .stack .button-name {
-  white-space: normal; /* Allow text to wrap */
-  word-break: break-word; /* Break long words if needed */
-  flex-grow: 1;
-  text-align: left;
-  margin-right: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  height: auto;
+  width: auto;
+  -webkit-line-clamp: unset;
+}
+
+.stack .button-name input {
+  background-color: transparent;
+  color: var(--text-pink);
+  font-family: Arial, Helvetica, sans-serif;
 }
 
 .stack .button.stacked-button {
-  width: auto !important; /* Changed from 100% to auto */
-  min-width: 100% !important; /* Ensure it takes at least full width */
+  width: auto !important;
+  min-width: 100% !important;
   min-height: 24px !important;
   padding: 2px 5px;
-  height: auto !important; /* Ensures height adapts to content */
+  height: auto !important;
 }
 
 .stack-add-button {
   width: 100%;
-  height: 20px !important;
-  background-color: #f5f5f5;
-  border: 1px dashed #ccc;
+  height: 25px !important;
+  background-color: var(--bg-color-grey);
+  border: 1px solid var(--bg-yellow);
   border-radius: var(--border-radius-sm);
   display: flex;
   align-items: center;
@@ -373,7 +378,7 @@ h1 {
   cursor: pointer;
   margin-top: 2px;
   font-size: 0.7rem;
-  color: var(--edit-btn-color);
+  color: var(--text-pink);
 }
 
 .stack-add-button:hover {
@@ -384,9 +389,10 @@ h1 {
   width: 100%;
   font-size: 0.8rem;
   padding: 2px;
+  background-color: var(--bg-input);
+  color: var(--text-pink);
 }
 
-/* Pulldown styles */
 .pulldown {
   display: flex;
   flex-direction: column;
@@ -403,7 +409,7 @@ h1 {
   font-size: 10px;
   color: var(--text-secondary);
   padding: 2px;
-  /* padding-right: 10px; */
+
   margin-right: 10px;
   cursor: pointer;
   background-color: var(--bg-color-grey);
@@ -456,7 +462,6 @@ h1 {
   width: auto;
 }
 
-/* Panel controls */
 .panel-controls {
   display: flex;
   gap: 5px;
@@ -467,7 +472,7 @@ h1 {
 .panel-name-container {
   text-align: center;
   padding: 5px;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--text-pink);
   margin-top: 5px;
 }
 
@@ -476,24 +481,23 @@ h1 {
   font-size: 0.8rem;
   text-align: center;
   width: 100%;
-  color: var(--text-color);
+  color: var(--text-pink);
+  background-color: transparent;
 }
 
 .panel-name:focus {
   outline: 1px solid #3498db;
-  background-color: #f9f9f9;
 }
 
 .panel-extension-info {
   display: none;
 }
 
-/* Add buttons */
 .add-button {
-  background-color: var(--edit-btn-color);
-  color: white;
-  border: none;
-  padding: 5px 10px;
+  background-color: transparent;
+  color: var(--text-pink);
+  border: 1px solid var(--bg-yellow);
+  padding: 5px 5px;
   font-size: 0.8rem;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
@@ -503,7 +507,7 @@ h1 {
 }
 
 .add-button:hover {
-  background-color: var(--edit-btn-hover);
+  background-color: var(--bg-input);
 }
 
 .plus {
@@ -518,7 +522,6 @@ h1 {
   justify-content: flex-end;
 }
 
-/* Extension Folder Preview */
 .extension-preview {
   background-color: var(--bg-color-grey);
   border: 1px solid var(--border-color);
@@ -528,22 +531,22 @@ h1 {
 }
 
 .preview-header {
-  background-color: var(--bg-bright-yellow);
+  background-color: transparent;
   padding: 10px;
   font-weight: bold;
-  color: var(--text-color);
+  color: var(--text-pink);
+  letter-spacing: 3px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .preview-content {
   padding: 15px;
-  color: var(--text-secondary);
+  color: var(--text-pink);
   line-height: 1.5;
   white-space: pre;
   overflow-x: auto;
 }
 
-/* Modal Styles */
 .modal {
   display: none;
   position: fixed;
@@ -556,7 +559,8 @@ h1 {
 }
 
 .modal-content {
-  background-color: white;
+  background-color: var(--bg-main-color);
+  color: var(--text-pink);
   margin: 5% auto;
   padding: 20px;
   border-radius: var(--border-radius-md);
@@ -595,11 +599,13 @@ h1 {
   cursor: pointer;
   text-align: center;
   flex: 1;
+  font-size: 1.5rem;
 }
 
 .button-type.selected {
-  border-color: #3498db;
-  background-color: #ebf5fb;
+  border: 5px solid var(--bg-pink);
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
 }
 
 .type-icon {
@@ -614,8 +620,9 @@ h1 {
 .form-group label {
   display: block;
   margin-bottom: 5px;
-  font-weight: bold;
-  color: var(--text-secondary);
+  /* font-weight: bold;  */
+  letter-spacing: 3px;
+  color: var(--bg-pink);
 }
 
 .form-group input,
@@ -624,6 +631,8 @@ h1 {
   padding: 8px;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
+  background-color: transparent;
+  color: var(--text-pink);
 }
 
 .form-group input:focus,
@@ -664,26 +673,27 @@ h1 {
   padding: 8px 15px;
   border: none;
   border-radius: var(--border-radius-sm);
+  border: 1px solid var(--border-color);
   cursor: pointer;
 }
 
 #createButton {
-  background-color: #2ecc71;
-  color: white;
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
 }
 
 .cancel-button {
-  background-color: #95a5a6;
-  color: white;
+  background-color: transparent;
+  color: var(--text-pink);
 }
 
-/* Code input styles */
 .code-input textarea {
   min-height: 100px;
   resize: vertical;
+  background-color: var(--bg-input);
+  color: var(--text-pink);
 }
 
-/* Drag and drop styling */
 .dragging {
   opacity: 0.5;
   border: 2px solid #3498db !important;
@@ -694,12 +704,10 @@ h1 {
   border: 2px dashed #3498db !important;
 }
 
-/* Make text unselectable during drag */
 .no-select {
   user-select: none;
 }
 
-/* Loading overlay styles */
 .loading-overlay {
   position: fixed;
   top: 0;
@@ -751,10 +759,15 @@ h1 {
   border: none;
   background-color: var(--bg-main-color);
   font-size: 2rem;
-  color: pink;
+  color: var(--text-pink);
   width: 100%;
   padding: 5px;
   margin-left: 5px;
+}
+
+.download-button .pixel-container {
+  margin-bottom: 10px;
+  width: auto;
 }
 
 .pixel-container input:focus {
@@ -793,11 +806,97 @@ h1 {
   );
 }
 
+.download-button .pixel-border {
+  filter: drop-shadow(5px 0 10px rgba(236, 72, 153, 0.6)) !important;
+}
 .pixel-content {
-  padding: 15px 30px;
+  padding: 15px 15px;
   background-color: var(--bg-main-color);
   color: #e4c3d9;
   font-size: 28px;
+}
+
+.download-button .pixel-container {
+  margin-bottom: 10px;
+  width: auto;
+  max-width: fit-content;
+}
+
+.download-button button {
+  width: 100%;
+}
+
+/* Add this to your styles.css file */
+
+/* Style the file input */
+input[type="file"] {
+  color: var(--text-pink);
+  background-color: var(--bg-main-color);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 8px;
+  width: 100%;
+}
+
+/* Custom styling for the file input button */
+::-webkit-file-upload-button {
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
+  border: none;
+  padding: 6px 12px;
+  margin-right: 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
   font-weight: bold;
-  letter-spacing: 1px;
+}
+
+/* Hover state for the button */
+::-webkit-file-upload-button:hover {
+  background-color: var(--bg-input);
+  border: 2px solid var(--bg-pink);
+  color: grey;
+}
+
+/* Firefox styling */
+::file-selector-button {
+  background-color: var(--bg-pink);
+  color: var(--bg-yellow);
+  border: none;
+  padding: 6px 12px;
+  margin-right: 10px;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  font-weight: bold;
+}
+
+/* Hover state for Firefox */
+::file-selector-button:hover {
+  background-color: var(--bg-input);
+  border: 2px solid var(--bg-pink);
+  color: grey;
+}
+
+@keyframes textGlow {
+  0% {
+    text-shadow: 0 0 5px var(--bg-pink), 0 0 10px var(--bg-pink),
+      0 0 15px var(--bg-pink);
+  }
+  50% {
+    text-shadow: 0 0 10px var(--bg-yellow), 0 0 20px var(--bg-yellow),
+      0 0 30px var(--bg-yellow);
+  }
+  100% {
+    text-shadow: 0 0 5px var(--bg-pink), 0 0 10px var(--bg-pink),
+      0 0 15px var(--bg-pink);
+  }
+}
+
+.glowing-text {
+  animation: textGlow 3s infinite;
+  color: var(--text-pink);
+}
+
+.glowing-text-slow {
+  animation: textGlow 5s infinite;
+  color: var(--bg-yellow);
 }

@@ -17,21 +17,39 @@
             <img src="logo.png" alt="pyRevit Logo">
             <h1>pyRevit<span>extension builder</span></h1>
         </div>
-
         <div class="download-button">
-            <button id="downloadZip">
-                DOWNLOAD EXTENSION AS ZIP
-                <span class="download-icon">⬇</span>
-            </button>
+            <div class="pixel-container">
+                <div class="pixel-border">
+                    <button id="loadConfig" class="load-button">
+                        LOAD CONFIG <span class="load-icon">🖿</span>
+                    </button>
+                </div>
+            </div>
+            <div class="pixel-container">
+                <div class="pixel-border">
+                    <button id="saveConfig" class="save-button">
+                        SAVE CONFIG <span class="save-icon">🖪</span>
+                    </button>
+                </div>
+            </div>
+            <div class="pixel-container">
+                <div class="pixel-border">
+                    <button class="glowing-text-slow" id="downloadZip">
+                        DOWNLOAD
+                        <span class="download-icon">⬇</span>
+                    </button>
+                </div>
+            </div>
         </div>
     </header>
 
+    <div class="extension-name">
+        <div class="pixel-container">
+            <div class="pixel-border">
+                <div class="pixel-content">
+                    <div><input class="glowing-text" type="text" id="extensionName" value="Your Extension Name"></div>
 
-    <div class="pixel-container">
-        <div class="pixel-border">
-            <div class="pixel-content">
-                <div><input type="text" id="extensionName" value="Your Extension Name"></div>
-
+                </div>
             </div>
         </div>
     </div>
@@ -45,6 +63,7 @@
                     <input type="text" class="tab-name" value="TAB NAME">
                 </div>
             </div>
+
             <button class="add-button" id="addTab">
                 <span class="plus">+</span> NEW TAB
             </button>

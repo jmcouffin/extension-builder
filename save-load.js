@@ -274,24 +274,16 @@ const SaveLoad = {
    * Initialize save/load functionality
    */
   initialize() {
-    // Add save and load buttons to header
-    const headerButtons = document.querySelector(".download-button");
-    if (headerButtons) {
-      // Save button
-      const saveButton = document.createElement("button");
-      saveButton.innerHTML = 'SAVE LAYOUT <span class="save-icon">🖪</span>';
-      saveButton.className = "save-button";
+    // Add event listeners to existing buttons
+    const saveButton = document.getElementById("saveConfig");
+    const loadButton = document.getElementById("loadConfig");
+
+    if (saveButton) {
       saveButton.addEventListener("click", () => this.saveExtension());
+    }
 
-      // Load button
-      const loadButton = document.createElement("button");
-      loadButton.innerHTML = 'LOAD LAYOUT <span class="load-icon">🖿</span>';
-      loadButton.className = "load-button";
+    if (loadButton) {
       loadButton.addEventListener("click", () => this.openFileSelector());
-
-      // Add buttons
-      headerButtons.insertBefore(saveButton, headerButtons.firstChild);
-      headerButtons.insertBefore(loadButton, headerButtons.firstChild);
     }
 
     console.log("Save/Load functionality initialized");
