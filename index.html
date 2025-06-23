@@ -152,6 +152,26 @@
                             <div class="type-icon">🔽</div>
                             <div class="type-name">Pulldown</div>
                         </div>
+                        <div class="button-type" data-type="smartbutton">
+                            <div class="type-icon">🧠</div>
+                            <div class="type-name">Smart Button</div>
+                        </div>
+                        <div class="button-type" data-type="splitbutton">
+                            <div class="type-icon">⚡</div>
+                            <div class="type-name">Split Button</div>
+                        </div>
+                        <div class="button-type" data-type="togglebutton">
+                            <div class="type-icon">🔄</div>
+                            <div class="type-name">Toggle Button</div>
+                        </div>
+                        <div class="button-type" data-type="linkbutton">
+                            <div class="type-icon">🔗</div>
+                            <div class="type-name">Link Button</div>
+                        </div>
+                        <div class="button-type" data-type="invokebutton">
+                            <div class="type-icon">⚙️</div>
+                            <div class="type-name">Invoke Button</div>
+                        </div>
                     </div>
                 </div>
 
@@ -168,6 +188,16 @@
                 <div class="form-group">
                     <label for="buttonTooltip">Tooltip (Optional):</label>
                     <input type="text" id="buttonTooltip">
+                </div>
+
+                <div class="form-group" id="linkUrlGroup" style="display: none;">
+                    <label for="buttonUrl">URL (Required for Link Button):</label>
+                    <input type="url" id="buttonUrl" placeholder="https://example.com">
+                </div>
+
+                <div class="form-group" id="invokeCommandGroup" style="display: none;">
+                    <label for="buttonCommand">Revit Command (Required for Invoke Button):</label>
+                    <input type="text" id="buttonCommand" placeholder="ID_REVIT_COMMAND">
                 </div>
 
                 <div class="form-group">

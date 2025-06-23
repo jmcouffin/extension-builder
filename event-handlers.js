@@ -350,7 +350,7 @@ const EventHandlers = {
     window.appState.panels[panelId] = {
       name: "NEW PANEL",
       elements: [],
-      tabId: tabId,
+      tabId: tabI,
     };
     window.appState.tabs[tabId].panels.push(panelId);
 

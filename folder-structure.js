@@ -41,6 +41,46 @@ const FolderStructure = {
                 element.code
               );
               break;
+            case "smartbutton":
+              elementFolder = window.templates.smartbutton(
+                element.name,
+                element.title,
+                element.tooltip,
+                element.code
+              );
+              break;
+            case "splitbutton":
+              elementFolder = window.templates.splitbutton(
+                element.name,
+                element.title,
+                element.tooltip,
+                element.code
+              );
+              break;
+            case "togglebutton":
+              elementFolder = window.templates.togglebutton(
+                element.name,
+                element.title,
+                element.tooltip,
+                element.code
+              );
+              break;
+            case "linkbutton":
+              elementFolder = window.templates.linkbutton(
+                element.name,
+                element.title,
+                element.tooltip,
+                element.url
+              );
+              break;
+            case "invokebutton":
+              elementFolder = window.templates.invokebutton(
+                element.name,
+                element.title,
+                element.tooltip,
+                element.command
+              );
+              break;
             case "pulldown":
               elementFolder = window.templates.pulldown(
                 element.name,
@@ -53,13 +93,60 @@ const FolderStructure = {
               if (element.children) {
                 element.children.forEach((childId) => {
                   const child = window.appState.elements[childId];
-                  if (child.type === "pushbutton") {
-                    const childFolder = window.templates.pushbutton(
-                      child.name,
-                      child.title,
-                      child.tooltip,
-                      child.code
-                    );
+                  let childFolder;
+                  
+                  switch (child.type) {
+                    case "pushbutton":
+                      childFolder = window.templates.pushbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "smartbutton":
+                      childFolder = window.templates.smartbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "splitbutton":
+                      childFolder = window.templates.splitbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "togglebutton":
+                      childFolder = window.templates.togglebutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "linkbutton":
+                      childFolder = window.templates.linkbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.url
+                      );
+                      break;
+                    case "invokebutton":
+                      childFolder = window.templates.invokebutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.command
+                      );
+                      break;
+                  }
+                  
+                  if (childFolder) {
                     elementFolder.children.push(childFolder);
                   }
                 });
@@ -72,42 +159,134 @@ const FolderStructure = {
               if (element.children) {
                 element.children.forEach((childId) => {
                   const child = window.appState.elements[childId];
-                  if (child.type === "pushbutton") {
-                    const childFolder = window.templates.pushbutton(
-                      child.name,
-                      child.title,
-                      child.tooltip,
-                      child.code
-                    );
+                  let childFolder;
+                  
+                  switch (child.type) {
+                    case "pushbutton":
+                      childFolder = window.templates.pushbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "smartbutton":
+                      childFolder = window.templates.smartbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "splitbutton":
+                      childFolder = window.templates.splitbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "togglebutton":
+                      childFolder = window.templates.togglebutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+                      break;
+                    case "linkbutton":
+                      childFolder = window.templates.linkbutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.url
+                      );
+                      break;
+                    case "invokebutton":
+                      childFolder = window.templates.invokebutton(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.command
+                      );
+                      break;
+                    case "pulldown":
+                      // Handle pulldowns within stacks
+                      childFolder = window.templates.pulldown(
+                        child.name,
+                        child.title,
+                        child.tooltip,
+                        child.code
+                      );
+
+                      // Add pulldown's children
+                      if (child.children) {
+                        child.children.forEach((pulldownChildId) => {
+                          const pulldownChild =
+                            window.appState.elements[pulldownChildId];
+                          let pulldownChildFolder;
+                          
+                          switch (pulldownChild.type) {
+                            case "pushbutton":
+                              pulldownChildFolder = window.templates.pushbutton(
+                                pulldownChild.name,
+                                pulldownChild.title,
+                                pulldownChild.tooltip,
+                                pulldownChild.code
+                              );
+                              break;
+                            case "smartbutton":
+                              pulldownChildFolder = window.templates.smartbutton(
+                                pulldownChild.name,
+                                pulldownChild.title,
+                                pulldownChild.tooltip,
+                                pulldownChild.code
+                              );
+                              break;
+                            case "splitbutton":
+                              pulldownChildFolder = window.templates.splitbutton(
+                                pulldownChild.name,
+                                pulldownChild.title,
+                                pulldownChild.tooltip,
+                                pulldownChild.code
+                              );
+                              break;
+                            case "togglebutton":
+                              pulldownChildFolder = window.templates.togglebutton(
+                                pulldownChild.name,
+                                pulldownChild.title,
+                                pulldownChild.tooltip,
+                                pulldownChild.code
+                              );
+                              break;
+                            case "linkbutton":
+                              pulldownChildFolder = window.templates.linkbutton(
+                                pulldownChild.name,
+                                pulldownChild.title,
+                                pulldownChild.tooltip,
+                                pulldownChild.url
+                              );
+                              break;
+                            case "invokebutton":
+                              pulldownChildFolder = window.templates.invokebutton(
+                                pulldownChild.name,
+                                pulldownChild.title,
+                                pulldownChild.tooltip,
+                                pulldownChild.command
+                              );
+                              break;
+                          }
+                          
+                          if (pulldownChildFolder) {
+                            childFolder.children.push(pulldownChildFolder);
+                          }
+                        });
+                      }
+                      break;
+                  }
+
+                  if (childFolder) {
                     elementFolder.children.push(childFolder);
-                  } else if (child.type === "pulldown") {
-                    // Handle pulldowns within stacks
-                    const pulldownFolder = window.templates.pulldown(
-                      child.name,
-                      child.title,
-                      child.tooltip,
-                      child.code
-                    );
-
-                    // Add pulldown's children
-                    if (child.children) {
-                      child.children.forEach((pulldownChildId) => {
-                        const pulldownChild =
-                          window.appState.elements[pulldownChildId];
-                        if (pulldownChild.type === "pushbutton") {
-                          const pulldownChildFolder =
-                            window.templates.pushbutton(
-                              pulldownChild.name,
-                              pulldownChild.title,
-                              pulldownChild.tooltip,
-                              pulldownChild.code
-                            );
-                          pulldownFolder.children.push(pulldownChildFolder);
-                        }
-                      });
-                    }
-
-                    elementFolder.children.push(pulldownFolder);
                   }
                 });
               }

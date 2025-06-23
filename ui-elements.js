@@ -178,10 +178,15 @@ const UIElements = {
 
     switch (element.type) {
       case "pushbutton":
+      case "smartbutton":
+      case "splitbutton":
+      case "togglebutton":
+      case "linkbutton":
+      case "invokebutton":
         elementElement = document.createElement("div");
-        elementElement.className = "button";
+        elementElement.className = `button ${element.type}`;
         elementElement.draggable = true;
-        elementElement.dataset.type = "pushbutton";
+        elementElement.dataset.type = element.type;
         elementElement.dataset.buttonId = elementId;
         elementElement.innerHTML = `
                     <div class="button-icon">
@@ -310,7 +315,7 @@ const UIElements = {
    */
   createStackedButtonElement(buttonId, button) {
     const buttonElement = document.createElement("div");
-    buttonElement.className = "button stacked-button";
+    buttonElement.className = `button stacked-button ${button.type}`;
     buttonElement.dataset.type = button.type;
     buttonElement.dataset.buttonId = buttonId;
     buttonElement.draggable = true;

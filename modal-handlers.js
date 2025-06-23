@@ -57,6 +57,8 @@ const ModalHandlers = {
     document.getElementById("buttonTitle").value = "";
     document.getElementById("buttonTooltip").value = "";
     document.getElementById("buttonCode").value = "";
+    document.getElementById("buttonUrl").value = "";
+    document.getElementById("buttonCommand").value = "";
     document.getElementById("iconPreview").innerHTML =
       '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==" alt="Default Icon">';
     document.getElementById("buttonIcon").value = "";
@@ -83,6 +85,10 @@ const ModalHandlers = {
         document.querySelector('.button-type[data-type="pushbutton"]')
       );
     }
+
+    // Hide special fields initially
+    document.getElementById("linkUrlGroup").style.display = "none";
+    document.getElementById("invokeCommandGroup").style.display = "none";
 
     buttonModal.style.display = "block";
     buttonModal.style.zIndex = "2000";
@@ -135,6 +141,22 @@ const ModalHandlers = {
       type.classList.remove("selected");
     });
     typeElement.classList.add("selected");
+
+    // Show/hide special fields based on button type
+    const selectedType = typeElement.dataset.type;
+    const linkUrlGroup = document.getElementById("linkUrlGroup");
+    const invokeCommandGroup = document.getElementById("invokeCommandGroup");
+
+    // Hide all special fields first
+    linkUrlGroup.style.display = "none";
+    invokeCommandGroup.style.display = "none";
+
+    // Show relevant fields
+    if (selectedType === "linkbutton") {
+      linkUrlGroup.style.display = "block";
+    } else if (selectedType === "invokebutton") {
+      invokeCommandGroup.style.display = "block";
+    }
   },
 
   /**
@@ -170,6 +192,8 @@ const ModalHandlers = {
     document.getElementById("buttonTitle").value = element.title || "";
     document.getElementById("buttonTooltip").value = element.tooltip || "";
     document.getElementById("buttonCode").value = element.code || "";
+    document.getElementById("buttonUrl").value = element.url || "";
+    document.getElementById("buttonCommand").value = element.command || "";
 
     if (element.iconData) {
       document.getElementById(
@@ -218,6 +242,19 @@ const ModalHandlers = {
     const title = document.getElementById("buttonTitle").value;
     const tooltip = document.getElementById("buttonTooltip").value;
     const code = document.getElementById("buttonCode").value;
+    const url = document.getElementById("buttonUrl").value;
+    const command = document.getElementById("buttonCommand").value;
+
+    // Validation for special button types
+    if (newType === "linkbutton" && !url) {
+      alert("URL is required for Link Button");
+      return;
+    }
+
+    if (newType === "invokebutton" && !command) {
+      alert("Revit Command is required for Invoke Button");
+      return;
+    }
 
     if (!name || name.trim() === "") {
       name = this.generateDefaultButtonName(
@@ -286,6 +323,19 @@ const ModalHandlers = {
         element.code = code;
         element.iconData = iconData;
 
+        // Set special properties for new button types
+        if (newType === "linkbutton") {
+          element.url = url;
+        } else {
+          delete element.url;
+        }
+
+        if (newType === "invokebutton") {
+          element.command = command;
+        } else {
+          delete element.command;
+        }
+
         ModalHandlers.closeModal();
 
         document.getElementById("createButton").textContent = "Create";
@@ -323,7 +373,7 @@ const ModalHandlers = {
 
         const elementId = `element${window.appState.nextIds.element++}`;
 
-        window.appState.elements[elementId] = {
+        const elementData = {
           type: newType,
           name: name,
           title: title,
@@ -333,6 +383,17 @@ const ModalHandlers = {
           children:
             newType === "pulldown" || newType === "stack" ? [] : undefined,
         };
+
+        // Add special properties for new button types
+        if (newType === "linkbutton") {
+          elementData.url = url;
+        }
+
+        if (newType === "invokebutton") {
+          elementData.command = command;
+        }
+
+        window.appState.elements[elementId] = elementData;
 
         if (target === "panel") {
           window.appState.panels[containerId].elements.push(elementId);
