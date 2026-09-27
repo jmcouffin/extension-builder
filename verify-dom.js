@@ -5,7 +5,7 @@ const dir = __dirname;
 
 const html = fs.readFileSync(path.join(dir, "index.html"), "utf8");
 const files = [
-  "app.js", "audio.js", "bundle-types.js", "drag-drop.js", "event-handlers.js",
+  "app.js", "bundle-types.js", "drag-drop.js", "event-handlers.js",
   "folder-structure.js", "modal-handlers.js", "save-load.js", "template.js",
   "ui-elements.js",
 ];
@@ -76,17 +76,24 @@ const IGNORED = new Set([
   "selected", "dragging", "drag-over", "no-select", "active", "stack-edit-mode",
   "name", "type", "field", "placeholder", "unknown", "body", "icon", "help",
   "tab-name", // styled as ".tab input"
+  "stack-", // a prefix: "stack-" + count, resolved as .stack-1/2/3
 ]);
 [...jsClasses].sort().forEach((c) => {
   if (IGNORED.has(c)) return;
   ok(cssClasses.has(c) || htmlClasses.has(c), "class ." + c + " is used by JS but styled nowhere");
 });
 
-console.log("== index.html does not autoplay audio");
-ok(!/audio\.play\(\)/.test(html), "no inline autoplay in HTML");
-ok(/id="audioBtn"/.test(html), "audio button present");
-ok(fs.existsSync(path.join(dir, "audio.js")), "audio.js exists");
-ok(/id="statusText"/.test(html), "status text present");
+console.log("== the music player is gone");
+ok(!/audio/i.test(html), "no audio markup in index.html");
+ok(!/audio\.js|mp3|\.mp3/i.test(html), "no audio script or media referenced");
+["audio.js", "the-return-of-the-8-bit-era-301292.mp3"].forEach((f) => {
+  ok(!fs.existsSync(path.join(dir, f)), f + " should no longer exist");
+});
+files.forEach((f) => {
+  const src = fs.readFileSync(path.join(dir, f), "utf8");
+  ok(!/new Audio\(|\.mp3|audioBtn|statusText/.test(src), f + " still references audio");
+});
+ok(!/audio|status-text/.test(css), "styles.css still styles audio controls");
 
 console.log("== removed markup is gone");
 ok(!/loading-overlay/.test(html), "loading overlay removed");

@@ -16,6 +16,11 @@ const FolderStructure = {
     const structure = this.buildFolderStructure(this.extensionName());
     document.getElementById("folderPreview").textContent =
       this.formatFolderStructure(structure);
+    // Every mutation in the app already routes through here - adding, deleting,
+    // renaming, dragging, loading. That makes it the one place the draft can
+    // be written from without a dozen call sites that would eventually miss
+    // one and silently stop persisting.
+    if (window.Draft) window.Draft.save();
   },
 
   extensionName() {

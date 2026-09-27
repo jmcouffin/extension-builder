@@ -47,13 +47,15 @@ const REAL_POSTFIXES = new Set([
   ok(await page.$("#ribbonContainer .delete-button, #ribbonContainer .element-delete-button") !== null,
      "default button has a delete control");
 
-  section("no autoplay");
-  const playing = await page.evaluate(() => {
-    const a = document.querySelector("audio");
-    return { playing: !!(a && !a.paused), hasAudio: !!a, status: document.getElementById("statusText").textContent };
-  });
-  ok(!playing.hasAudio || !playing.playing, "audio is not playing on load");
-  ok(playing.status === "Music Off", "status reads 'Music Off', got: " + playing.status);
+  section("the music player is gone");
+  const audio = await page.evaluate(() => ({
+    buttons: document.querySelectorAll("#audioBtn").length,
+    status: document.querySelectorAll("#statusText").length,
+    tags: document.querySelectorAll("audio, video").length,
+  }));
+  ok(audio.buttons === 0, "no audio button in the DOM");
+  ok(audio.status === 0, "no audio status text in the DOM");
+  ok(audio.tags === 0, "no media elements in the DOM");
 
   section("default folder preview");
   const preview = await page.$eval("#folderPreview", (e) => e.textContent);
@@ -172,10 +174,10 @@ const REAL_POSTFIXES = new Set([
   ok(await page.$eval("#buttonCodeGroup", (e) => getComputedStyle(e).display) === "none",
      "script box hidden for a container after create");
 
-  // Open the group's editor, then add a command from inside it. That is the
-  // picker scoped to the group, which is where the whitelist bites.
-  await page.click("#ribbonContainer .group .group-header");
-  await new Promise((r) => setTimeout(r, 250));
+  // Open the group's editor by clicking its icon, then add a command from
+  // inside. Clicking the name renames instead, same as a plain command.
+  await page.click("#ribbonContainer .group .group-header .button-icon");
+  await new Promise((r) => setTimeout(r, 300));
   ok(await page.$eval("#pulldownContentContainer", (e) => e.style.display) === "block", "group editor opened");
   const editorHtml = await page.$eval("#pulldownContentContainer", (e) => e.innerHTML.slice(0, 300));
   const addBtn = await page.$("#pulldownContentContainer .group-editor-add");
@@ -351,6 +353,52 @@ const REAL_POSTFIXES = new Set([
   }
   await page.setViewport({ width: 1400, height: 1050 });
   await new Promise((r) => setTimeout(r, 200));
+
+  section("the draft survives a reload, and RESET clears it");
+  const DRAFT_KEY = "pyrevit-extension-builder:draft:v2";
+  await page.$eval("#extensionName", (e) => {
+    e.value = "Persisted Extension";
+  });
+  await page.evaluate(() => window.FolderStructure.updateFolderPreview());
+  await page.click(".panel .add-button[data-action='add-stack']");
+  await new Promise((r) => setTimeout(r, 300));
+  await new Promise((r) => setTimeout(r, 600));
+
+  const beforeReload = await page.evaluate((k) => ({
+    elements: Object.keys(window.appState.elements).length,
+    name: document.getElementById("extensionName").value,
+    stored: !!window.localStorage.getItem(k),
+  }), DRAFT_KEY);
+  ok(beforeReload.stored, "draft written to local storage");
+  ok(beforeReload.elements > 1, "there is something worth persisting");
+
+  await page.reload({ waitUntil: "networkidle0" });
+  await new Promise((r) => setTimeout(r, 1000));
+  const afterReload = await page.evaluate(() => ({
+    elements: Object.keys(window.appState.elements).length,
+    name: document.getElementById("extensionName").value,
+    panels: document.querySelectorAll(".panel").length,
+    stacks: document.querySelectorAll(".stack").length,
+  }));
+  ok(afterReload.elements === beforeReload.elements, "element count survived the reload");
+  ok(afterReload.name === beforeReload.name, "extension name survived the reload");
+  ok(afterReload.stacks >= 1, "the stack came back");
+  console.log("  " + JSON.stringify(afterReload));
+
+  // Reset must not be undone by the beforeunload flush on the way out.
+  await page.evaluate(() => document.getElementById("resetToolbar").click());
+  await new Promise((r) => setTimeout(r, 1500));
+  const afterReset = await page.evaluate(() => ({
+    elements: Object.keys(window.appState.elements).length,
+    name: document.getElementById("extensionName").value,
+  }));
+  ok(afterReset.elements === 1, "reset returns to one command, got " + afterReset.elements);
+  ok(afterReset.name !== beforeReload.name, "reset restores the default name");
+
+  await page.reload({ waitUntil: "networkidle0" });
+  await new Promise((r) => setTimeout(r, 900));
+  const stillReset = await page.evaluate(() => Object.keys(window.appState.elements).length);
+  ok(stillReset === 1, "reset sticks across a further reload, got " + stillReset);
 
   section("no errors accumulated during the whole run");
   ok(errors.length === 0, "runtime errors: " + errors.join(" | "));

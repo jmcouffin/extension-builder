@@ -94,26 +94,27 @@ const UIElements = {
     // Pulldown / split groups open their own editor panel.
     const groupActions = this.el("div", "panel-controls");
     [
-      { action: "add-button", label: "BUTTON" },
-      { action: "add-stack", label: "STACK" },
-      { action: "add-group", label: "GROUP" },
+      { action: "add-button", label: "BUTTON", title: "Add a command" },
+      { action: "add-stack", label: "STACK", title: "Add a stack of 2-3 commands" },
+      { action: "add-group", label: "GROUP", title: "Add a pulldown or split button" },
     ].forEach((spec) => {
-      const button = this.el("button", "add-button");
+      const button = this.el("button", "add-button", spec.label);
       button.dataset.panelId = panelId;
       button.dataset.action = spec.action;
-      const plus = this.el("span", "plus", "+");
-      button.appendChild(plus);
-      button.appendChild(document.createTextNode(spec.label));
+      button.title = spec.title;
       button.addEventListener("click", window.EventHandlers.handlePanelAction);
       groupActions.appendChild(button);
     });
 
-    const panelNameContainer = this.el("div", "panel-name-container");
+    // Revit puts the panel name along the bottom of the panel, so the name and
+    // the add controls share a footer under the items.
+    const footer = this.el("div", "panel-footer");
+
     const panelName = document.createElement("input");
     panelName.type = "text";
     panelName.className = "panel-name";
     panelName.value = panel.name || "";
-    panelNameContainer.appendChild(panelName);
+    panelName.title = "Panel name - becomes the folder in your extension";
     panelName.addEventListener("change", () => {
       const newName = panelName.value.trim();
       if (!newName) {
@@ -136,10 +137,11 @@ const UIElements = {
       window.appState.panels[panelId].name = newName;
       window.FolderStructure.updateFolderPreview();
     });
+    footer.appendChild(panelName);
+    footer.appendChild(groupActions);
 
     panelElement.appendChild(panelContent);
-    panelElement.appendChild(groupActions);
-    panelElement.appendChild(panelNameContainer);
+    panelElement.appendChild(footer);
 
     this.addDeleteButton(panelElement, panelId, "panel");
 
@@ -229,7 +231,20 @@ const UIElements = {
     node.title = typeDef.label + " - " + typeDef.postfix;
 
     const header = this.el("div", "group-header");
-    header.appendChild(this.iconImg(element));
+    // The icon needs the same wrapper the plain commands use, otherwise the
+    // image renders at its natural size and swamps the item.
+    const iconWrap = this.el("div", "button-icon");
+    iconWrap.appendChild(this.iconImg(element));
+    header.appendChild(iconWrap);
+
+    // Clicking the icon opens the group, clicking the name renames it. The
+    // name stops propagation to rename, so the icon is what opens the list -
+    // same split as a plain command, where the name renames too.
+    iconWrap.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.openGroupEditor(elementId, node);
+    });
+
     const name = this.el("div", "button-name", element.name);
     name.addEventListener("click", (e) => {
       e.stopPropagation();
@@ -238,12 +253,12 @@ const UIElements = {
       });
     });
     header.appendChild(name);
-    const count = this.el(
-      "div",
-      "group-count",
-      String((element.children || []).length)
-    );
-    header.appendChild(count);
+    // Revit marks a command that opens a list with a caret, not a count.
+    const caret = this.el("div", "group-count", "▼");
+    caret.title =
+      (element.children || []).length +
+      " command(s) - click the icon to open them";
+    header.appendChild(caret);
     node.appendChild(header);
 
     const body = this.el("div", "group-body");
@@ -340,20 +355,22 @@ const UIElements = {
     node.title = "Stack - " + typeDef.postfix;
 
     const children = element.children || [];
+
+    // Revit draws a stack as vertical rows inside one panel slot, so the
+    // children get their own column rather than being laid out by the panel.
+    const items = this.el("div", "stack-items");
     children.forEach((childId) => {
       const child = window.appState.elements[childId];
       if (!child) return;
       const childNode = this.createElementElement(childId, child);
-      if (childNode) node.appendChild(childNode);
+      if (childNode) items.appendChild(childNode);
     });
+    node.appendChild(items);
 
     const remaining = typeDef.maxChildren - children.length;
     if (remaining > 0) {
-      const add = this.el(
-        "div",
-        "stack-add-button",
-        remaining + " slot" + (remaining === 1 ? "" : "s") + " free"
-      );
+      const add = this.el("div", "stack-add-button", "+" + remaining);
+      add.title = remaining + " slot" + (remaining === 1 ? "" : "s") + " free";
       add.addEventListener("click", (e) => {
         e.stopPropagation();
         window.ModalHandlers.openButtonModal("stack", elementId);
@@ -440,7 +457,21 @@ const UIElements = {
 
   addDeleteButton(node, id, kind) {
     const button = this.el("button", kind + "-delete-button");
-    button.title = "Delete";
+    const element = window.appState.elements[id];
+    const typeDef = element ? window.BundleTypes.get(element.type) : null;
+
+    if (kind === "tab") {
+      button.title = "Delete this tab and everything in it";
+    } else if (kind === "panel") {
+      button.title = "Delete this panel and everything in it";
+    } else {
+      button.title =
+        "Remove this " +
+        ((typeDef && typeDef.label) || "element").toLowerCase() +
+        (element && element.name ? ' "' + element.name + '"' : "");
+    }
+    button.setAttribute("aria-label", button.title);
+
     button.addEventListener("click", (e) => {
       e.stopPropagation();
       this.handleDelete(id, kind);

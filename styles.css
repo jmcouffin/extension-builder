@@ -1,42 +1,93 @@
-/* ===== VARIABLES ===== */
+/* ===== VARIABLES =====
+   Revit's own chrome, darkened a little: a medium grey ribbon on a slightly
+   darker application background, near-black text, one deep blue accent, and
+   red reserved for "this deletes something".
+
+   The full light Revit grey (#F1F2F2) washed out behind a full-width ribbon,
+   so the surfaces sit a few steps darker while keeping the same structure.
+   Every text pairing below is WCAG-checked; verify-contrast.js re-checks the
+   rendered result, including ::after text, placeholders and hover states.
+
+     text            9.5:1 on ribbon      text-secondary  7.0:1 on ribbon
+     accent          5.3:1 on ribbon      warn / danger    4.5:1 on ribbon
+     white on accent fill 5.4:1           white on delete fill 6.2:1 */
 :root {
-  /* Colors */
-  --bg-main-color: #320452;
-  --bg-color-grey: #381153;
-  --bg-yellow: #ffd000;
-  --bg-pink: rgb(255, 0, 200);
-  --bg-input: #411f1f;
-  --border-color: rgb(255, 0, 200);
-  --delete-btn-color: #c0392b;
-  --delete-btn-hover: #e74c3c;
-  --edit-btn-color: #6495ed;
-  --edit-btn-hover: #4169e1;
-  --text-color: #333;
-  --text-pink: #ff69b4;
-  --text-secondary: #555;
-  --title-color: rgb(211, 143, 143);
-  
+  /* Surfaces */
+  --surface-app: #8f959b; /* behind the ribbon */
+  --surface-ribbon: #b9bec3; /* the ribbon bar */
+  --surface-raised: #c9ced2; /* panels, tiles, chips */
+  --surface-sunken: #f2f3f4; /* inputs, textareas: lighter, so they read as fields */
+  --surface-hover: #a2bcd4; /* Revit's light blue hover */
+
+  /* Lines. Dividers separate; they do not shout. */
+  --border-separator: #8b9197;
+  --border-subtle: #7d8389;
+
+  /* Text */
+  --text-primary: #14181b;
+  --text-secondary: #262c31;
+  --text-disabled: #5b6167;
+
+  /* Accent: a deep Revit blue, dark enough to read as text on grey. */
+  --accent: #074576;
+  --accent-strong: #0f6cbd; /* for fills; white glyph is 5.4:1 on it */
+  --accent-hover: #0b5c9e;
+  --on-accent: #ffffff;
+
+  /* Status */
+  --warn: #6b4500;
+  --danger: #932115;
+  --danger-fill: #b3311f;
+
+  /* Legacy token names, kept so the existing rules keep working. */
+  --bg-main-color: var(--surface-app);
+  --bg-color-grey: var(--surface-ribbon);
+  --bg-input: var(--surface-sunken);
+  --bg-pink: var(--accent);
+  --bg-yellow: var(--accent);
+  --border-color: var(--border-subtle);
+  --text-pink: var(--text-primary);
+  --title-color: #074576;
+  --delete-btn-color: var(--danger-fill);
+  --delete-btn-hover: #9a2617;
+  --edit-btn-color: var(--accent-strong);
+  --edit-btn-hover: var(--accent-hover);
+
   /* Sizing and Spacing */
   --border-radius-sm: 3px;
   --border-radius-md: 5px;
   --border-radius-lg: 10px;
-  --shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
   --bt-delete-size: 15px;
   --bt-delete-size-small: 8px;
   --bt-delete-offset-big: 4px;
   --bt-delete-offset-small: 2px;
 }
 
-/* ===== RESET & BASE STYLES ===== */
+/* ===== RESET & BASE STYLES =====
+   Revit runs on Segoe UI, so that is the stack here too. The pixel face is
+   kept for the wordmark only, where it carries the branding rather than the
+   reading. */
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-  font-family: "Pixelcraft", sans-serif;
+  font-family: var(--font-ui);
+  -webkit-font-smoothing: antialiased;
+}
+
+:root {
+  --font-ui: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue",
+    Arial, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "SF Mono", "Courier New", monospace;
 }
 
 body {
-  background-color: var(--bg-main-color);
+  /* Set here, not on *, because * also matches <html> and that would re-base
+     every rem in the file. */
+  font-size: 13px;
+  line-height: 1.4;
+  background-color: var(--surface-app);
   padding: 20px;
 }
 
@@ -48,73 +99,42 @@ header {
   margin-bottom: 12px;
 }
 
+
+/* The wordmark. The subtitle sits in normal flow below the h1 with a real
+   gap; a negative margin here is what used to overlap them. */
 .logo {
   display: flex;
   align-items: center;
+  gap: 18px;
 }
 
 .logo img {
-  margin-right: 14px;
-  height: 54px;
+  height: 108px;
   width: auto;
+  flex: 0 0 auto;
+}
+
+.logo-text {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 h1 {
-  font-size: 2.6rem;
+  font-family: var(--font-ui);
+  font-size: 3.4rem;
+  line-height: 1.05;
   color: var(--title-color);
 }
 
 .logo span {
   display: block;
-  font-size: 0.9rem;
+  font-family: var(--font-ui);
+  font-size: 1.2rem;
+  line-height: 1.2;
   font-weight: normal;
-  margin-top: -5px;
-}
-
-/* Audio controls */
-.audio-container {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  position: absolute;
-  top: 20px;
-  left: 20px;
-}
-
-.audio-btn {
-  width: 20px;
-  height: 20px;
-  border-radius: 50%;
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s;
-  position: relative;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.audio-btn:hover {
-  background-color: var(--title-color);
-}
-
-.audio-btn:active {
-  background-color: var(--bg-pink);
-}
-
-.audio-btn svg {
-  width: 12px;
-  height: 12px;
-  fill: currentColor;
-}
-
-.status-text {
-  margin: 0 0 5px 15px;
-  color: var(--bg-yellow);
-  font-size: 10px;
+  color: var(--text-secondary);
+  margin-top: 12px;
 }
 
 /* Download Buttons */
@@ -133,9 +153,10 @@ h1 {
 
 .download-button button,
 .save-button,
-.load-button {
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
+.load-button,
+.reset-button {
+  background-color: var(--accent-strong);
+  color: var(--on-accent);
   padding: 0px 10px 6px 10px;
   font-size: 0.8rem;
   cursor: pointer;
@@ -151,7 +172,7 @@ h1 {
 }
 
 .download-button button:hover {
-  border: 2px solid var(--bg-pink);
+  border: 2px solid var(--accent);
   background-color: var(--bg-input);
   color: grey;
 }
@@ -162,7 +183,8 @@ h1 {
 
 .download-icon,
 .save-icon,
-.load-icon {
+.load-icon,
+.reset-icon {
   margin-left: 10px;
   font-weight: bold;
   font-size: 1rem;
@@ -171,8 +193,23 @@ h1 {
   justify-content: center;
 }
 
+/* Reset is destructive, so it is outlined rather than filled - it should not
+   read as the same weight as DOWNLOAD. It needs its own light surface: red
+   text directly on the mid-grey app background was only 2.8:1. */
+.reset-button {
+  background-color: var(--surface-sunken) !important;
+  color: var(--danger) !important;
+  border: 1px solid var(--danger-fill) !important;
+  box-shadow: none !important;
+}
+
+.reset-button:hover {
+  background-color: var(--danger-fill) !important;
+  color: #ffffff !important;
+}
+
 .download-button .pixel-border {
-  filter: drop-shadow(5px 0 10px rgba(236, 72, 153, 0.6)) !important;
+  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)) !important;
 }
 
 /* ===== EXTENSION NAME ===== */
@@ -211,107 +248,421 @@ h1 {
   margin-bottom: 0;
 }
 
+/* ============================================================
+   RIBBON - modelled on the Revit ribbon
+   Panels sit side by side, separated by a vertical rule, each with its
+   name along the bottom. Items are an icon above a label, wrapping into
+   rows as the panel grows. That is the shape pyRevit actually produces,
+   so the builder shows what the ribbon will look like rather than an
+   abstract diagram of it.
+   ============================================================ */
+
+/* --- Tabs: small text, active one underlined --- */
 .tabs {
   display: flex;
-  gap: 5px;
+  gap: 2px;
   flex-grow: 1;
+  align-items: flex-end;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .tab {
-  padding: 10px 15px;
-  border-radius: 5px 5px 0 0;
-  border: 2px solid var(--border-color);
-  border-bottom: none;
+  padding: 4px 12px 5px;
   cursor: pointer;
   position: relative;
   min-width: max-content;
+  border-bottom: 2px solid transparent;
 }
 
 .tab.active {
-  border-bottom: 5px solid var(--bg-yellow);
-  background-color: transparent;
-  position: relative;
-  z-index: 1;
+  border-bottom-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .tab input {
   border: none;
-  font-size: 1rem;
-  letter-spacing: 2px;
+  font-size: 0.75rem;
+  letter-spacing: 1px;
   color: var(--text-pink);
-  font-weight: bold;
   width: auto;
-  min-width: 100px;
+  min-width: 70px;
+  max-width: 160px;
   background-color: transparent;
+  padding: 1px 2px;
 }
 
-/* ===== RIBBON SECTION ===== */
+.tab:not(.active) input {
+  color: var(--text-secondary);
+}
+
+.tab input:focus {
+  background-color: var(--bg-input);
+  outline: 1px solid var(--accent);
+}
+
+/* --- Ribbon surface --- */
 .ribbon-container {
   display: flex;
-  margin-bottom: 20px;
+  margin-bottom: 14px;
 }
 
 .ribbon {
-  border: var(--border-radius-sm) solid var(--border-color);
-  background-color: var(--bg-color-grey);
-  padding: 10px;
-  border-radius: var(--border-radius-md);
+  border: 1px solid var(--border-color);
+  background-color: var(--surface-ribbon);
+  border-radius: 0;
   flex-grow: 1;
   display: flex;
-  gap: 10px;
-  min-height: 200px;
+  align-items: stretch;
+  gap: 0;
+  min-height: 172px;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
-/* ===== PANEL STYLES ===== */
+/* --- Panel: items on top, name + controls in a footer --- */
 .panel {
-  border: var(--border-radius-sm) solid var(--border-color);
-  border-radius: var(--border-radius-sm);
-  padding: 5px;
-  min-width: 120px;
   display: flex;
   flex-direction: column;
   position: relative;
+  padding: 6px 8px 0;
+  min-width: 96px;
+  /* The vertical rule that separates one panel from the next. */
+  border-right: 1px solid var(--border-color);
+}
+
+.panel:last-child {
+  border-right: none;
 }
 
 .panel-content {
   flex-grow: 1;
-  padding: 5px;
-  min-height: 100px;
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
-  gap: 5px;
-  overflow-x: auto;
+  /* A single command fills the panel's height, the Revit "large button". The
+     rows stretch to fill (align-content's default) and items stretch within
+     them; a stack opts out with align-self: center so it sits in the middle
+     instead of being stretched. */
+  align-items: stretch;
+  gap: 2px 4px;
+  min-height: 124px;
+  padding-bottom: 4px;
 }
 
-.panel-controls {
+.panel-footer {
   display: flex;
-  gap: 5px;
-  padding: 5px;
-  border-top: 1px solid var(--text-pink);
-  justify-content: space-around;
-}
-
-.panel-name-container {
-  text-align: center;
-  padding: 5px;
-  border-top: 1px solid var(--text-pink);
-  margin-top: 5px;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  border-top: 1px solid var(--border-color);
+  padding: 3px 0 4px;
+  margin-top: 2px;
 }
 
 .panel-name {
   border: none;
-  font-size: 0.8rem;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
   text-align: center;
   width: 100%;
   color: var(--text-pink);
   background-color: transparent;
+  padding: 1px 2px;
 }
 
 .panel-name:focus {
-  outline: 1px solid #3498db;
+  outline: 1px solid var(--accent);
+  background-color: var(--bg-input);
 }
 
+.panel-controls {
+  display: flex;
+  gap: 3px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.panel-controls .add-button {
+  font-size: 0.58rem;
+  letter-spacing: 0.5px;
+  padding: 2px 5px;
+  /* No opacity here: at 0.75 these fell to 4.33:1. Secondary text on the
+     ribbon is 7.0:1, so they stay legible and still read as chrome. */
+  color: var(--text-secondary);
+  border-color: var(--border-subtle);
+  background-color: var(--surface-raised);
+}
+
+.panel-controls .add-button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background-color: var(--surface-hover);
+}
+
+/* --- Item: icon above label, the Revit large button ---
+   A standalone command fills the panel's height with a large icon, exactly
+   like Revit's large button. --icon-size is the single source the stack sizes
+   itself against, so the 1/3 relationship below stays honest. */
+.button {
+  --icon-size: 48px;
+  --label-size: 0.66rem;
+  --item-width: 62px;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: var(--item-width);
+  padding: 4px 2px 3px;
+  gap: 4px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: grab;
+  position: relative;
+}
+
+.button:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-hover);
+}
+
+.button .button-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-bottom: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+.button .button-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.button .button-name {
+  color: var(--text-primary);
+  text-align: center;
+  font-size: var(--label-size);
+  line-height: 1.15;
+  width: 100%;
+  height: auto;
+  white-space: normal;
+  word-break: break-word;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.button .button-name input {
+  background-color: var(--surface-sunken);
+  color: var(--text-primary);
+  font-size: var(--label-size);
+  width: 100%;
+  height: auto;
+  padding: 1px;
+  border: 1px solid var(--accent);
+}
+
+.button .element-delete-button {
+  top: -3px;
+  right: -3px;
+}
+
+/* --- Stack: Revit's stacked buttons ---
+   A stack is a column of small rows, centred in the panel rather than filling
+   it. Each row is icon-then-label, and the icon is one third of the
+   full-height large button (48px -> 16px). */
+.stack {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  align-self: center;
+  gap: 1px;
+  padding: 3px 2px;
+  background-color: transparent;
+  border: 1px dashed transparent;
+  border-radius: 2px;
+  cursor: grab;
+  position: relative;
+  margin: 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  height: auto;
+}
+
+.stack:hover {
+  border-color: var(--accent);
+}
+
+.stack-items {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 1px;
+}
+
+.stack-items > .button {
+  /* One third of the large button's icon, and the label moves to the side. */
+  --icon-size: 16px;
+  --label-size: 0.6rem;
+  --item-width: 100%;
+
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 5px;
+  width: 100%;
+  min-height: 0;
+  padding: 2px 4px;
+}
+
+.stack-items > .button .button-icon {
+  flex: 0 0 var(--icon-size);
+}
+
+.stack-items > .button .button-name {
+  flex: 1 1 auto;
+  text-align: left;
+  line-height: 1.1;
+  -webkit-line-clamp: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  word-break: normal;
+}
+
+.stack-name {
+  font-size: 0.58rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-secondary);
+  text-align: center;
+  padding: 0 2px;
+  background-color: transparent;
+  border-radius: 2px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: text;
+}
+
+.stack-add-button {
+  font-size: 0.56rem;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px dashed var(--border-color);
+  border-radius: 2px;
+  padding: 0 4px;
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.stack-add-button:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
+.stack-invalid {
+  outline: 1px solid var(--warn);
+  outline-offset: 0;
+}
+
+/* --- Group: icon, label and a caret, like a Revit split/pulldown --- */
+.group {
+  --icon-size: 48px;
+  --label-size: 0.66rem;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 62px;
+  padding: 4px 2px 3px;
+  gap: 4px;
+  background-color: transparent;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  cursor: pointer;
+  position: relative;
+}
+
+.group:hover {
+  border-color: var(--accent);
+  background-color: var(--surface-hover);
+}
+
+.group .group-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  flex: 1;
+  overflow: hidden;
+  width: 100%;
+}
+
+.group .group-header .button-icon {
+  width: var(--icon-size);
+  height: var(--icon-size);
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+}
+
+.group .group-header .button-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.group .group-header .button-name {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: var(--label-size);
+  line-height: 1.15;
+  text-align: center;
+  color: var(--text-primary);
+  width: 100%;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+/* The caret that says "this opens a list". */
+.group .group-count {
+  font-size: 0.55rem;
+  color: var(--text-secondary);
+  letter-spacing: 1px;
+}
+
+.group-body {
+  display: none;
+}
+
+.group-add {
+  display: none;
+}
+
+.group .element-delete-button {
+  top: -3px;
+  right: -3px;
+}
+
+.add-panel-container {
+  margin-top: 8px;
+  display: flex;
+}
 .panel-extension-info {
   display: none;
 }
@@ -322,83 +673,6 @@ h1 {
   justify-content: flex-end;
 }
 
-/* ===== BUTTON STYLES ===== */
-.button,
-.stack,
-.group,
-.smartbutton,
-.splitbutton,
-.splitpushbutton,
-.urlbutton,
-.panelbutton,
-.linkbutton,
-.invokebutton,
-.combobox,
-.nobutton,
-.content,
-.pushbutton,
-.toggle {
-  background-color: rgb(124, 41, 124);
-  border: 1px dashed #ccc;
-  border-radius: var(--border-radius-sm);
-  padding: 5px;
-  cursor: grab;
-  position: relative;
-}
-
-.button {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 70px;
-  height: 152px;
-}
-
-.panel-content .stack,
-.panel-content .group {
-  width: 85px;
-  margin-bottom: 5px;
-}
-
-.button-icon {
-  width: 50px;
-  height: 50px;
-  margin-bottom: 5px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-.button-icon img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.button-name {
-  color: var(--text-pink);
-  text-align: center;
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.8rem;
-  width: 100%;
-  white-space: normal;
-  word-break: break-word;
-  height: 6em;
-  overflow: hidden;
-  display: -webkit-box;
-  -webkit-line-clamp: 5;
-  -webkit-box-orient: vertical;
-}
-
-.button-name input {
-  background-color: transparent;
-  color: var(--text-pink);
-  font-family: Arial, Helvetica, sans-serif;
-  font-size: 0.8rem;
-  width: 100%;
-  height: auto;
-  padding: 2px;
-}
 
 /* ===== BUTTON POSTFIX BADGE =====
    The folder suffix is what pyRevit actually keys off, so it is worth seeing.
@@ -436,8 +710,8 @@ h1 {
   font-family: Consolas, "Courier New", monospace;
   font-size: 8px;
   letter-spacing: 0.3px;
-  background-color: rgba(0, 0, 0, 0.85);
-  color: #b8ffb8;
+  background-color: #0d639f;
+  color: #ffffff;
   padding: 2px 4px;
   border-radius: 2px;
   pointer-events: none;
@@ -450,39 +724,50 @@ h1 {
 .button:focus-within::after {
   opacity: 1;
 }
-.delete-button {
-  width: var(--bt-delete-size-small);
-  height: var(--bt-delete-size-small);
-  top: var(--bt-delete-offset-small);
-  right: var(--bt-delete-offset-small);
-}
-
-.tab-delete-button,
-.panel-delete-button,
-.element-delete-button {
-  width: var(--bt-delete-size);
-  height: var(--bt-delete-size);
-  top: var(--bt-delete-offset-big);
-  right: var(--bt-delete-offset-big);
-}
-
+/* ===== DELETE CONTROL =====
+   A small red square with a cross, in the top-right of the thing it removes.
+   It is hidden until hover so a full ribbon is not a field of red, and it
+   carries its own tooltip, so it is never a mystery. */
 .delete-button,
 .tab-delete-button,
 .panel-delete-button,
 .element-delete-button {
   position: absolute;
-  background-color: var(--delete-btn-color);
-  color: white;
-  border: none;
-  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: 0;
+  background-color: var(--danger-fill);
+  color: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.45);
+  border-radius: 3px;
   cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.12s, background-color 0.1s;
+  z-index: 6;
+  line-height: 1;
+}
+
+/* The cross. Drawn in CSS so the markup stays a plain empty button. */
+.delete-button::after,
+.tab-delete-button::after,
+.panel-delete-button::after,
+.element-delete-button::after {
+  content: "\00d7";
+  font-family: var(--font-ui);
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.button:hover > .element-delete-button,
+.stack:hover > .element-delete-button,
+.group:hover > .element-delete-button,
+.tab:hover > .tab-delete-button,
+.panel:hover > .panel-delete-button,
+.delete-button:focus-visible {
   opacity: 1;
-  transition: background-color 0.1s;
-  font-size: calc(var(--bt-delete-size) * 0.5);
-  z-index: 5;
 }
 
 .delete-button:hover,
@@ -491,175 +776,29 @@ h1 {
 .element-delete-button:hover {
   opacity: 1;
   background-color: var(--delete-btn-hover);
+  border-color: rgba(0, 0, 0, 0.6);
 }
 
-/* ===== STACK STYLES ===== */
-.stack {
-  display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-height: 40px;
-  height: auto;
-  width: auto !important;
-  min-width: 85px;
-  max-width: max-content;
-  padding-right: 10px;
+.element-delete-button {
+  width: 14px;
+  height: 14px;
+  top: 1px;
+  right: 1px;
 }
 
-.stack .button {
-  min-height: 30px;
-  width: 100%;
-  margin-bottom: 2px;
+.tab-delete-button,
+.panel-delete-button {
+  width: 16px;
+  height: 16px;
+  top: var(--bt-delete-offset-big);
+  right: var(--bt-delete-offset-big);
 }
 
-.stack .button-icon {
-  width: 30px;
-  height: 30px;
-  min-width: 30px;
-  margin-right: 8px;
-  margin-bottom: 0;
-}
-
-.stack-name {
-  text-align: center;
-  font-size: 0.8rem;
-  color: var(--text-pink);
-  padding: 0.5px;
-  background-color: transparent;
-  border-radius: var(--border-radius-sm);
-  margin-top: auto;
-}
-
-.stacked-button {
-  min-height: 40px !important;
-  width: auto !important;
-  min-width: 100% !important;
-  margin-bottom: 2px;
-  height: auto !important;
-}
-
-.stacked-button-content {
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  width: 100%;
-  padding: 2px;
-  padding-right: 20px;
-  white-space: nowrap;
-}
-
-.stack .button-name {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  height: auto;
-  width: auto;
-  -webkit-line-clamp: unset;
-}
-
-.stack .button-name input {
-  background-color: transparent;
-  color: var(--text-pink);
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.stack .button.stacked-button {
-  width: auto !important;
-  min-width: 100% !important;
-  min-height: 24px !important;
-  padding: 2px 5px;
-  height: auto !important;
-}
-
-.stack-add-button {
-  width: 100%;
-  height: 35px !important;
-  background-color: var(--bg-color-grey);
-  border: 1px solid var(--bg-yellow);
-  border-radius: var(--border-radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 0.7rem;
-  padding: 0px 5px 5px 5px;
-  color: var(--text-pink);
-}
-
-.stack-add-button:hover {
-  background-color: #e5e5e5;
-}
-
-.stack-edit-mode .stack-name input {
-  width: 100%;
-  font-size: 0.8rem;
-  padding: 2px;
-  background-color: var(--bg-input);
-  color: var(--text-pink);
-}
-
-/* ===== GROUP STYLES (pulldown / splitbutton / splitpushbutton) ===== */
-.group {
-  display: flex;
-  flex-direction: column;
-  width: 70px;
-  height: 152px;
-  cursor: pointer;
-}
-
-.group .group-header {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding-bottom: 4px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
-  flex: 1;
-  overflow: hidden;
-}
-
-.group .group-header .button-icon {
-  width: 42px;
-  height: 42px;
-  margin-bottom: 3px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.group .group-header .button-icon img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-}
-
-.group .group-header .button-name {
-  font-size: 0.7rem;
-  color: var(--text-pink);
-  text-align: center;
-  word-break: break-word;
-  -webkit-line-clamp: 2;
-}
-
-.group .group-count {
-  font-size: 0.65rem;
-  color: var(--bg-yellow);
-  margin-top: 2px;
-}
-
-.group .group-body {
-  display: none;
-}
-
-/* The in-ribbon add button lives in .group-body, which is collapsed. The
-   floating editor's add button must stay visible, hence the descendant scope. */
-.group-body .group-add {
-  display: none;
-}
 
 /* The floating editor for a group's contents. */
 .pulldown-content-container {
-  background-color: white;
-  border: 1px solid var(--border-color);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-separator);
   border-radius: var(--border-radius-md);
   padding: 10px;
   display: none;
@@ -672,7 +811,7 @@ h1 {
   max-width: 320px;
   max-height: 60vh;
   overflow-y: auto;
-  border: 1px solid #eee;
+  border: 1px solid var(--border-subtle);
   padding: 5px;
 }
 
@@ -714,7 +853,7 @@ h1 {
 /* ===== ADD BUTTON STYLES ===== */.add-button {
   background-color: transparent;
   color: var(--text-pink);
-  border: 1px solid var(--bg-yellow);
+  border: 1px solid var(--accent);
   padding: 0px 5px 6px 5px;
   font-size: 0.8rem;
   border-radius: var(--border-radius-sm);
@@ -742,17 +881,28 @@ h1 {
 }
 
 .preview-header {
+  font-family: var(--font-ui);
+  /* The preview block sits inside .pixel-container, which is bold. The tree is
+     reference text, not a heading, so it opts back out. */
+  font-weight: 400;
   background-color: transparent;
-  padding: 10px;
+  padding: 5px 10px;
   font-weight: bold;
+  font-size: 0.7rem;
   color: var(--text-pink);
-  letter-spacing: 3px;
+  letter-spacing: 2px;
   border-bottom: 1px solid var(--border-color);
 }
 
 .preview-content {
-  padding: 15px;
+  font-family: var(--font-mono);
+  font-weight: 400;
+  padding: 9px 12px;
   color: var(--text-pink);
+  /* The tree inherits the 16px body default, which made it the largest text on
+     the page - bigger than the panel and button names beside it. Keep it in
+     step with them, and keep the line height tight for a long folder list. */
+  font-size: 0.78rem;
   line-height: 1.5;
   white-space: pre;
   overflow-x: auto;
@@ -819,7 +969,7 @@ main + .pixel-container .preview-content {
   right: 20px;
   font-size: 1.5rem;
   cursor: pointer;
-  color: #777;
+  color: var(--text-secondary);
 }
 
 .close-modal:hover {
@@ -848,15 +998,11 @@ main + .pixel-container .preview-content {
   transition: all 0.2s;
 }
 
-.button-type.selected {
-  border: 3px solid var(--bg-pink);
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
-}
+/* Selection is styled once, further down with the rest of the picker. */
 
 .button-type:hover:not(.selected) {
-  border-color: var(--bg-pink);
-  background-color: rgba(255, 0, 200, 0.1);
+  border-color: var(--accent);
+  background-color: var(--surface-hover);
 }
 
 .type-icon {
@@ -877,9 +1023,12 @@ main + .pixel-container .preview-content {
 .form-group label {
   display: block;
   margin-bottom: 3px;
-  letter-spacing: 2px;
-  color: var(--bg-pink);
-  font-size: 0.62rem;
+  letter-spacing: 1.5px;
+  /* Not the accent: the modal sits on the mid-grey app background, where the
+     accent only reached 3.27:1. */
+  color: var(--text-primary);
+  font-size: 0.66rem;
+  font-weight: 600;
 }
 
 .form-group input,
@@ -894,8 +1043,8 @@ main + .pixel-container .preview-content {
 
 .form-group input:focus,
 .form-group textarea:focus {
-  outline: 1px solid #3498db;
-  border-color: #3498db;
+  outline: 1px solid var(--accent);
+  border-color: var(--accent);
 }
 
 .icon-upload {
@@ -918,8 +1067,8 @@ main + .pixel-container .preview-content {
   font-size: 0.6rem;
   padding: 3px 6px;
   margin-right: 6px;
-  background: var(--bg-pink);
-  color: var(--bg-yellow);
+  background: var(--accent-strong);
+  color: var(--on-accent);
   border: none;
   border-radius: var(--border-radius-sm);
   cursor: pointer;
@@ -957,8 +1106,9 @@ main + .pixel-container .preview-content {
 }
 
 #createButton {
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
+  background-color: var(--accent-strong);
+  color: var(--on-accent);
+  font-weight: 600;
 }
 
 .cancel-button {
@@ -978,7 +1128,7 @@ main + .pixel-container .preview-content {
   position: relative;
   padding: 3px;
   display: inline-block;
-  color: #444;
+  color: var(--text-secondary);
   width: 600px;
   max-width: 100%;
   font-weight: bold;
@@ -1002,7 +1152,7 @@ main + .pixel-container .preview-content {
   position: relative;
   border: 10px solid transparent;
   background-clip: padding-box;
-  filter: drop-shadow(15px 0 20px rgba(236, 72, 153, 0.6));
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.2));
 }
 
 .pixel-border::before {
@@ -1012,7 +1162,7 @@ main + .pixel-container .preview-content {
   left: -3px;
   right: -3px;
   bottom: -3px;
-  background: linear-gradient(to bottom right, #ec4899, #9d174d);
+  background: linear-gradient(to bottom right, #e2e4e6, #c9cccf);
   z-index: -1;
   clip-path: polygon(
     0% 3px,
@@ -1033,7 +1183,7 @@ main + .pixel-container .preview-content {
 .pixel-content {
   padding: 15px 15px;
   background-color: var(--bg-main-color);
-  color: #e4c3d9;
+  color: var(--text-primary);
   font-size: 28px;
 }
 
@@ -1048,8 +1198,8 @@ input[type="file"] {
 }
 
 ::-webkit-file-upload-button {
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
+  background-color: var(--accent-strong);
+  color: var(--on-accent);
   border: none;
   padding: 6px 12px;
   margin-right: 10px;
@@ -1060,13 +1210,13 @@ input[type="file"] {
 
 ::-webkit-file-upload-button:hover {
   background-color: var(--bg-input);
-  border: 2px solid var(--bg-pink);
+  border: 2px solid var(--accent);
   color: grey;
 }
 
 ::file-selector-button {
-  background-color: var(--bg-pink);
-  color: var(--bg-yellow);
+  background-color: var(--accent-strong);
+  color: var(--on-accent);
   border: none;
   padding: 6px 12px;
   margin-right: 10px;
@@ -1077,19 +1227,19 @@ input[type="file"] {
 
 ::file-selector-button:hover {
   background-color: var(--bg-input);
-  border: 2px solid var(--bg-pink);
+  border: 2px solid var(--accent);
   color: grey;
 }
 
 /* ===== UTILITY CLASSES ===== */
 .dragging {
   opacity: 0.5;
-  border: 2px solid #3498db !important;
+  border: 2px solid var(--accent) !important;
 }
 
 .drag-over {
-  background-color: #ebf5fb;
-  border: 2px dashed #3498db !important;
+  background-color: var(--surface-hover);
+  border: 2px dashed var(--accent) !important;
 }
 
 .no-select {
@@ -1097,34 +1247,18 @@ input[type="file"] {
 }
 
 /* ===== ANIMATIONS ===== */
-@keyframes textGlow {
-  0% {
-    text-shadow: 0 0 5px var(--bg-pink), 0 0 10px var(--bg-pink),
-      0 0 15px var(--bg-pink);
-  }
-  50% {
-    text-shadow: 0 0 10px var(--bg-yellow), 0 0 20px var(--bg-yellow),
-      0 0 30px var(--bg-yellow);
-  }
-  100% {
-    text-shadow: 0 0 5px var(--bg-pink), 0 0 10px var(--bg-pink),
-      0 0 15px var(--bg-pink);
-  }
-}
-
+/* The old pulsing text-shadow read as neon. A calm accent is enough, and the
+   wordmark keeps the pixel face because that is where the brand lives. */
 .glowing-text {
-  animation: textGlow 3s infinite;
-  color: var(--text-pink);
+  color: var(--text-primary);
 }
 
 .glowing-text-slow {
-  animation: textGlow 5s infinite;
-  color: var(--bg-yellow);
+  color: var(--on-accent);
 }
 
 .glowing-text-title {
-  animation: textGlow 8s infinite;
-  color: var(--bg-yellow);
+  color: var(--accent);
 }
 /* ============================================================
 /* ============================================================
@@ -1161,13 +1295,11 @@ input[type="file"] {
 
 .type-group h4 {
   margin: 0;
-  font-size: 0.55rem;
+  font-size: 0.62rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-secondary);
-  font-family: Arial, Helvetica, sans-serif;
-  line-height: 1;
-  opacity: 0.8;
+  line-height: 1.1;
 }
 
 .button-types {
@@ -1182,19 +1314,19 @@ input[type="file"] {
   padding: 3px 5px;
   cursor: pointer;
   text-align: center;
-  background: #fbfbfb;
+  background: var(--surface-raised);
   line-height: 1.15;
   transition: border-color 0.15s, background 0.15s;
 }
 
 .button-type:hover:not(.selected) {
-  border-color: var(--bg-yellow);
+  border-color: var(--accent);
 }
 
 .button-type.selected {
-  border-color: #7c297c;
-  background: #f3e6f3;
-  box-shadow: inset 0 0 0 1px #7c297c;
+  border-color: var(--accent);
+  background: #cfe0f0;
+  box-shadow: inset 0 0 0 1px var(--accent);
 }
 
 .type-icon {
@@ -1203,24 +1335,24 @@ input[type="file"] {
 
 .type-name {
   font-size: 0.65rem;
-  color: var(--text-primary, #333);
+  color: var(--text-primary);
   white-space: nowrap;
 }
 
 .type-postfix {
-  font-family: Consolas, "Courier New", monospace;
-  font-size: 0.5rem;
-  color: #888;
+  font-family: var(--font-mono);
+  font-size: 0.55rem;
+  color: var(--text-secondary);
   white-space: nowrap;
 }
 
 .type-note {
   font-size: 0.65rem;
-  color: #a33;
+  color: var(--danger);
   margin-bottom: 6px;
   padding: 4px 6px;
-  background: #fdf0f0;
-  border-left: 3px solid #a33;
+  background: #f7e3e0;
+  border-left: 3px solid var(--danger);
 }
 
 /* ============================================================
@@ -1241,7 +1373,8 @@ input[type="file"] {
 }
 
 .form-group code {
-  background: #eee;
+  background: var(--surface-sunken);
+  color: var(--accent);
   padding: 0 3px;
   border-radius: 2px;
 }
@@ -1268,6 +1401,7 @@ input[type="file"] {
 }
 
 #buttonCode {
+  font-family: var(--font-mono);
   height: 72px;
   min-height: 0;
   resize: vertical;
@@ -1282,7 +1416,7 @@ input[type="file"] {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   margin: 6px 0 0;
-  background: #fafafa;
+  background: var(--surface-raised);
   flex: 0 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -1292,7 +1426,7 @@ input[type="file"] {
   cursor: pointer;
   padding: 4px 8px;
   font-size: 0.6rem;
-  color: #7c297c;
+  color: var(--accent);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   user-select: none;
@@ -1327,22 +1461,22 @@ input[type="file"] {
    STACK VALIDITY
    ============================================================ */
 .stack-invalid {
-  outline: 2px solid #e6a700;
+  outline: 2px solid var(--warn);
   outline-offset: -2px;
 }
 
 .stack-invalid .stack-add-button {
-  border-color: #e6a700;
-  color: #e6a700;
+  border-color: var(--warn);
+  color: var(--warn);
 }
 
 .unknown-type {
-  border-color: #a33 !important;
+  border-color: var(--danger) !important;
   border-style: dashed;
 }
 
 .unknown-type .button-name {
-  color: #a33;
+  color: var(--danger);
 }
 
 /* ============================================================

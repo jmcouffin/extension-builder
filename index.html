@@ -8,25 +8,16 @@
     <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <link href="https://fonts.cdnfonts.com/css/pixelcraft-2" rel="stylesheet">
 </head>
 
 <body>
     <header>
-        <div class="audio-container">
-            <button id="audioBtn" class="audio-btn" aria-label="Play music">
-                <svg class="play-icon" viewBox="0 0 24 24">
-                    <path d="M8 5v14l11-7z" />
-                </svg>
-                <svg class="pause-icon" viewBox="0 0 24 24" style="display:none;">
-                    <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
-                </svg>
-            </button>
-            <p id="statusText" class="status-text">Music Off</p>
-        </div>
         <div class="logo">
-            <img src="logo.png" alt="pyRevit Logo">
-            <h1 class="glowing-text-title">pyRevit<span class="glowing-text-title">extension builder</span></h1>
+            <img src="logo.svg" alt="pyRevit Logo" width="198" height="218">
+            <div class="logo-text">
+                <h1 class="glowing-text-title">pyRevit</h1>
+                <span class="glowing-text-title">extension builder</span>
+            </div>
         </div>
         <div class="download-button">
             <div class="pixel-container">
@@ -40,6 +31,13 @@
                 <div class="pixel-border">
                     <button id="saveConfig" class="save-button">
                         SAVE LAYOUT <span class="save-icon">&#x1F5AA;</span>
+                    </button>
+                </div>
+            </div>
+            <div class="pixel-container">
+                <div class="pixel-border">
+                    <button class="reset-button" id="resetToolbar">
+                        RESET <span class="reset-icon">&#x21BB;</span>
                     </button>
                 </div>
             </div>
@@ -169,7 +167,7 @@
     <script src="modal-handlers.js"></script>
     <script src="event-handlers.js"></script>
     <script src="save-load.js"></script>
-    <script src="audio.js"></script>
+    <script src="draft.js"></script>
     <script src="app.js"></script>
 </body>
 

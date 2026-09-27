@@ -247,6 +247,27 @@ const EventHandlers = {
       window.FolderStructure.generateZipFile();
     });
 
+    const resetButton = document.getElementById("resetToolbar");
+    if (resetButton) {
+      resetButton.addEventListener("click", () => {
+        const buttons = Object.keys(window.appState.elements).length;
+        const panels = Object.keys(window.appState.panels).length;
+        if (
+          !confirm(
+            "Discard the whole toolbar?\n\n" +
+              panels +
+              " panel(s) and " +
+              buttons +
+              " command(s) will be removed, and the saved draft deleted.\n\n" +
+              "This cannot be undone. Save a layout first if you want to keep it."
+          )
+        ) {
+          return;
+        }
+        window.Draft.reset();
+      });
+    }
+
     const extensionNameInput = document.getElementById("extensionName");
     extensionNameInput.addEventListener("change", () => {
       window.FolderStructure.updateFolderPreview();

@@ -6,6 +6,36 @@ Static site — plain HTML, CSS and JavaScript. No server, no build step, no
 dependencies at runtime (JSZip comes from a CDN). Open `index.html` or serve
 the folder with any static host.
 
+## Your work is kept
+
+The ribbon you are building is saved to `localStorage` on every change, so a
+reload does not lose it. **RESET** in the header discards it and returns to a
+single empty tab, panel and command. This is separate from SAVE/LOAD LAYOUT,
+which is the explicit file you keep.
+
+The draft is written from `FolderStructure.updateFolderPreview()` because every
+mutation already passes through it — one hook rather than a dozen call sites
+that would eventually miss one.
+
+## The ribbon
+
+The canvas is laid out the way Revit's ribbon is: tabs along the top, panels
+side by side with a vertical rule between them, and each panel's name along the
+bottom. Item sizing follows the same rules:
+
+| | size | label |
+| --- | --- | --- |
+| single command | fills the panel height, 48px icon | below the icon |
+| stack of 2 or 3 | centred column of rows, 16px icon (one third) | beside the icon |
+| pulldown / split | full-height large button | below the icon, with a caret |
+
+A stack is centred rather than stretched, which is why a 2-stack sits in the
+middle of its panel. The one-third relationship is a single custom property on
+`.button`, so the two numbers cannot drift apart.
+
+Delete is a small red cross in the top-right of the thing it removes. It
+appears on hover, and its tooltip names the command and its bundle type.
+
 ## Why the type table exists
 
 `bundle-types.js` is the single source of truth for every bundle type. Each row
@@ -66,12 +96,13 @@ that sanitise to the same folder, a content button with no `.rfa`.
 Not required to run the site.
 
 ```sh
-node verify.js         # tree, YAML, sanitiser, validator, v1->v2 migration
-node verify-dom.js     # every DOM/CSS reference resolves; no dead markup
+node verify.js           # tree, YAML, sanitiser, validator, v1->v2 migration
+node verify-dom.js       # every DOM/CSS reference resolves; no dead markup
 npm i --no-save puppeteer-core jszip
 node serve.js 8777 &
-node verify-browser.js # drives the real page, builds a ZIP, inspects it
-node measure.js        # modal overflow and page box sizes, per viewport
+node verify-browser.js   # drives the real page, builds a ZIP, inspects it
+node verify-contrast.js  # WCAG contrast of every rendered text, incl. ::after
+node measure.js          # modal overflow and page box sizes, per viewport
 ```
 
 `verify-browser.js` asserts the generated archive contains no folder whose
@@ -79,7 +110,12 @@ suffix pyRevit does not know, that icons carry real image bytes, and that no
 `__init__.py`, `entrypoint.py` or `.pyrevit` is emitted — none of which pyRevit
 expects or produces. It also asserts the modal, its type picker and the Advanced
 section need no scrollbar at 1400x1050, 1280x800 or 1024x768, with Advanced
-either collapsed or open.
+either collapsed or open, and that a draft survives a reload while RESET does
+not.
 
-`measure.js` prints the same overflow numbers plus the page's box sizes, which
-is what to reach for when something looks too big.
+`verify-contrast.js` walks every rendered text — including text drawn by
+`::after` and `::placeholder`, which a naive check misses entirely — resolves
+its effective foreground against the composited background of its ancestors,
+and compares to WCAG AA. It runs the page at rest and on hover, with the modal
+open and closed. It is strict on purpose: the first version of it missed three
+real failures.
