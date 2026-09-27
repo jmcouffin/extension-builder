@@ -108,8 +108,39 @@ console.log("== every script tag resolves");
 [...html.matchAll(/<script src="([^"]+)"><\/script>/g)].forEach((m) => {
   const src = m[1];
   if (/^https?:/.test(src)) { console.log("  (cdn) " + src); return; }
-  ok(fs.existsSync(path.join(dir, src)), "script " + src + " does not exist");
+  // strip any ?v= cache-busting token before touching the filesystem
+  const file = src.split("?")[0];
+  ok(fs.existsSync(path.join(dir, file)), "script " + file + " does not exist");
 });
+
+console.log("== every local asset is cache-busted");
+{
+  // GitHub Pages serves these with max-age=600, so an unversioned reference
+  // lets a browser pair fresh HTML with stale CSS/JS. The site then looks
+  // broken in a way that has nothing to do with the code. Every local asset
+  // must carry the same ?v= token, and the file must exist.
+  const refs = [
+    ...[...html.matchAll(/<link[^>]+href="([^"]+)"/g)].map((m) => m[1]),
+    ...[...html.matchAll(/<script src="([^"]+)"><\/script>/g)].map((m) => m[1]),
+  ].filter((u) => u && !/^(https?:|data:|#|mailto:)/.test(u));
+
+  ok(refs.length > 0, "found local asset references to check");
+  const versions = new Set();
+  refs.forEach((u) => {
+    const v = u.match(/[?&]v=([^&]+)/);
+    if (!v) {
+      ok(false, "asset is not cache-busted: " + u);
+      return;
+    }
+    versions.add(v[1]);
+    const file = u.split("?")[0];
+    ok(fs.existsSync(path.join(dir, file)), "cache-busted asset " + file + " exists");
+  });
+  ok(versions.size === 1,
+     "all local assets share one version token" +
+     (versions.size ? " (found: " + [...versions].join(", ") + ")" : ""));
+  console.log("  version token: " + [...versions].join(", ") + "  (" + refs.length + " assets)");
+}
 
 console.log("== no legacy references remain");
 const legacy = {
