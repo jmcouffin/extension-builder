@@ -35,40 +35,40 @@ const BundleTypes = {
         { value: "active-detail-view", label: "active-detail-view" },
         { value: "active-drafting-view", label: "active-drafting-view" },
       ],
-      help: "Without a context pyRevit generates no availability class at all, so the button is always enabled.",
+      help: "No availability class is generated, so the button is always enabled.",
     },
     hyperlink: {
       label: "Hyperlink",
       input: "url",
       placeholder: "https://pyrevitlabs.io",
-      help: "Opens the URL in a browser. This is the only key a .urlbutton needs.",
+      help: "Opens in a browser. The only key a .urlbutton needs.",
     },
     assembly: {
       label: "Assembly",
       input: "text",
       placeholder: "MyCommands",
-      help: "Name of the compiled DLL (without .dll), resolvable from this bundle's bin/ folder.",
+      help: "Compiled DLL name (no .dll), resolved from this bundle's bin/.",
     },
     command_class: {
       label: "Command Class",
       input: "text",
       placeholder: "MyCommand",
-      help: "Namespace-qualified class in the assembly that implements the command.",
+      help: "Namespace-qualified class implementing the command.",
     },
     availability_class: {
       label: "Availability Class",
       input: "text",
       placeholder: "MyCommandAvail",
       optional: true,
-      help: "Optional .NET IExternalCommand that decides whether the button is enabled.",
+      help: "IExternalCommand deciding whether the button is enabled.",
     },
     members: {
       label: "ComboBox Members",
       input: "textarea",
-      rows: 6,
+      rows: 4,
       placeholder:
-        "- id: first\n  text: First Item\n  group: Group A\n  tooltip: Details",
-      help: "YAML list. Each item needs at least an id and a text. Icons are referenced by filename.",
+        "- id: first\n  text: First Item\n  group: Group A",
+      help: "YAML list; each item needs an id and a text.",
     },
   },
 
@@ -157,7 +157,7 @@ const BundleTypes = {
       icons: ["icon.png"],
       darkIcons: ["icon.dark.png"],
       contentFile: "content.rfa",
-      help: "Puts an .rfa family on the stack. Drop your own .rfa into this folder after unzipping.",
+      help: "Needs a content.rfa family in this folder.",
       fields: ["context"],
     },
 
@@ -173,7 +173,7 @@ const BundleTypes = {
       required: ["assembly", "command_class"],
       advanced: true,
       fields: ["assembly", "command_class", "availability_class"],
-      help: "Binds straight to a .NET class. Not a URL button - use URL Button for links.",
+      help: "Binds to a .NET class. For links, use URL Button.",
     },
 
     invokebutton: {
@@ -295,7 +295,7 @@ const BundleTypes = {
       icons: [],
       advanced: true,
       fields: [],
-      help: "A script bundle with no ribbon button. Useful with hooks/ or a panel's own layout.",
+      help: "A script bundle with no ribbon button.",
     },
   },
 

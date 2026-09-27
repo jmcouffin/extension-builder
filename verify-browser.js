@@ -313,6 +313,45 @@ const REAL_POSTFIXES = new Set([
   );
   console.log("  post-migration validator (expected: link/invoke need .NET fields): " + JSON.stringify(afterLoad));
 
+  section("no modal needs a scrollbar, at any size");
+  // The worst case is a .NET type with Advanced open: every field visible.
+  for (const vp of [
+    { w: 1400, h: 1050 },
+    { w: 1280, h: 800 },
+    { w: 1024, h: 768 },
+  ]) {
+    await page.setViewport({ width: vp.w, height: vp.h });
+    await new Promise((r) => setTimeout(r, 200));
+    for (const open of [false, true]) {
+      await page.click(".panel .add-button[data-action='add-button']");
+      await new Promise((r) => setTimeout(r, 200));
+      await page.click('.button-type[data-type="linkbutton"]');
+      await page.evaluate((v) => {
+        document.getElementById("advancedDisclosure").open = v;
+      }, open);
+      await new Promise((r) => setTimeout(r, 200));
+      const m = await page.evaluate(() => {
+        const c = document.querySelector(".modal-content");
+        const grid = document.getElementById("buttonTypeGrid");
+        const adv = document.getElementById("advancedDisclosure");
+        return {
+          overflow: c.scrollHeight - c.clientHeight,
+          grid: grid.scrollHeight - grid.clientHeight,
+          adv: adv.scrollHeight - adv.clientHeight,
+          h: Math.round(c.getBoundingClientRect().height),
+        };
+      });
+      const label = vp.w + "x" + vp.h + (open ? " advanced-open" : " advanced-closed");
+      ok(m.overflow <= 0, label + ": modal overflows by " + m.overflow + "px");
+      ok(m.grid <= 0, label + ": type picker scrolls by " + m.grid + "px");
+      ok(m.adv <= 0, label + ": advanced section scrolls by " + m.adv + "px");
+    }
+    await page.click(".cancel-button");
+    await new Promise((r) => setTimeout(r, 150));
+  }
+  await page.setViewport({ width: 1400, height: 1050 });
+  await new Promise((r) => setTimeout(r, 200));
+
   section("no errors accumulated during the whole run");
   ok(errors.length === 0, "runtime errors: " + errors.join(" | "));
 

@@ -104,51 +104,50 @@
             <div id="buttonTypeGrid"></div>
             <div class="type-note" id="typeNote" style="display:none;"></div>
 
-            <div class="form-group">
-                <label for="buttonName">Name (required)</label>
-                <input type="text" id="buttonName" placeholder="Button 1">
-                <div class="field-help">Becomes the bundle folder name, e.g. <code>Button 1.pushbutton</code></div>
-            </div>
-
-            <div class="form-group">
-                <label for="buttonTitle">Title (optional)</label>
-                <input type="text" id="buttonTitle" placeholder="Defaults to the name">
-            </div>
-
-            <div class="form-group">
-                <label for="buttonTooltip">Tooltip (optional)</label>
-                <input type="text" id="buttonTooltip" placeholder="Shown when hovering">
-            </div>
-
-            <div class="form-group" id="buttonIconGroup">
-                <label for="buttonIcon">Icon (optional)</label>
-                <div class="icon-upload">
-                    <input type="file" id="buttonIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
-                    <div class="icon-preview" id="iconPreview"></div>
+            <div class="modal-grid">
+                <div class="form-group span-2">
+                    <label for="buttonName">Name (required)</label>
+                    <input type="text" id="buttonName" placeholder="Button 1">
                 </div>
-            </div>
 
-            <div class="form-group" id="onIconGroup" style="display:none;">
-                <label for="buttonOnIcon">On-state Icon (optional)</label>
-                <div class="icon-upload">
-                    <input type="file" id="buttonOnIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
-                    <div class="icon-preview" id="onIconPreview"></div>
+                <div class="form-group">
+                    <label for="buttonTitle">Title</label>
+                    <input type="text" id="buttonTitle" placeholder="Defaults to name">
                 </div>
-                <div class="field-help">A Toggle is a <code>.smartbutton</code> with <code>on.png</code> / <code>off.png</code>.
-                    Add an on-state icon so the button shows both states.</div>
-            </div>
 
-            <div class="form-group" id="buttonCodeGroup">
-                <label for="buttonCode">Python (optional)</label>
-                <textarea id="buttonCode" rows="6" placeholder="# Leave empty for a starter script."></textarea>
+                <div class="form-group span-3">
+                    <label for="buttonTooltip">Tooltip</label>
+                    <input type="text" id="buttonTooltip" placeholder="Shown on hover">
+                </div>
+
+                <div class="form-group" id="buttonIconGroup">
+                    <label for="buttonIcon">Icon</label>
+                    <div class="icon-upload">
+                        <input type="file" id="buttonIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
+                        <div class="icon-preview" id="iconPreview"></div>
+                    </div>
+                </div>
+
+                <div class="form-group" id="onIconGroup" style="display:none;">
+                    <label for="buttonOnIcon">On-state Icon</label>
+                    <div class="icon-upload">
+                        <input type="file" id="buttonOnIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
+                        <div class="icon-preview" id="onIconPreview"></div>
+                    </div>
+                </div>
+
+                <div class="form-group span-3" id="buttonCodeGroup">
+                    <label for="buttonCode">Python</label>
+                    <textarea id="buttonCode" placeholder="Leave empty for a starter script."></textarea>
+                </div>
             </div>
 
             <details class="advanced-disclosure" id="advancedDisclosure">
                 <summary>Advanced <span class="advanced-hint">(bundle.yaml)</span></summary>
                 <div class="advanced-body" id="advancedBody">
                     <div id="advancedFields"></div>
-                    <div class="form-group">
-                        <label for="buttonDarkIcon">Dark-theme Icon (optional)</label>
+                    <div class="form-group" id="darkIconGroup">
+                        <label for="buttonDarkIcon">Dark-theme Icon</label>
                         <input type="file" id="buttonDarkIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
                     </div>
                 </div>

@@ -45,7 +45,7 @@ header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
 }
 
 .logo {
@@ -54,17 +54,19 @@ header {
 }
 
 .logo img {
-  margin-right: 20px;
+  margin-right: 14px;
+  height: 54px;
+  width: auto;
 }
 
 h1 {
-  font-size: 5rem;
+  font-size: 2.6rem;
   color: var(--title-color);
 }
 
 .logo span {
   display: block;
-  font-size: 1.2rem;
+  font-size: 0.9rem;
   font-weight: normal;
   margin-top: -5px;
 }
@@ -118,9 +120,9 @@ h1 {
 /* Download Buttons */
 .download-button {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  align-items: flex-end;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
 }
 
 .download-button .pixel-container {
@@ -175,23 +177,22 @@ h1 {
 
 /* ===== EXTENSION NAME ===== */
 .extension-name {
-  font-size: 2rem;
+  font-size: 1.15rem;
   color: var(--text-pink);
   font-weight: bold;
   text-align: center;
-  margin-top: 0px;
-  margin-bottom: 10px;
+  margin: 0 0 8px;
 }
 
 #extensionName {
   width: 100%;
-  padding: 5px;
+  padding: 4px;
   color: var(--text-pink);
   border: none;
   border-radius: var(--border-radius-sm);
-  font-size: 2rem;
+  font-size: 1.15rem;
   text-align: center;
-  margin: 0px 5px 5px 5px;
+  margin: 0;
 }
 
 .extension-name .pixel-container {
@@ -800,14 +801,16 @@ main + .pixel-container .preview-content {
 .modal-content {
   background-color: var(--bg-main-color);
   color: var(--text-pink);
-  margin: 5% auto;
-  padding: 20px;
+  margin: 12px auto;
+  padding: 14px 16px;
   border-radius: var(--border-radius-md);
-  width: 600px;
-  max-width: 90%;
+  width: 640px;
+  max-width: calc(100% - 24px);
   position: relative;
-  max-height: 80vh;
-  overflow-y: auto;
+  max-height: calc(100vh - 24px);
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
 }
 
 .close-modal {
@@ -868,20 +871,21 @@ main + .pixel-container .preview-content {
 
 /* Form Styles */
 .form-group {
-  margin-bottom: 15px;
+  margin-bottom: 8px;
 }
 
 .form-group label {
   display: block;
-  margin-bottom: 5px;
-  letter-spacing: 3px;
+  margin-bottom: 3px;
+  letter-spacing: 2px;
   color: var(--bg-pink);
+  font-size: 0.62rem;
 }
 
 .form-group input,
 .form-group textarea {
   width: 100%;
-  padding: 8px;
+  padding: 5px 7px;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
   background-color: transparent;
@@ -897,12 +901,33 @@ main + .pixel-container .preview-content {
 .icon-upload {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+/* A native file input wants far more width than the field it sits in. */
+.icon-upload input[type="file"],
+#darkIconGroup input[type="file"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.65rem;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--text-pink);
+}
+
+.icon-upload input[type="file"]::file-selector-button {
+  font-size: 0.6rem;
+  padding: 3px 6px;
+  margin-right: 6px;
+  background: var(--bg-pink);
+  color: var(--bg-yellow);
+  border: none;
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
 }
 
 .icon-preview {
-  width: 64px;
-  height: 64px;
+  width: 40px;
+  height: 40px;
   border: 1px solid var(--border-color);
   display: flex;
   justify-content: center;
@@ -918,8 +943,9 @@ main + .pixel-container .preview-content {
 .modal-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 10px;
-  margin-top: 20px;
+  gap: 8px;
+  margin-top: 10px;
+  flex: 0 0 auto;
 }
 
 .modal-actions button {
@@ -941,7 +967,7 @@ main + .pixel-container .preview-content {
 }
 
 .code-input textarea {
-  min-height: 100px;
+  min-height: 0;
   resize: vertical;
   background-color: var(--bg-input);
   color: var(--text-pink);
@@ -954,17 +980,18 @@ main + .pixel-container .preview-content {
   display: inline-block;
   color: #444;
   width: 600px;
+  max-width: 100%;
   font-weight: bold;
 }
 
 .pixel-container input {
   border: none;
   background-color: var(--bg-main-color);
-  font-size: 2rem;
+  font-size: 1.15rem;
   color: var(--text-pink);
   width: 100%;
-  padding: 5px;
-  margin-left: 5px;
+  padding: 4px;
+  margin-left: 4px;
 }
 
 .pixel-container input:focus {
@@ -1100,48 +1127,63 @@ input[type="file"] {
   color: var(--bg-yellow);
 }
 /* ============================================================
+/* ============================================================
    BUNDLE TYPE PICKER
+   Compact: three tiles per row, group headings inline. The modal
+   must fit the viewport without its own scrollbar, so nothing here
+   is allowed to grow.
    ============================================================ */
 .modal-section-title {
   color: var(--text-pink);
-  font-size: 0.85rem;
-  margin: 0 0 6px 0;
-  letter-spacing: 1px;
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0 0 4px;
 }
 
 #buttonTypeGrid {
-  max-height: 210px;
-  overflow-y: auto;
-  margin-bottom: 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  margin-bottom: 8px;
+  /* Never scrolls: the picker is the one part that must always be fully
+     visible, so it keeps its natural height and the optional Advanced
+     section below is what absorbs any squeeze. */
+  flex: 0 0 auto;
+  overflow: visible;
 }
 
 .type-group {
-  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .type-group h4 {
-  margin: 0 0 4px 0;
-  font-size: 0.65rem;
+  margin: 0;
+  font-size: 0.55rem;
   text-transform: uppercase;
   letter-spacing: 1px;
   color: var(--text-secondary);
   font-family: Arial, Helvetica, sans-serif;
+  line-height: 1;
+  opacity: 0.8;
 }
 
 .button-types {
   display: flex;
   flex-wrap: wrap;
-  gap: 5px;
+  gap: 3px;
 }
 
 .button-type {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  padding: 5px 7px;
+  padding: 3px 5px;
   cursor: pointer;
-  min-width: 74px;
   text-align: center;
   background: #fbfbfb;
+  line-height: 1.15;
   transition: border-color 0.15s, background 0.15s;
 }
 
@@ -1156,33 +1198,81 @@ input[type="file"] {
 }
 
 .type-icon {
-  font-family: Arial, Helvetica, sans-serif;
-  font-weight: bold;
-  font-size: 0.9rem;
-  color: #7c297c;
+  display: none;
 }
 
 .type-name {
   font-size: 0.65rem;
   color: var(--text-primary, #333);
-  line-height: 1.2;
-  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .type-postfix {
   font-family: Consolas, "Courier New", monospace;
-  font-size: 0.55rem;
+  font-size: 0.5rem;
   color: #888;
-  margin-top: 2px;
+  white-space: nowrap;
 }
 
 .type-note {
-  font-size: 0.7rem;
+  font-size: 0.65rem;
   color: #a33;
-  margin-bottom: 10px;
-  padding: 5px 7px;
+  margin-bottom: 6px;
+  padding: 4px 6px;
   background: #fdf0f0;
   border-left: 3px solid #a33;
+}
+
+/* ============================================================
+   MODAL BODY - a two-column grid so the modal stays short
+   ============================================================ */
+.modal-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 8px;
+}
+
+.modal-grid .span-2 {
+  grid-column: span 2;
+}
+
+.modal-grid .span-3 {
+  grid-column: span 3;
+}
+
+.form-group code {
+  background: #eee;
+  padding: 0 3px;
+  border-radius: 2px;
+}
+
+.field-help {
+  font-size: 0.58rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+  line-height: 1.25;
+  font-family: Arial, Helvetica, sans-serif;
+  /* Two lines maximum, so a long help string cannot stretch the modal. */
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.form-group select {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  padding: 4px;
+  font-size: 0.75rem;
+  width: 100%;
+}
+
+#buttonCode {
+  height: 72px;
+  min-height: 0;
+  resize: vertical;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.7rem;
 }
 
 /* ============================================================
@@ -1191,16 +1281,19 @@ input[type="file"] {
 .advanced-disclosure {
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-sm);
-  margin: 12px 0;
+  margin: 6px 0 0;
   background: #fafafa;
+  flex: 0 1 auto;
+  min-height: 0;
+  overflow-y: auto;
 }
 
 .advanced-disclosure > summary {
   cursor: pointer;
-  padding: 7px 10px;
-  font-size: 0.75rem;
+  padding: 4px 8px;
+  font-size: 0.6rem;
   color: #7c297c;
-  letter-spacing: 1px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   user-select: none;
 }
@@ -1213,36 +1306,21 @@ input[type="file"] {
 }
 
 .advanced-body {
-  padding: 4px 12px 12px 12px;
-  border-top: 1px solid var(--border-color);
+  padding: 2px 8px 6px;
+}
+
+#advancedFields {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0 8px;
 }
 
 .advanced-field {
-  margin-top: 10px;
+  margin-top: 4px;
 }
 
-.field-help {
-  font-size: 0.65rem;
-  color: var(--text-secondary);
-  margin-top: 3px;
-  line-height: 1.35;
-  font-family: Arial, Helvetica, sans-serif;
-}
-
-.field-help code,
-.form-group code {
-  background: #eee;
-  padding: 0 3px;
-  border-radius: 2px;
-  font-size: 0.95em;
-}
-
-.form-group select {
-  background-color: white;
-  border: 1px solid var(--border-color);
-  padding: 4px;
-  font-size: 0.8rem;
-  width: 100%;
+.advanced-field.span-2 {
+  grid-column: span 2;
 }
 
 /* ============================================================
@@ -1265,4 +1343,77 @@ input[type="file"] {
 
 .unknown-type .button-name {
   color: #a33;
+}
+
+/* ============================================================
+   SHORT VIEWPORTS
+   Trim the optional parts so the modal still fits without a
+   scrollbar on a 768px-tall window with Advanced open.
+   ============================================================ */
+@media (max-height: 820px) {
+  .modal-content {
+    margin: 8px auto;
+    max-height: calc(100vh - 16px);
+    padding: 12px 14px;
+  }
+
+  .form-group {
+    margin-bottom: 6px;
+  }
+
+  #buttonCode {
+    height: 54px;
+  }
+
+  .advanced-body {
+    padding: 0 8px 3px;
+  }
+
+  .advanced-field {
+    margin-top: 0;
+  }
+
+  .advanced-field input,
+  .advanced-field select,
+  .advanced-field textarea {
+    padding: 2px 6px;
+  }
+
+  .field-help {
+    display: none;
+  }
+
+  .advanced-disclosure {
+    margin-top: 2px;
+  }
+}
+
+/* ============================================================
+   NARROW VIEWPORTS
+   ============================================================ */
+@media (max-width: 700px) {
+  .modal-content {
+    width: auto;
+    margin: 8px;
+    max-height: calc(100vh - 16px);
+  }
+
+  .modal-grid,
+  #advancedFields {
+    grid-template-columns: 1fr;
+  }
+
+  .modal-grid .span-2,
+  .modal-grid .span-3,
+  .advanced-field.span-2 {
+    grid-column: span 1;
+  }
+
+  h1 {
+    font-size: 1.6rem;
+  }
+
+  .logo img {
+    height: 34px;
+  }
 }

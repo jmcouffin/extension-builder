@@ -71,9 +71,15 @@ node verify-dom.js     # every DOM/CSS reference resolves; no dead markup
 npm i --no-save puppeteer-core jszip
 node serve.js 8777 &
 node verify-browser.js # drives the real page, builds a ZIP, inspects it
+node measure.js        # modal overflow and page box sizes, per viewport
 ```
 
 `verify-browser.js` asserts the generated archive contains no folder whose
 suffix pyRevit does not know, that icons carry real image bytes, and that no
 `__init__.py`, `entrypoint.py` or `.pyrevit` is emitted — none of which pyRevit
-expects or produces.
+expects or produces. It also asserts the modal, its type picker and the Advanced
+section need no scrollbar at 1400x1050, 1280x800 or 1024x768, with Advanced
+either collapsed or open.
+
+`measure.js` prints the same overflow numbers plus the page's box sizes, which
+is what to reach for when something looks too big.

@@ -111,7 +111,9 @@ const ModalHandlers = {
         });
       } else if (def.input === "textarea") {
         input = document.createElement("textarea");
-        input.rows = def.rows || 4;
+        input.rows = def.rows || 3;
+        // A block field needs the full width of the two-column advanced grid.
+        group.classList.add("span-2");
       } else {
         input = document.createElement("input");
         input.type = def.input === "url" ? "url" : "text";
@@ -125,6 +127,9 @@ const ModalHandlers = {
         help.className = "field-help";
         help.textContent = def.help;
         group.appendChild(help);
+        // Also on the input itself, so the guidance is reachable once the
+        // advanced section is scrolled on a short viewport.
+        input.title = def.help;
       }
 
       this.fieldNodes[key] = { group: group, input: input, def: def };
@@ -210,7 +215,7 @@ const ModalHandlers = {
 
     const containerKey = target === "panel" ? "panel" : target;
 
-    this.resetCommonFields();
+    this.resetCommonFields(this.nextDefaultName(containerId));
     this.buildTypePicker(containerKey, "command");
     this.buildAdvancedFields();
 
@@ -234,7 +239,7 @@ const ModalHandlers = {
     delete modal.dataset.elementId;
     delete modal.dataset.originalType;
 
-    this.resetCommonFields();
+    this.resetCommonFields(this.nextDefaultGroupName());
     this.buildTypePicker("panel", "container");
     this.buildAdvancedFields();
     this.selectButtonType(document.querySelector(".button-type"));
@@ -245,8 +250,8 @@ const ModalHandlers = {
     modal.style.display = "block";
   },
 
-  resetCommonFields() {
-    document.getElementById("buttonName").value = this.nextDefaultGroupName();
+  resetCommonFields(defaultName) {
+    document.getElementById("buttonName").value = defaultName;
     document.getElementById("buttonTitle").value = "";
     document.getElementById("buttonTooltip").value = "";
     document.getElementById("buttonCode").value = "";
@@ -275,21 +280,27 @@ const ModalHandlers = {
     return "NEW GROUP " + n;
   },
 
-  /** Containers have no script, so those fields go away for them. */
+  /**
+   * Hide the parts a type cannot use. Only the script box is script-specific:
+   * title and tooltip are read for every bundle type, and pyRevit falls back to
+   * the folder name when no title is given.
+   */
   applyModeVisibility() {
     const typeId = this.selectedType();
     const typeDef = typeId ? window.BundleTypes.get(typeId) : null;
-    const isCommand = !!(typeDef && typeDef.script);
+    const isScript = !!(typeDef && typeDef.script);
 
-    document.getElementById("buttonCodeGroup").style.display = isCommand
+    document.getElementById("buttonCodeGroup").style.display = isScript
       ? "block"
       : "none";
-    document.getElementById("buttonTitle").disabled = !typeDef || !typeDef.script;
-    document.getElementById("buttonTooltip").disabled = !typeDef || !typeDef.script;
 
     const iconGroup = document.getElementById("buttonIconGroup");
     if (iconGroup) {
       iconGroup.style.display = typeDef && (typeDef.icons || []).length ? "block" : "none";
+    }
+    const darkIconGroup = document.getElementById("darkIconGroup");
+    if (darkIconGroup) {
+      darkIconGroup.style.display = typeDef && (typeDef.darkIcons || []).length ? "block" : "none";
     }
 
     const onIconGroup = document.getElementById("onIconGroup");
