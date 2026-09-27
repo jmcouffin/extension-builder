@@ -134,3 +134,46 @@ const Draft = {
 };
 
 window.Draft = Draft;
+
+/* ------------------------------------------------------------------
+   View preferences.
+
+   Separate from the draft on purpose: the ribbon is what gets saved and
+   loaded, while "is the folder tree open" is a display choice about this
+   browser, not part of the extension.
+   ------------------------------------------------------------------ */
+const Prefs = {
+  KEY: "pyrevit-extension-builder:prefs:v1",
+
+  read() {
+    if (!Draft.available()) return {};
+    try {
+      return JSON.parse(window.localStorage.getItem(this.KEY) || "{}") || {};
+    } catch {
+      return {};
+    }
+  },
+
+  write(patch) {
+    if (!Draft.available()) return;
+    try {
+      window.localStorage.setItem(
+        this.KEY,
+        JSON.stringify(Object.assign(this.read(), patch))
+      );
+    } catch (error) {
+      console.warn("Could not save preferences:", error);
+    }
+  },
+
+  get(key, fallback) {
+    const value = this.read()[key];
+    return value === undefined ? fallback : value;
+  },
+
+  set(key, value) {
+    this.write({ [key]: value });
+  },
+};
+
+window.Prefs = Prefs;

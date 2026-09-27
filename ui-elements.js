@@ -140,6 +140,18 @@ const UIElements = {
     footer.appendChild(panelName);
     footer.appendChild(groupActions);
 
+    // A small + at the panel's own bottom-right adds a panel to this panel's
+    // tab, which is more discoverable than one button for the whole ribbon.
+    const addPanel = this.el("button", "add-button add-panel-inline");
+    addPanel.dataset.panelId = panelId;
+    addPanel.title = "Add another panel to this tab";
+    addPanel.setAttribute("aria-label", "Add another panel to this tab");
+    addPanel.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.EventHandlers.addNewPanel(panelId);
+    });
+    footer.appendChild(addPanel);
+
     panelElement.appendChild(panelContent);
     panelElement.appendChild(footer);
 
@@ -253,13 +265,25 @@ const UIElements = {
       });
     });
     header.appendChild(name);
-    // Revit marks a command that opens a list with a caret, not a count.
-    const caret = this.el("div", "group-count", "▼");
-    caret.title =
-      (element.children || []).length +
-      " command(s) - click the icon to open them";
+    // Revit marks a command that opens a list with a small chevron just under
+    // the label. It is an empty element drawn by CSS borders, not a text
+    // glyph: a literal triangle was re-encoded into mojibake on the way to
+    // disk, and a rotated border chevron cannot be corrupted that way. The
+    // header reserves the room for it, so it sits under the title whether the
+    // title is one line or wraps to two.
+    const caret = this.el("div", "group-caret");
+    caret.setAttribute("aria-hidden", "true");
     header.appendChild(caret);
     node.appendChild(header);
+    node.title =
+      typeDef.label +
+      " - " +
+      typeDef.postfix +
+      ' "' +
+      element.name +
+      '" with ' +
+      (element.children || []).length +
+      " command(s). Click the icon to open them.";
 
     const body = this.el("div", "group-body");
     (element.children || []).forEach((childId) => {
@@ -367,33 +391,53 @@ const UIElements = {
     });
     node.appendChild(items);
 
+    // No stack label. Revit shows none, and a caption under the rows would make
+    // the stack taller than the band a full-height button occupies, so the two
+    // would no longer sit on the same baseline. The name is the folder name and
+    // is visible in the tree; double-click renames it through the modal.
+
+    // The add affordance is a row in the column, not an overlay. A stack reads
+    // as "these commands, plus room for one more", so the + belongs where the
+    // next command will land - at the bottom, in the same place as the third
+    // row - rather than as a badge floating over the top-right corner.
     const remaining = typeDef.maxChildren - children.length;
     if (remaining > 0) {
-      const add = this.el("div", "stack-add-button", "+" + remaining);
-      add.title = remaining + " slot" + (remaining === 1 ? "" : "s") + " free";
+      const add = this.el("div", "stack-add-button");
+      add.setAttribute("role", "button");
+      add.setAttribute("tabindex", "0");
+      add.title =
+        remaining +
+        " slot" +
+        (remaining === 1 ? "" : "s") +
+        " free - click to add a command";
+      add.setAttribute(
+        "aria-label",
+        "Add a command to stack " + element.name
+      );
       add.addEventListener("click", (e) => {
+        e.stopPropagation();
+        window.ModalHandlers.openButtonModal("stack", elementId);
+      });
+      add.addEventListener("keydown", (e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
         e.stopPropagation();
         window.ModalHandlers.openButtonModal("stack", elementId);
       });
       node.appendChild(add);
     }
 
-    const name = this.el("div", "stack-name", element.name);
-    name.addEventListener("click", (e) => {
-      e.stopPropagation();
-      this.makeEditable(name, element.name, (next) => {
-        this.renameElement(elementId, next);
-        name.textContent = window.appState.elements[elementId].name;
-      });
-    });
-    node.appendChild(name);
+    node.title =
+      "Stack - " +
+      typeDef.postfix +
+      ' "' +
+      element.name +
+      '" with ' +
+      children.length +
+      " command(s). Double-click to edit.";
 
     if (children.length < typeDef.minChildren) {
       node.classList.add("stack-invalid");
-      node.title =
-        "A stack needs at least " +
-        typeDef.minChildren +
-        " commands. With fewer, pyRevit will not show it at all.";
     }
 
     this.addDeleteButton(node, elementId, "element");
@@ -403,6 +447,62 @@ const UIElements = {
     });
     window.DragDrop.setupElementDragEvents(node);
     return node;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Folder preview disclosure
+  // ---------------------------------------------------------------------------
+
+  /**
+   * The tree is collapsed by default and its state is remembered, so it stays
+   * out of the way without the user having to re-collapse it every reload.
+   * The <details> element does the toggling; this only restores and records.
+   */
+  setupPreviewDisclosure() {
+    const details = document.getElementById("previewDisclosure");
+    if (!details) return;
+
+    details.open = !!window.Prefs.get("previewOpen", false);
+
+    // A user's explicit toggle wins over the stored value, so only record it
+    // once the element has been initialised - the open assignment above fires a
+    // toggle event of its own.
+    this._previewReady = true;
+    details.addEventListener("toggle", () => {
+      if (!this._previewReady) return;
+      window.Prefs.set("previewOpen", details.open);
+    });
+  },
+
+  /** A short one-line description of what the tree currently holds. */
+  updatePreviewSummary() {
+    const meta = document.getElementById("previewSummaryMeta");
+    if (!meta) return;
+
+    const details = document.getElementById("previewDisclosure");
+    if (details && !details.open) {
+      meta.textContent = "";
+      return;
+    }
+
+    const counts = { bundle: 0, file: 0 };
+    const walk = (node) => {
+      if (node.type === "file") counts.file++;
+      else if (node.type === "folder") counts.bundle++;
+      (node.children || []).forEach(walk);
+    };
+    walk(window.FolderStructure.buildFolderStructure(window.FolderStructure.extensionName()));
+
+    const problems = window.FolderStructure.validate();
+    meta.textContent =
+      counts.bundle +
+      " folder" +
+      (counts.bundle === 1 ? "" : "s") +
+      ", " +
+      counts.file +
+      " file" +
+      (counts.file === 1 ? "" : "s") +
+      (problems.length ? "  \u26A0 " + problems.length + " to fix" : "");
   },
 
   // ---------------------------------------------------------------------------

@@ -148,6 +148,9 @@ const MIN_LARGE = 3.0;
       if (!fgRaw) return;
       const bg = bgOf(el);
       const o = opacityOf(el);
+      // Fully transparent is not rendered, so contrast does not apply. Partial
+      // opacity is a real case and is measured as composited.
+      if (o === 0) return;
       const fg = o < 1 ? blend({ ...fgRaw, a: fgRaw.a * o }, bg) : fgRaw;
       const px = parseFloat(cs.fontSize);
       const weight = +cs.fontWeight;
@@ -232,6 +235,7 @@ const MIN_LARGE = 3.0;
 
         const bg = bgOf(host);
         const o = opacityOf(host);
+        if (o === 0) continue; // not rendered
         const fgRaw = parse(rule.style.color) || parse(cs.color);
         if (!fgRaw) continue;
         const fg = o < 1 ? blend({ ...fgRaw, a: fgRaw.a * o }, bg) : fgRaw;

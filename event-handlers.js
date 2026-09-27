@@ -83,9 +83,6 @@ const EventHandlers = {
       tab.classList.toggle("active", tab.dataset.tabId === tabId);
     });
 
-    const addPanelButton = document.getElementById("addPanel");
-    if (addPanelButton) addPanelButton.dataset.tabId = tabId;
-
     window.UIElements.renderPanels();
   },
 
@@ -121,8 +118,14 @@ const EventHandlers = {
     window.FolderStructure.updateFolderPreview();
   },
 
-  addNewPanel() {
-    const tabId = window.appState.activeTabId;
+  /**
+   * Adds a panel. `sourcePanelId` decides which tab the new panel joins, so the
+   * small + on a panel adds beside that panel rather than always to whichever
+   * tab happens to be active.
+   */
+  addNewPanel(sourcePanelId) {
+    const source = sourcePanelId ? window.appState.panels[sourcePanelId] : null;
+    const tabId = source ? source.tabId : window.appState.activeTabId;
     const tab = window.appState.tabs[tabId];
     if (!tab) return;
 
@@ -147,6 +150,10 @@ const EventHandlers = {
       panelId: panelId,
     };
     window.appState.panels[panelId].elements.push(buttonId);
+
+    // If the panel was added to another tab, switch to it so the result is
+    // visible rather than silently landing on an inactive tab.
+    if (tabId !== window.appState.activeTabId) this.activateTab(tabId);
 
     window.UIElements.renderPanels();
     window.FolderStructure.updateFolderPreview();
@@ -240,9 +247,6 @@ const EventHandlers = {
     document.getElementById("addTab").addEventListener("click", () => {
       this.addNewTab();
     });
-    document.getElementById("addPanel").addEventListener("click", () => {
-      this.addNewPanel();
-    });
     document.getElementById("downloadZip").addEventListener("click", () => {
       window.FolderStructure.generateZipFile();
     });
@@ -269,7 +273,11 @@ const EventHandlers = {
     }
 
     const extensionNameInput = document.getElementById("extensionName");
+    // updateFolderPreview() owns the hint, so both events just go through it.
     extensionNameInput.addEventListener("change", () => {
+      window.FolderStructure.updateFolderPreview();
+    });
+    extensionNameInput.addEventListener("input", () => {
       window.FolderStructure.updateFolderPreview();
     });
 

@@ -134,9 +134,24 @@ const REAL_POSTFIXES = new Set([
   ok(await page.$("#ribbonContainer .panel") !== null, "the new tab auto-activated and shows its panel");
   ok(await page.$("#ribbonContainer .panel .button") !== null, "the new tab's panel has a seeded command");
 
-  await page.click("#addPanel");
-  await new Promise((r) => setTimeout(r, 250));
+  // Panels are added by the small + on a panel, not a ribbon-wide button.
+  ok(await page.$("#addPanel") === null, "the old ribbon-wide + PANEL button is gone");
+  const panelPlus = await page.$$("#ribbonContainer .add-panel-inline");
+  ok(panelPlus.length === 1, "one + per panel, got " + panelPlus.length);
+  await panelPlus[0].click();
+  await new Promise((r) => setTimeout(r, 300));
   ok(await page.$$eval("#ribbonContainer .panel", (e) => e.length) === 2, "second panel added");
+  ok(await page.$$eval("#ribbonContainer .add-panel-inline", (e) => e.length) === 2,
+     "the new panel brought its own + along");
+  ok(await page.$("#addTab") !== null, "the tab strip still has its +");
+  const tabPlus = await page.$eval("#addTab", (e) => ({
+    text: e.textContent.trim(),
+    label: e.getAttribute("aria-label"),
+    hasBars: getComputedStyle(e, "::before").width !== "0px",
+  }));
+  ok(tabPlus.text === "", "the tab + is drawn in CSS, not typed as a glyph");
+  ok(!!tabPlus.label, "the tab + has an accessible name: " + tabPlus.label);
+  ok(tabPlus.hasBars, "the tab + actually renders its bars");
 
   await page.click(".panel .add-button[data-action='add-stack']");
   await new Promise((r) => setTimeout(r, 300));
@@ -399,6 +414,126 @@ const REAL_POSTFIXES = new Set([
   await new Promise((r) => setTimeout(r, 900));
   const stillReset = await page.evaluate(() => Object.keys(window.appState.elements).length);
   ok(stillReset === 1, "reset sticks across a further reload, got " + stillReset);
+
+  section("ribbon icon alignment, and the collapsible preview");
+  // Build a deterministic fixture: one full-height command, a 2-stack, a
+  // 3-stack and a group, all in the same panel. Built through the app's own
+  // API so the renderer is what gets measured.
+  await page.evaluate(() => {
+    const st = window.appState;
+    const panelId = st.activeTabId ? st.tabs[st.activeTabId].panels[0] : Object.values(st.tabs)[0].panels[0];
+    const panel = st.panels[panelId];
+    const mk = (name) => {
+      const id = "element" + st.nextIds.element++;
+      st.elements[id] = {
+        type: "pushbutton", name, title: "", tooltip: "", code: "",
+        iconData: null, iconDarkData: null, iconOnData: null, panelId,
+      };
+      panel.elements.push(id);
+      return id;
+    };
+    const stack = (name, n) => {
+      const id = "element" + st.nextIds.element++;
+      st.elements[id] = { type: "stack", name, title: "", tooltip: "", iconData: null, children: [], panelId };
+      panel.elements.push(id);
+      for (let i = 0; i < n; i++) {
+        const cid = "element" + st.nextIds.element++;
+        st.elements[cid] = {
+          type: "pushbutton", name: "Cmd " + (i + 1), title: "", tooltip: "", code: "",
+          iconData: null, iconDarkData: null, iconOnData: null, parentId: id,
+        };
+        st.elements[id].children.push(cid);
+      }
+      return id;
+    };
+    st.panels[panelId].elements = [];
+    mk("Solo Command");
+    stack("Two Up", 2);
+    stack("Three Up", 3);
+    const gid = "element" + st.nextIds.element++;
+    st.elements[gid] = { type: "pulldown", name: "My Tools", title: "", tooltip: "", iconData: null, children: [], panelId };
+    panel.elements.push(gid);
+    window.UIElements.renderPanels();
+    window.FolderStructure.updateFolderPreview();
+  });
+  await new Promise((r) => setTimeout(r, 400));
+
+  // Every shape must start on the same line: a full-height command, a
+  // pulldown/split group, and the first row of a 2- or 3-stack.
+  const align = await page.evaluate(() => {
+    const pc = document.querySelector("#ribbonContainer .panel-content");
+    const pr = pc.getBoundingClientRect();
+    const top = (el, sel) => {
+      const i = el.querySelector(sel);
+      return i ? Math.round(i.getBoundingClientRect().top - pr.top) : null;
+    };
+    const solo = pc.querySelector(":scope > .button");
+    const group = pc.querySelector(":scope > .group");
+    const stacks = [...pc.querySelectorAll(":scope > .stack")];
+    return {
+      panelH: Math.round(pr.height),
+      solo: top(solo, ".button-icon"),
+      group: top(group, ".button-icon"),
+      stacks: stacks.map((s) => ({
+        n: s.querySelectorAll(".stack-items > .button").length,
+        firstIcon: top(s, ".stack-items > .button .button-icon"),
+        icon: Math.round(
+          s.querySelector(".stack-items > .button .button-icon").getBoundingClientRect().width
+        ),
+      })),
+      groupCaretCentred: (() => {
+        const c = group.querySelector(".group-caret");
+        if (!c) return null;
+        const cr = c.getBoundingClientRect();
+        const gr = group.getBoundingClientRect();
+        return Math.abs((cr.left + cr.width / 2) - (gr.left + gr.width / 2));
+      })(),
+    };
+  });
+  console.log("  " + JSON.stringify(align));
+  ok(align.solo !== null && align.group !== null, "both a command and a group are present");
+  ok(
+    Math.abs(align.solo - align.group) <= 1,
+    "group icon lines up with a full-height command (" + align.solo + " vs " + align.group + ")"
+  );
+  align.stacks.forEach((s) => {
+    ok(s.firstIcon !== null && Math.abs(s.firstIcon - align.solo) <= 1,
+       "stack of " + s.n + " starts on the same line (" + s.firstIcon + " vs " + align.solo + ")");
+    ok(s.icon === 16, "stack icon is 1/3 of the full-height 48px, got " + s.icon);
+  });
+  ok(
+    align.groupCaretCentred !== null && align.groupCaretCentred <= 1,
+    "the group chevron is horizontally centred, off by " + align.groupCaretCentred + "px"
+  );
+
+  const previewState = await page.evaluate(() => {
+    const d = document.getElementById("previewDisclosure");
+    return {
+      collapsedByDefault: !d.open,
+      usesDetails: d.tagName === "DETAILS",
+      stored: window.localStorage.getItem("pyrevit-extension-builder:prefs:v1"),
+    };
+  });
+  ok(previewState.usesDetails, "the preview is a native <details>");
+  ok(previewState.collapsedByDefault, "the preview starts collapsed");
+  console.log("  preview prefs: " + previewState.stored);
+
+  // Opening it must be remembered.
+  await page.click("#previewDisclosure > summary");
+  await new Promise((r) => setTimeout(r, 250));
+  ok(await page.$eval("#previewDisclosure", (e) => e.open), "the preview opens on click");
+  await page.reload({ waitUntil: "networkidle0" });
+  await new Promise((r) => setTimeout(r, 900));
+  ok(await page.$eval("#previewDisclosure", (e) => e.open), "the open state survived a reload");
+  const meta = await page.$eval("#previewSummaryMeta", (e) => e.textContent);
+  ok(/folder/.test(meta), "the summary reports what the tree holds: " + JSON.stringify(meta));
+  console.log("  summary meta: " + JSON.stringify(meta));
+
+  await page.click("#previewDisclosure > summary");
+  await new Promise((r) => setTimeout(r, 200));
+  await page.reload({ waitUntil: "networkidle0" });
+  await new Promise((r) => setTimeout(r, 900));
+  ok(await page.$eval("#previewDisclosure", (e) => !e.open), "the collapsed state is remembered too");
 
   section("no errors accumulated during the whole run");
   ok(errors.length === 0, "runtime errors: " + errors.join(" | "));

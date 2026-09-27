@@ -20,77 +20,58 @@
             </div>
         </div>
         <div class="download-button">
-            <div class="pixel-container">
-                <div class="pixel-border">
-                    <button id="loadConfig" class="load-button">
-                        LOAD LAYOUT <span class="load-icon">&#x1F5BF;</span>
-                    </button>
-                </div>
-            </div>
-            <div class="pixel-container">
-                <div class="pixel-border">
-                    <button id="saveConfig" class="save-button">
-                        SAVE LAYOUT <span class="save-icon">&#x1F5AA;</span>
-                    </button>
-                </div>
-            </div>
-            <div class="pixel-container">
-                <div class="pixel-border">
-                    <button class="reset-button" id="resetToolbar">
-                        RESET <span class="reset-icon">&#x21BB;</span>
-                    </button>
-                </div>
-            </div>
-            <div class="pixel-container">
-                <div class="pixel-border">
-                    <button class="glowing-text-slow" id="downloadZip">
-                        DOWNLOAD
-                        <span class="download-icon">&#x2B07;</span>
-                    </button>
-                </div>
-            </div>
+            <button id="loadConfig" class="toolbar-action">
+                <span class="toolbar-action-label">Load layout</span>
+            </button>
+            <button id="saveConfig" class="toolbar-action">
+                <span class="toolbar-action-label">Save layout</span>
+            </button>
+            <button class="toolbar-action toolbar-action-danger" id="resetToolbar">
+                <span class="toolbar-action-label">Reset</span>
+            </button>
+            <button class="toolbar-action toolbar-action-primary" id="downloadZip">
+                <span class="toolbar-action-label">Download</span>
+            </button>
         </div>
     </header>
 
     <div class="extension-name">
-        <div class="pixel-container">
-            <div class="pixel-border">
-                <div class="pixel-content">
-                    <input class="glowing-text" type="text" id="extensionName" value="My Extension">
-                </div>
-            </div>
+        <label class="extension-name-label" for="extensionName">Extension name</label>
+        <div class="extension-name-row">
+            <input class="glowing-text" type="text" id="extensionName"
+                value="My Extension" spellcheck="false" autocomplete="off"
+                maxlength="60" placeholder="My Extension">
+            <div class="extension-name-hint" id="extensionNameHint"></div>
         </div>
     </div>
 
     <main>
         <div class="tabs-container">
             <div class="tabs" id="tabsContainer"></div>
-            <button class="add-button" id="addTab">
-                <span class="plus">+</span>TAB
-            </button>
+            <button class="add-button add-tab-inline" id="addTab"
+                title="Add a tab" aria-label="Add a tab"></button>
         </div>
 
-        <div class="ribbon-container">
-            <div class="ribbon" id="ribbonContainer"></div>
-        </div>
+        <div class="workspace">
+            <div class="ribbon-container">
+                <div class="ribbon" id="ribbonContainer"></div>
+            </div>
 
-        <div class="add-panel-container">
-            <button class="add-button" id="addPanel">
-                <span class="plus">+</span>PANEL
-            </button>
+            <div class="preview-panel pixel-container">
+                <div class="pixel-border">
+                    <details class="preview-disclosure" id="previewDisclosure">
+                        <summary>
+                            <span class="preview-title">Folder preview</span>
+                            <span class="preview-summary-meta" id="previewSummaryMeta"></span>
+                        </summary>
+                        <div class="preview-content" id="folderPreview"></div>
+                    </details>
+                </div>
+            </div>
         </div>
 
         <div class="pulldown-content-container" id="pulldownContentContainer"></div>
     </main>
-
-    <div class="pixel-container">
-        <div class="pixel-border">
-            <div class="extension-preview">
-                <div class="preview-header">EXTENSION FOLDER PREVIEW</div>
-                <div class="preview-content" id="folderPreview"></div>
-            </div>
-        </div>
-    </div>
 
     <!-- Modal for creating and editing a bundle -->
     <div class="modal" id="buttonModal">

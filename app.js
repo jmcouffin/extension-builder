@@ -45,6 +45,7 @@ document.addEventListener("DOMContentLoaded", function () {
   window.FolderStructure.updateFolderPreview();
 
   window.UIElements.initialize();
+  window.UIElements.setupPreviewDisclosure();
   window.SaveLoad.initialize();
   window.EventHandlers.initializeApp();
 

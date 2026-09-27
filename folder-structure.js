@@ -16,11 +16,46 @@ const FolderStructure = {
     const structure = this.buildFolderStructure(this.extensionName());
     document.getElementById("folderPreview").textContent =
       this.formatFolderStructure(structure);
+    this.updateExtensionNameHint();
     // Every mutation in the app already routes through here - adding, deleting,
     // renaming, dragging, loading. That makes it the one place the draft can
     // be written from without a dozen call sites that would eventually miss
     // one and silently stop persisting.
     if (window.Draft) window.Draft.save();
+    if (window.UIElements && window.UIElements.updatePreviewSummary) {
+      window.UIElements.updatePreviewSummary();
+    }
+  },
+
+  /**
+   * Warn only when the extension name cannot be used as-is. The resulting
+   * folder name is deliberately NOT echoed here - it is the first line of the
+   * folder tree, and repeating it beside the field was just noise.
+   */
+  updateExtensionNameHint() {
+    const hint = document.getElementById("extensionNameHint");
+    if (!hint) return;
+
+    const raw = this.extensionName();
+    const folder = window.templates.sanitizeFileName(raw);
+    hint.innerHTML = "";
+
+    const warn = (text) => {
+      const span = document.createElement("span");
+      span.className = "hint-warn";
+      span.textContent = text;
+      hint.appendChild(span);
+    };
+
+    if (!raw.trim()) {
+      warn("Give the extension a name");
+    } else if (folder === "Untitled") {
+      warn("No usable folder characters in this name");
+    } else if (folder !== raw.trim()) {
+      // Spaces are legal in a pyRevit folder, but control characters and a
+      // leading dot are not, so the name gets rewritten on save.
+      warn("Saved as " + folder + ".extension");
+    }
   },
 
   extensionName() {

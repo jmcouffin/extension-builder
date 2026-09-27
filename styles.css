@@ -54,9 +54,9 @@
   --edit-btn-hover: var(--accent-hover);
 
   /* Sizing and Spacing */
-  --border-radius-sm: 3px;
-  --border-radius-md: 5px;
-  --border-radius-lg: 10px;
+  --border-radius-sm: 5px;
+  --border-radius-md: 8px;
+  --border-radius-lg: 12px;
   --shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
   --bt-delete-size: 15px;
   --bt-delete-size-small: 8px;
@@ -145,107 +145,112 @@ h1 {
   gap: 8px;
 }
 
-.download-button .pixel-container {
-  margin-bottom: 0px;
-  width: auto;
-  max-width: fit-content;
-}
-
-.download-button button,
-.save-button,
-.load-button,
-.reset-button {
-  background-color: var(--accent-strong);
-  color: var(--on-accent);
-  padding: 0px 10px 6px 10px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: background-color 0.3s;
-  width: auto;
-  min-width: 150px;
-  max-width: 200px;
-  height: 40px;
-  border: none;
-}
-
-.download-button button:hover {
-  border: 2px solid var(--accent);
-  background-color: var(--bg-input);
-  color: grey;
-}
-
-.download-button button {
-  width: 100%;
-}
+/* The four header actions share one style, defined with the rest of the button
+   tokens further down (".toolbar-action"). The old rules here gave each one a
+   different fill, a 150px minimum width and a 6px bottom padding, which is why
+   they read as a separate family from the ribbon. */
 
 .download-icon,
 .save-icon,
 .load-icon,
 .reset-icon {
-  margin-left: 10px;
-  font-weight: bold;
-  font-size: 1rem;
+  font-size: 0.9rem;
+  line-height: 1;
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Reset is destructive, so it is outlined rather than filled - it should not
-   read as the same weight as DOWNLOAD. It needs its own light surface: red
-   text directly on the mid-grey app background was only 2.8:1. */
-.reset-button {
-  background-color: var(--surface-sunken) !important;
-  color: var(--danger) !important;
-  border: 1px solid var(--danger-fill) !important;
-  box-shadow: none !important;
-}
-
-.reset-button:hover {
-  background-color: var(--danger-fill) !important;
-  color: #ffffff !important;
-}
-
-.download-button .pixel-border {
-  filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25)) !important;
-}
-
-/* ===== EXTENSION NAME ===== */
+/* ===== EXTENSION NAME =====
+   Constrained and labelled rather than a full-bleed bar, with the resulting
+   folder name shown beside it - that is the one thing the user needs to know
+   about this field, and it was previously only visible in the preview far
+   below. */
 .extension-name {
-  font-size: 1.15rem;
-  color: var(--text-pink);
-  font-weight: bold;
-  text-align: center;
-  margin: 0 0 8px;
+  margin: 0 auto 10px;
+  max-width: 620px;
 }
 
-#extensionName {
-  width: 100%;
-  padding: 4px;
-  color: var(--text-pink);
-  border: none;
-  border-radius: var(--border-radius-sm);
-  font-size: 1.15rem;
-  text-align: center;
-  margin: 0;
+.extension-name-label {
+  display: block;
+  font-size: 0.66rem;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 4px;
+}
+
+.extension-name-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 .extension-name .pixel-container {
-  width: 100%;
+  width: auto;
   max-width: 100%;
+  flex: 0 1 auto;
+  min-width: 0;
 }
 
 .extension-name .pixel-content input {
   width: 100%;
+  min-width: 0;
+}
+
+.extension-name-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.extension-name-hint .hint-folder {
+  color: var(--text-primary);
+}
+
+.extension-name-hint .hint-warn {
+  color: var(--danger);
+  font-weight: 600;
+}
+
+#extensionName {
+  width: 100%;
+  min-width: 220px;
+  padding: 6px 8px;
+  color: var(--text-primary);
+  border: 1px solid transparent;
+  border-radius: var(--border-radius-sm);
+  font-size: 1.05rem;
+  text-align: left;
+  margin: 0;
+}
+
+#extensionName:hover {
+  border-color: var(--border-subtle);
+}
+
+#extensionName:focus {
+  outline: none;
+  border-color: var(--accent);
+  background-color: var(--surface-sunken);
 }
 
 /* ===== TABS SECTION ===== */
 .tabs-container {
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   margin-bottom: 0;
+  /* The strip rule lives on the container, not on .tabs, so the tab list can
+     hug its own tabs. The + then follows the last tab instead of being pushed
+     to the far edge of the ribbon, where it read as belonging to the folder
+     preview sitting beside it. */
+  border-bottom: 1px solid var(--border-color);
 }
 
 /* ============================================================
@@ -261,9 +266,9 @@ h1 {
 .tabs {
   display: flex;
   gap: 2px;
-  flex-grow: 1;
+  /* hug the tabs, so the + sits right after the last one */
+  flex: 0 1 auto;
   align-items: flex-end;
-  border-bottom: 1px solid var(--border-color);
 }
 
 .tab {
@@ -272,6 +277,7 @@ h1 {
   position: relative;
   min-width: max-content;
   border-bottom: 2px solid transparent;
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
 }
 
 .tab.active {
@@ -301,20 +307,63 @@ h1 {
 }
 
 /* --- Ribbon surface --- */
+
+/* The ribbon and the folder tree sit side by side: the ribbon takes the bulk
+   of the width because that is what you work in, the tree is a reference panel
+   beside it. 15% is narrow for a folder path, so the tree scrolls sideways
+   rather than wrapping - wrapping would break the indentation that makes a
+   tree readable. */
+.workspace {
+  display: flex;
+  /* flex-start, not stretch: the two columns keep their own heights, so
+     expanding the folder preview does not pull the toolbar taller with it. */
+  align-items: flex-start;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
 .ribbon-container {
   display: flex;
-  margin-bottom: 14px;
+  flex: 1 1 80%;
+  min-width: 0;
+  align-items: flex-start;
+}
+
+.preview-panel {
+  flex: 0 0 20%;
+  min-width: 260px;
+  max-width: 20%;
+  display: flex;
+}
+
+.preview-panel .pixel-border {
+  width: 100%;
+  display: flex;
+}
+
+.preview-panel .preview-disclosure {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.preview-panel .preview-content {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .ribbon {
   border: 1px solid var(--border-color);
   background-color: var(--surface-ribbon);
-  border-radius: 0;
+  border-radius: var(--border-radius-sm);
   flex-grow: 1;
   display: flex;
   align-items: stretch;
   gap: 0;
-  min-height: 172px;
+  /* Sized to the tallest item a panel can hold - a 3-row stack or a full-height
+     command plus its label and the group's chevron - instead of a fixed 172px
+     that left ~37px of dead space under the chevron. */
+  min-height: 128px;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -345,42 +394,123 @@ h1 {
      instead of being stretched. */
   align-items: stretch;
   gap: 2px 4px;
-  min-height: 124px;
+  min-height: 100px;
   padding-bottom: 4px;
 }
 
 .panel-footer {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 3px;
+  gap: 5px;
   border-top: 1px solid var(--border-color);
-  padding: 3px 0 4px;
+  padding: 3px 4px 4px;
   margin-top: 2px;
 }
 
 .panel-name {
   border: none;
-  font-size: 0.6rem;
+  font-size: 0.66rem;
   text-transform: uppercase;
   letter-spacing: 1px;
-  text-align: center;
-  width: 100%;
-  color: var(--text-pink);
+  text-align: left;
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--text-primary);
   background-color: transparent;
-  padding: 1px 2px;
+  padding: 2px 3px;
+  border-radius: var(--border-radius-sm);
+}
+
+.panel-name:hover {
+  background-color: var(--surface-hover);
 }
 
 .panel-name:focus {
   outline: 1px solid var(--accent);
-  background-color: var(--bg-input);
+  background-color: var(--surface-sunken);
 }
 
 .panel-controls {
   display: flex;
   gap: 3px;
+  flex: 0 0 auto;
+}
+
+/* The small + that adds another panel, at the panel's own bottom-right, and
+   the small + at the end of the tab strip. Both replace the large labelled
+   buttons they used to be, so the ribbon has no chrome hanging off it.
+
+   The plus is drawn from two bars rather than typed as "+": a glyph's optical
+   centre depends on the font, and in a UI face it always sits slightly high and
+   slightly left. Geometry does not drift. The accessible name comes from
+   aria-label, so there is no text to hide. */
+.add-panel-inline,
+.add-tab-inline {
+  position: relative;
+  flex: 0 0 auto;
+  /* sits on the strip rule rather than half under it */
+  margin-bottom: 2px;
+  margin-left: 4px;
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  padding: 0;
+  display: flex;
+  align-items: center;
   justify-content: center;
-  flex-wrap: wrap;
+  color: var(--text-secondary);
+  background-color: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  cursor: pointer;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.add-panel-inline::before,
+.add-tab-inline::before,
+.add-panel-inline::after,
+.add-tab-inline::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  background-color: currentColor;
+  border-radius: 1px;
+}
+
+.add-panel-inline::before,
+.add-tab-inline::before {
+  width: 10px;
+  height: 2px;
+  transform: translate(-50%, -50%);
+}
+
+.add-panel-inline::after,
+.add-tab-inline::after {
+  width: 2px;
+  height: 10px;
+  transform: translate(-50%, -50%);
+}
+
+.add-panel-inline:hover,
+.add-tab-inline:hover {
+  color: #ffffff;
+  background-color: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
+.add-panel-inline:active,
+.add-tab-inline:active {
+  transform: scale(0.94);
+}
+
+.add-tab-inline {
+  width: 26px;
+  height: 26px;
+  min-width: 26px;
+  margin-left: 5px;
+  align-self: flex-end;
 }
 
 .panel-controls .add-button {
@@ -412,13 +542,16 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  /* Icon at the top, like Revit's large button. Centre-fitting instead made a
+     full-height command and a pulldown land on different lines, because their
+     content is not the same height once a caret is present. */
+  justify-content: flex-start;
   width: var(--item-width);
-  padding: 4px 2px 3px;
+  padding: 6px 2px 3px;
   gap: 4px;
   background-color: transparent;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
   cursor: grab;
   position: relative;
 }
@@ -482,12 +615,15 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: stretch;
-  align-self: center;
+  /* Top-aligned so the stack's first icon lands on the same line as a
+     full-height command's icon. The padding puts the first row's icon exactly
+     there; see the measurement in verify-browser.js. */
+  align-self: flex-start;
   gap: 1px;
-  padding: 3px 2px;
+  padding: 3px 2px 3px;
   background-color: transparent;
   border: 1px dashed transparent;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
   cursor: grab;
   position: relative;
   margin: 0;
@@ -538,37 +674,63 @@ h1 {
   word-break: normal;
 }
 
-.stack-name {
-  font-size: 0.58rem;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--text-secondary);
-  text-align: center;
-  padding: 0 2px;
-  background-color: transparent;
-  border-radius: 2px;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  cursor: text;
-}
-
+/* The add affordance is the last row of the column, exactly where the next
+   command will appear, and it is sized like one. Flow content, not an overlay:
+   an absolutely positioned badge in the corner read as decoration on the stack
+   rather than as the empty third row. */
 .stack-add-button {
-  font-size: 0.56rem;
+  position: relative;
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  width: 100%;
+  min-height: 16px;
+  padding: 2px 4px;
   color: var(--text-secondary);
   background-color: transparent;
-  border: 1px dashed var(--border-color);
-  border-radius: 2px;
-  padding: 0 4px;
+  border: 1px dashed var(--border-subtle);
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
-  text-align: center;
-  line-height: 1.3;
 }
 
-.stack-add-button:hover {
-  color: var(--accent);
-  border-color: var(--accent);
+.stack-add-button::before,
+.stack-add-button::after {
+  /* The plus, drawn in CSS so it cannot be a mis-encoded glyph. */
+  content: "";
+  background-color: currentColor;
+}
+
+.stack-add-button::before {
+  width: 7px;
+  height: 1.5px;
+}
+
+/* The vertical bar crosses the horizontal one at the centre of the row. */
+.stack-add-button::after {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1.5px;
+  height: 7px;
+  transform: translate(-50%, -50%);
+}
+
+.stack-add-button:hover,
+.stack-add-button:focus-visible {
+  color: #ffffff;
+  background-color: var(--accent-strong);
+  border-color: var(--accent-strong);
+  border-style: solid;
+  outline: none;
+}
+
+/* An under-filled stack has to show it in the warning colour, or there is no
+   way to tell a missing command from a deliberate two-command stack. */
+.stack-invalid > .stack-add-button {
+  color: var(--warn);
+  border-color: var(--warn);
 }
 
 .stack-invalid {
@@ -584,13 +746,13 @@ h1 {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   width: 62px;
-  padding: 4px 2px 3px;
+  padding: 6px 2px 3px;
   gap: 4px;
   background-color: transparent;
   border: 1px solid transparent;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   position: relative;
 }
@@ -605,9 +767,14 @@ h1 {
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  flex: 1;
-  overflow: hidden;
+  /* flex: 1 would stretch the header to the full height of the button, so a
+     chevron positioned against it would land at the bottom of the container
+     instead of under the label. The padding reserves the chevron's row. */
+  flex: 0 0 auto;
+  overflow: visible;
   width: 100%;
+  position: relative;
+  padding-bottom: 10px;
 }
 
 .group .group-header .button-icon {
@@ -639,11 +806,24 @@ h1 {
   -webkit-box-orient: vertical;
 }
 
-/* The caret that says "this opens a list". */
-.group .group-count {
-  font-size: 0.55rem;
-  color: var(--text-secondary);
-  letter-spacing: 1px;
+/* The chevron is anchored to the header, not to the whole button, so it sits
+   directly under the label. Anchored to the button it drifted to the bottom of
+   a full-height group's 130px, far from the title it belongs to. */
+/* A rotated border chevron, not a text glyph: one shape at any font size, and
+   nothing to re-encode. Anchored to the header's padded bottom edge, so it
+   always clears the label, whether the title is one line or two. */
+.group-caret {
+  position: absolute;
+  bottom: 0;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-right: 1.5px solid var(--text-secondary);
+  border-bottom: 1.5px solid var(--text-secondary);
+  /* 45deg swings the bottom-right corner of the box to bottom-centre, which
+     is what turns it into a chevron pointing DOWN. 225deg points it up. */
+  transform: translateX(-50%) rotate(45deg);
+  pointer-events: none;
 }
 
 .group-body {
@@ -659,18 +839,8 @@ h1 {
   right: -3px;
 }
 
-.add-panel-container {
-  margin-top: 8px;
-  display: flex;
-}
 .panel-extension-info {
   display: none;
-}
-
-.add-panel-container {
-  margin-top: 10px;
-  display: flex;
-  justify-content: flex-end;
 }
 
 
@@ -713,7 +883,7 @@ h1 {
   background-color: #0d639f;
   color: #ffffff;
   padding: 2px 4px;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
   pointer-events: none;
   opacity: 0;
   transition: opacity 0.12s;
@@ -740,7 +910,7 @@ h1 {
   background-color: var(--danger-fill);
   color: #ffffff;
   border: 1px solid rgba(0, 0, 0, 0.45);
-  border-radius: 3px;
+  border-radius: var(--border-radius-sm);
   cursor: pointer;
   opacity: 0;
   transition: opacity 0.12s, background-color 0.1s;
@@ -850,6 +1020,69 @@ h1 {
   width: auto;
 }
 
+/* ===== HEADER ACTIONS =====
+   Load / Save / Reset / Download sit on the app background rather than the
+   ribbon, but they are built from the same tokens as the panel's + buttons, so
+   the whole UI reads as one set. Reset keeps the danger colour, because it
+   discards the layout; Download is the one primary action. */
+.download-button .toolbar-action {
+  background-color: var(--surface-raised);
+  color: var(--text-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--border-radius-sm);
+  font-size: 0.66rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 12px;
+  min-width: 0;
+  width: auto;
+  transition: background-color 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.download-button .toolbar-action:hover {
+  background-color: var(--surface-hover);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+/* The one action that produces the deliverable. */
+.download-button .toolbar-action-primary {
+  background-color: var(--accent-strong);
+  border-color: var(--accent-strong);
+  color: var(--on-accent);
+}
+
+.download-button .toolbar-action-primary:hover {
+  background-color: var(--accent-hover);
+  border-color: var(--accent-hover);
+  color: var(--on-accent);
+}
+
+/* Reset discards work, so it stays in the danger colour. */
+.download-button .toolbar-action-danger {
+  color: var(--danger);
+  border-color: var(--danger-fill);
+  background-color: var(--surface-raised);
+}
+
+.download-button .toolbar-action-danger:hover {
+  background-color: var(--danger-fill);
+  border-color: var(--danger-fill);
+  color: #ffffff;
+}
+
+.download-button .toolbar-action:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* The pixel frame around each header action. */
 /* ===== ADD BUTTON STYLES ===== */.add-button {
   background-color: transparent;
   color: var(--text-pink);
@@ -873,66 +1106,101 @@ h1 {
   font-weight: bold;
 }
 
-/* ===== EXTENSION PREVIEW ===== */
-.extension-preview {
-  background-color: var(--bg-color-grey);
-  overflow: hidden;
-  width: 100%;
+
+/* ===== EXTENSION FOLDER PREVIEW =====
+   Collapsed by default, since the ribbon is what you work in and the tree is a
+   reference. A native <details> does the toggling, so it works without JS and
+   is keyboard accessible; the open/closed state is remembered separately from
+   the draft, because it is a view preference rather than part of the
+   extension. */
+.preview-disclosure {
+  margin: 0;
 }
 
-.preview-header {
-  font-family: var(--font-ui);
-  /* The preview block sits inside .pixel-container, which is bold. The tree is
-     reference text, not a heading, so it opts back out. */
-  font-weight: 400;
-  background-color: transparent;
-  padding: 5px 10px;
-  font-weight: bold;
+.preview-disclosure > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  user-select: none;
+  list-style: none;
+  color: var(--text-primary);
+  background-color: var(--surface-raised);
+  border-radius: var(--border-radius-sm);
+}
+
+.preview-disclosure > summary::-webkit-details-marker {
+  display: none;
+}
+
+.preview-disclosure > summary:hover {
+  background-color: var(--surface-hover);
+}
+
+.preview-disclosure > summary:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -2px;
+}
+
+.preview-title {
   font-size: 0.7rem;
-  color: var(--text-pink);
-  letter-spacing: 2px;
+  font-weight: 600;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.preview-summary-meta {
+  font-size: 0.66rem;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+/* The disclosure chevron, drawn rather than taken from the UA so it can point
+   the way the panel actually is. */
+.preview-disclosure > summary::after {
+  content: "\25B8";
+  margin-left: auto;
+  flex: 0 0 auto;
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  transition: transform 0.15s;
+}
+
+.preview-disclosure[open] > summary::after {
+  transform: rotate(90deg);
+}
+
+.preview-disclosure[open] > summary {
   border-bottom: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
 }
 
 .preview-content {
   font-family: var(--font-mono);
   font-weight: 400;
-  padding: 9px 12px;
-  color: var(--text-pink);
-  /* The tree inherits the 16px body default, which made it the largest text on
-     the page - bigger than the panel and button names beside it. Keep it in
-     step with them, and keep the line height tight for a long folder list. */
   font-size: 0.78rem;
   line-height: 1.5;
+  color: var(--text-primary);
+  background-color: var(--surface-ribbon);
+  padding: 9px 12px;
   white-space: pre;
-  overflow-x: auto;
+  /* The tree scrolls inside its own panel rather than growing the page, so a
+     deep extension does not push everything else down. */
+  max-height: 45vh;
+  overflow: auto;
   width: 100%;
-}
-
-/* Extension preview specific overrides */
-.extension-preview .pixel-container,
-.preview-content .pixel-container {
-  width: 100%;
-  max-width: 100%;
-}
-
-.extension-preview .pixel-border {
-  width: 100%;
+  border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
 }
 
 /* Special override for the extension preview section */
-main + .pixel-container {
-  width: 100%;
-  max-width: 100%;
-  display: block;
-}
-
 main + .pixel-container .pixel-border {
-  width: 100%;
-}
-
-main + .pixel-container .extension-preview,
-main + .pixel-container .preview-content {
   width: 100%;
 }
 
@@ -1376,7 +1644,7 @@ input[type="file"] {
   background: var(--surface-sunken);
   color: var(--accent);
   padding: 0 3px;
-  border-radius: 2px;
+  border-radius: var(--border-radius-sm);
 }
 
 .field-help {
