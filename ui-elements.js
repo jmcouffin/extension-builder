@@ -1,676 +1,543 @@
 const UIElements = {
-  defaultIconPath: "icon.png",
-  defaultDarkIconPath: "icon.dark.png",
-
   defaultIconData: null,
   defaultDarkIconData: null,
 
-  /**
-   * Initialize by loading default icons
-   */
+  FALLBACK_ICON:
+    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==",
+
   initialize() {
-    this.loadDefaultIcons();
+    window.FolderStructure.loadDefaultIcons().then(() => {
+      this.defaultIconData = window.FolderStructure.defaultIconData;
+      this.defaultDarkIconData = window.FolderStructure.defaultDarkIconData;
+      this.renderPanels();
+    });
   },
 
-  togglePulldownContent: function (pulldownId, pulldownElement) {
-    const pulldownContentContainer = document.getElementById(
-      "pulldownContentContainer"
-    );
+  // ---------------------------------------------------------------------------
+  // Icons
+  // ---------------------------------------------------------------------------
 
-    if (
-      window.appState.activePulldown === pulldownId &&
-      pulldownContentContainer.style.display === "block"
-    ) {
-      pulldownContentContainer.style.display = "none";
-      window.appState.activePulldown = null;
-      return;
-    }
-
-    this.showPulldownContent(pulldownId, pulldownElement);
-  },
-
-  /**
-   * Load default icons from the root
-   */
-  loadDefaultIcons() {
-    fetch(this.defaultIconPath)
-      .then((response) => {
-        if (!response.ok) {
-          console.warn(
-            `Default icon ${this.defaultIconPath} not found, using placeholder`
-          );
-          return null;
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        if (!blob) return;
-
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.defaultIconData = reader.result;
-
-          this.renderPanels();
-        };
-        reader.readAsDataURL(blob);
-      })
-      .catch((error) => {
-        console.error(`Error loading default icon:`, error);
-      });
-
-    fetch(this.defaultDarkIconPath)
-      .then((response) => {
-        if (!response.ok) {
-          console.warn(
-            `Default dark icon ${this.defaultDarkIconPath} not found`
-          );
-          return null;
-        }
-        return response.blob();
-      })
-      .then((blob) => {
-        if (!blob) return;
-
-        const reader = new FileReader();
-        reader.onload = () => {
-          this.defaultDarkIconData = reader.result;
-        };
-        reader.readAsDataURL(blob);
-      })
-      .catch((error) => {
-        console.error(`Error loading default dark icon:`, error);
-      });
-  },
-
-  /**
-   * Get icon data for an element (use default if none set)
-   */
   getIconData(element) {
-    if (element.iconData) {
-      return element.iconData;
-    }
-
-    return (
-      this.defaultIconData ||
-      "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
-    );
+    if (element && element.iconData) return element.iconData;
+    return this.defaultIconData || this.FALLBACK_ICON;
   },
 
-  /**
-   * Creates a panel DOM element
-   */
+  // ---------------------------------------------------------------------------
+  // Small DOM helpers -- everything user-supplied goes through textContent or
+  // a property assignment, never innerHTML.
+  // ---------------------------------------------------------------------------
+
+  el(tag, className, text) {
+    const node = document.createElement(tag);
+    if (className) node.className = className;
+    if (text !== undefined && text !== null) node.textContent = text;
+    return node;
+  },
+
+  iconImg(element, alt) {
+    const img = document.createElement("img");
+    img.src = this.getIconData(element);
+    img.alt = alt || "Icon";
+    return img;
+  },
+
+  /** Make a label's text editable in place. */
+  makeEditable(labelNode, currentValue, onCommit) {
+    labelNode.textContent = "";
+    const input = document.createElement("input");
+    input.type = "text";
+    input.value = currentValue;
+    labelNode.appendChild(input);
+    input.focus();
+    input.select();
+
+    const commit = () => {
+      const next = input.value.trim();
+      input.removeEventListener("blur", commit);
+      input.removeEventListener("keydown", onKey);
+      onCommit(next);
+    };
+    const onKey = (e) => {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        input.blur();
+      } else if (e.key === "Escape") {
+        e.preventDefault();
+        input.value = currentValue;
+        input.blur();
+      }
+    };
+
+    input.addEventListener("blur", commit);
+    input.addEventListener("keydown", onKey);
+  },
+
+  // ---------------------------------------------------------------------------
+  // Panels
+  // ---------------------------------------------------------------------------
+
   createPanelElement(panelId, panel) {
-    const panelElement = document.createElement("div");
-    panelElement.className = "panel";
+    const panelElement = this.el("div", "panel");
     panelElement.dataset.panelId = panelId;
     panelElement.dataset.tabId = panel.tabId;
     panelElement.style.position = "relative";
 
-    const panelContent = document.createElement("div");
-    panelContent.className = "panel-content";
-    panelContent.id = `panelContent${panelId.replace("panel", "")}`;
+    const panelContent = this.el("div", "panel-content");
 
-    panel.elements.forEach((elementId) => {
+    (panel.elements || []).forEach((elementId) => {
       const element = window.appState.elements[elementId];
-      const elementElement = this.createElementElement(elementId, element);
-      panelContent.appendChild(elementElement);
+      if (!element) return;
+      const node = this.createElementElement(elementId, element);
+      if (node) panelContent.appendChild(node);
     });
 
-    const panelControls = document.createElement("div");
-    panelControls.className = "panel-controls";
-    panelControls.innerHTML = `
-            <button class="add-button" data-panel-id="${panelId}" data-action="add-button">
-                <span class="plus">+</span>BUTTON
-            </button>
-            <button class="add-button" data-panel-id="${panelId}" data-action="add-stack">
-                <span class="plus">+</span>STACK
-            </button>
-        `;
-
-    panelControls.querySelectorAll("button").forEach((button) => {
+    // Pulldown / split groups open their own editor panel.
+    const groupActions = this.el("div", "panel-controls");
+    [
+      { action: "add-button", label: "BUTTON" },
+      { action: "add-stack", label: "STACK" },
+      { action: "add-group", label: "GROUP" },
+    ].forEach((spec) => {
+      const button = this.el("button", "add-button");
+      button.dataset.panelId = panelId;
+      button.dataset.action = spec.action;
+      const plus = this.el("span", "plus", "+");
+      button.appendChild(plus);
+      button.appendChild(document.createTextNode(spec.label));
       button.addEventListener("click", window.EventHandlers.handlePanelAction);
+      groupActions.appendChild(button);
     });
 
-    const panelNameContainer = document.createElement("div");
-    panelNameContainer.className = "panel-name-container";
-    panelNameContainer.innerHTML = `<input type="text" class="panel-name" value="${panel.name}">`;
-
-    panelNameContainer
-      .querySelector(".panel-name")
-      .addEventListener("change", function () {
-        const newName = this.value;
-
-        const tabId = panel.tabId;
-        const isDuplicate = window.appState.tabs[tabId].panels.some((pid) => {
-          if (pid === panelId) return false;
-          return (
-            window.appState.panels[pid].name.toLowerCase() ===
-            newName.toLowerCase()
-          );
-        });
-
-        if (isDuplicate) {
-          alert(
-            "Panel name already exists in this tab. Please choose a different name."
-          );
-          this.value = window.appState.panels[panelId].name;
-          return;
-        }
-
-        window.appState.panels[panelId].name = newName;
-        window.FolderStructure.updateFolderPreview();
+    const panelNameContainer = this.el("div", "panel-name-container");
+    const panelName = document.createElement("input");
+    panelName.type = "text";
+    panelName.className = "panel-name";
+    panelName.value = panel.name || "";
+    panelNameContainer.appendChild(panelName);
+    panelName.addEventListener("change", () => {
+      const newName = panelName.value.trim();
+      if (!newName) {
+        panelName.value = window.appState.panels[panelId].name;
+        return;
+      }
+      const tabId = panel.tabId;
+      const isDuplicate = (window.appState.tabs[tabId].panels || []).some((pid) => {
+        if (pid === panelId) return false;
+        return (
+          (window.appState.panels[pid].name || "").toLowerCase() ===
+          newName.toLowerCase()
+        );
       });
+      if (isDuplicate) {
+        alert("Panel name already exists in this tab. Please choose a different name.");
+        panelName.value = window.appState.panels[panelId].name;
+        return;
+      }
+      window.appState.panels[panelId].name = newName;
+      window.FolderStructure.updateFolderPreview();
+    });
 
     panelElement.appendChild(panelContent);
-    panelElement.appendChild(panelControls);
+    panelElement.appendChild(groupActions);
     panelElement.appendChild(panelNameContainer);
 
-    this.addPanelDeleteButton(panelElement, panelId);
+    this.addDeleteButton(panelElement, panelId, "panel");
 
     return panelElement;
   },
 
-  /**
-   * Creates an element (button, stack, pulldown) DOM element
-   */
-  createElementElement(elementId, element) {
-    let elementElement;
+  // ---------------------------------------------------------------------------
+  // Elements
+  // ---------------------------------------------------------------------------
 
-    switch (element.type) {
-      case "pushbutton":
-      case "smartbutton":
-      case "splitbutton":
-      case "togglebutton":
-      case "linkbutton":
-      case "invokebutton":
-        elementElement = document.createElement("div");
-        elementElement.className = `button ${element.type}`;
-        elementElement.draggable = true;
-        elementElement.dataset.type = element.type;
-        elementElement.dataset.buttonId = elementId;
-        elementElement.innerHTML = `
-                    <div class="button-icon">
-                        <img src="${this.getIconData(
-                          element
-                        )}" alt="Button Icon">
-                    </div>
-                    <div class="button-name">${element.name}</div>
-                `;
+  createElementElement(elementId, element, options) {
+    const opts = options || {};
+    const typeDef = window.BundleTypes.get(element.type);
 
-        this.addDeleteButton(elementElement, elementId);
-        break;
-
-      case "pulldown":
-        elementElement = document.createElement("div");
-        elementElement.className = "pulldown";
-        elementElement.draggable = true;
-        elementElement.dataset.type = "pulldown";
-        elementElement.dataset.buttonId = elementId;
-        elementElement.innerHTML = `
-                    <div class="button-icon">
-                        <img src="${this.getIconData(
-                          element
-                        )}" alt="Button Icon">
-                    </div>
-                    <div class="button-name">${element.name}</div>
-                `;
-
-        this.addDeleteButton(elementElement, elementId);
-
-        elementElement.addEventListener("click", (e) => {
-          this.togglePulldownContent(elementId, elementElement);
-        });
-
-        const pulldownIndicator = document.createElement("div");
-        pulldownIndicator.className = "pulldown-indicator";
-        pulldownIndicator.innerHTML = "▼";
-        pulldownIndicator.style.position = "absolute";
-        pulldownIndicator.style.bottom = "2px";
-        pulldownIndicator.style.right = "2px";
-        pulldownIndicator.style.fontSize = "10px";
-        pulldownIndicator.style.color = "#555";
-        pulldownIndicator.style.padding = "2px";
-        pulldownIndicator.style.cursor = "pointer";
-
-        pulldownIndicator.addEventListener("click", (e) => {
-          e.stopPropagation();
-          this.togglePulldownContent(elementId, elementElement);
-        });
-
-        elementElement.appendChild(pulldownIndicator);
-        break;
-
-      case "stack":
-        elementElement = document.createElement("div");
-        elementElement.className = "stack";
-        elementElement.draggable = true;
-        elementElement.dataset.type = "stack";
-        elementElement.dataset.buttonId = elementId;
-
-        if (element.children && element.children.length > 0) {
-          element.children.forEach((childId) => {
-            const child = window.appState.elements[childId];
-            const childElement = this.createStackedButtonElement(
-              childId,
-              child
-            );
-            elementElement.appendChild(childElement);
-          });
-        }
-
-        if (!element.children || element.children.length < 3) {
-          const addButtonElement = document.createElement("div");
-          addButtonElement.className = "stack-add-button";
-          addButtonElement.innerHTML = "+ Add Button";
-          addButtonElement.addEventListener("click", () => {
-            if (element.children && element.children.length >= 3) return;
-
-            window.ModalHandlers.openButtonModal("stack", elementId);
-          });
-          elementElement.appendChild(addButtonElement);
-        }
-
-        const stackName = document.createElement("div");
-        stackName.className = "stack-name";
-        stackName.textContent = element.name;
-        elementElement.appendChild(stackName);
-
-        this.addDeleteButton(elementElement, elementId);
-
-        stackName.addEventListener("click", function () {
-          const currentText = this.textContent;
-          elementElement.classList.add("stack-edit-mode");
-          this.innerHTML = `<input type="text" value="${currentText}" style="width:90%;">`;
-          const input = this.querySelector("input");
-          input.focus();
-
-          input.addEventListener("blur", function () {
-            const newName = this.value;
-            window.appState.elements[elementId].name = newName;
-            this.parentElement.textContent = newName;
-            elementElement.classList.remove("stack-edit-mode");
-            window.FolderStructure.updateFolderPreview();
-          });
-
-          input.addEventListener("keypress", function (e) {
-            if (e.key === "Enter") {
-              this.blur();
-            }
-          });
-        });
-
-        break;
+    if (!typeDef) {
+      return this.createUnknownElement(elementId, element);
     }
 
-    if (elementElement) {
-      window.DragDrop.setupElementDragEvents(elementElement);
-      window.EventHandlers.initializeButtonEvents(elementElement);
+    if (typeDef.container) {
+      return typeDef.postfix === ".stack"
+        ? this.createStackElement(elementId, element)
+        : this.createGroupElement(elementId, element);
     }
 
-    return elementElement;
+    return this.createCommandElement(elementId, element, typeDef, opts);
   },
 
-  /**
-   * Creates a button element for use inside stacks
-   */
-  createStackedButtonElement(buttonId, button) {
-    const buttonElement = document.createElement("div");
-    buttonElement.className = `button stacked-button ${button.type}`;
-    buttonElement.dataset.type = button.type;
-    buttonElement.dataset.buttonId = buttonId;
-    buttonElement.draggable = true;
+  createUnknownElement(elementId, element) {
+    const node = this.el("div", "button unknown-type");
+    node.dataset.type = element.type || "";
+    node.dataset.buttonId = elementId;
+    node.draggable = true;
+    const name = this.el("div", "button-name", element.name || "(unnamed)");
+    node.appendChild(name);
+    node.title =
+      "This element has an unrecognised type (" +
+      (element.type || "none") +
+      "). It cannot be exported.";
+    this.addDeleteButton(node, elementId, "element");
+    return node;
+  },
 
-    const contentWrapper = document.createElement("div");
-    contentWrapper.className = "stacked-button-content";
-    contentWrapper.style.display = "flex";
-    contentWrapper.style.flexDirection = "row";
-    contentWrapper.style.alignItems = "center";
-    contentWrapper.style.width = "100%";
-    contentWrapper.style.overflow = "hidden";
+  createCommandElement(elementId, element, typeDef, opts) {
+    const node = this.el("div", "button " + typeDef.postfix.slice(1));
+    node.dataset.type = element.type;
+    node.dataset.buttonId = elementId;
+    node.draggable = true;
+    node.title = typeDef.label + " - " + typeDef.postfix;
 
-    const iconDiv = document.createElement("div");
-    iconDiv.className = "button-icon";
-    iconDiv.style.minWidth = "18px";
-    iconDiv.style.height = "18px";
-    iconDiv.style.marginRight = "4px";
-    iconDiv.style.marginBottom = "0";
-    iconDiv.innerHTML = `<img src="${this.getIconData(
-      button
-    )}" alt="Button Icon">`;
+    const iconWrap = this.el("div", "button-icon");
+    iconWrap.appendChild(this.iconImg(element));
+    node.appendChild(iconWrap);
 
-    const nameDiv = document.createElement("div");
-    nameDiv.className = "button-name";
-    nameDiv.style.overflow = "hidden";
-    nameDiv.style.textOverflow = "ellipsis";
-    nameDiv.style.whiteSpace = "nowrap";
-    nameDiv.style.flexGrow = "1";
-    nameDiv.textContent = button.name;
-
-    contentWrapper.appendChild(iconDiv);
-    contentWrapper.appendChild(nameDiv);
-    buttonElement.appendChild(contentWrapper);
-
-    if (button.type === "pulldown") {
-      const pulldownIndicator = document.createElement("span");
-      pulldownIndicator.className = "pulldown-indicator";
-      pulldownIndicator.innerHTML = "▼";
-      pulldownIndicator.title = "Open Pulldown Content";
-
-      pulldownIndicator.addEventListener("click", (e) => {
+    const name = this.el("div", "button-name");
+    if (opts.inlineEdit) {
+      this.makeEditable(name, element.name, (next) => {
+        this.renameElement(elementId, next);
+        window.UIElements.renderPanels();
+      });
+    } else {
+      name.textContent = element.name;
+      name.addEventListener("click", (e) => {
         e.stopPropagation();
-        window.UIElements.togglePulldownContent(buttonId);
+        this.makeEditable(name, element.name, (next) => {
+          this.renameElement(elementId, next);
+        });
       });
-
-      contentWrapper.appendChild(pulldownIndicator);
     }
+    node.appendChild(name);
 
-    this.addDeleteButton(buttonElement, buttonId);
-
-    nameDiv.addEventListener("click", function (e) {
+    this.addDeleteButton(node, elementId, "element");
+    node.addEventListener("dblclick", (e) => {
       e.stopPropagation();
-      const currentText = this.textContent;
-      this.innerHTML = `<input type="text" value="${currentText}" style="width:90%;">`;
-      const input = this.querySelector("input");
-      input.focus();
-
-      input.addEventListener("blur", function () {
-        const newName = this.value;
-        window.appState.elements[buttonId].name = newName;
-        this.parentElement.textContent = newName;
-        window.FolderStructure.updateFolderPreview();
-      });
-
-      input.addEventListener("keypress", function (e) {
-        if (e.key === "Enter") {
-          this.blur();
-        }
-      });
+      window.ModalHandlers.editElement(elementId);
     });
 
-    buttonElement.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      window.ModalHandlers.editElement(buttonId);
-    });
-
-    window.DragDrop.setupElementDragEvents(buttonElement);
-
-    return buttonElement;
+    window.DragDrop.setupElementDragEvents(node);
+    return node;
   },
 
-  /**
-   * Shows pulldown content for a pulldown button
-   */
-  showPulldownContent(pulldownId, pulldownElement) {
-    window.appState.activePulldown = pulldownId;
-    const pulldown = window.appState.elements[pulldownId];
-    const pulldownContentContainer = document.getElementById(
-      "pulldownContentContainer"
+  createGroupElement(elementId, element) {
+    const typeDef = window.BundleTypes.get(element.type);
+    const node = this.el("div", "group " + typeDef.postfix.slice(1));
+    node.dataset.type = element.type;
+    node.dataset.buttonId = elementId;
+    node.draggable = true;
+    node.title = typeDef.label + " - " + typeDef.postfix;
+
+    const header = this.el("div", "group-header");
+    header.appendChild(this.iconImg(element));
+    const name = this.el("div", "button-name", element.name);
+    name.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.makeEditable(name, element.name, (next) => {
+        this.renameElement(elementId, next);
+      });
+    });
+    header.appendChild(name);
+    const count = this.el(
+      "div",
+      "group-count",
+      String((element.children || []).length)
     );
+    header.appendChild(count);
+    node.appendChild(header);
 
-    pulldownContentContainer.innerHTML = "";
-
-    const contentDiv = document.createElement("div");
-    contentDiv.className = "pulldown-content";
-
-    const label = document.createElement("div");
-    label.className = "pulldown-label";
-    label.textContent = "PULLDOWN CONTENT";
-    contentDiv.appendChild(label);
-
-    if (pulldown.children && pulldown.children.length > 0) {
-      pulldown.children.forEach((childId) => {
-        const child = window.appState.elements[childId];
-        const childElement = this.createElementElement(childId, child);
-        contentDiv.appendChild(childElement);
-      });
-    }
-
-    const addButton = document.createElement("button");
-    addButton.className = "add-button";
-    addButton.innerHTML = '<span class="plus">+</span> NEW BUTTON';
-    addButton.addEventListener("click", () => {
-      window.ModalHandlers.openButtonModal("pulldown", pulldownId);
+    const body = this.el("div", "group-body");
+    (element.children || []).forEach((childId) => {
+      const child = window.appState.elements[childId];
+      if (!child) return;
+      const childNode = this.createElementElement(childId, child);
+      if (childNode) body.appendChild(childNode);
     });
-    contentDiv.appendChild(addButton);
 
-    const closeButton = document.createElement("button");
-    closeButton.className = "add-button";
-    closeButton.style.marginTop = "10px";
-    closeButton.style.backgroundColor = "#95a5a6";
-    closeButton.innerHTML = "CLOSE";
-    closeButton.addEventListener("click", (e) => {
+    const add = this.el("button", "add-button group-add", "+ ADD COMMAND");
+    add.addEventListener("click", (e) => {
       e.stopPropagation();
-      pulldownContentContainer.style.display = "none";
-      window.appState.activePulldown = null;
+      window.ModalHandlers.openButtonModal(element.type, elementId);
     });
-    contentDiv.appendChild(closeButton);
+    body.appendChild(add);
+    node.appendChild(body);
 
-    pulldownContentContainer.appendChild(contentDiv);
-    pulldownContentContainer.style.display = "block";
+    node.addEventListener("click", (e) => {
+      if (e.target.closest(".group-add") || e.target.closest(".delete-button")) {
+        return;
+      }
+      this.openGroupEditor(elementId, node);
+    });
+    node.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      window.ModalHandlers.editElement(elementId);
+    });
 
-    if (pulldownElement) {
-      const rect = pulldownElement.getBoundingClientRect();
-      pulldownContentContainer.style.position = "absolute";
-      pulldownContentContainer.style.top = rect.bottom + 5 + "px";
-      pulldownContentContainer.style.left = rect.left + "px";
-      pulldownContentContainer.style.zIndex = "1000";
-    }
+    this.addDeleteButton(node, elementId, "element");
+    window.DragDrop.setupElementDragEvents(node);
+    return node;
   },
-  addTabDeleteButton: function () {
-    document.querySelectorAll(".tab").forEach((tabElement) => {
-      if (tabElement.querySelector(".tab-delete-button")) return;
 
-      const tabId = tabElement.dataset.tabId;
+  openGroupEditor(groupId, anchorNode) {
+    const container = document.getElementById("pulldownContentContainer");
+    const group = window.appState.elements[groupId];
+    if (!group) return;
 
-      const deleteButton = document.createElement("button");
-      deleteButton.className = "tab-delete-button";
-      deleteButton.innerHTML = "";
-      deleteButton.title = "Delete Tab";
+    container.innerHTML = "";
+    const content = this.el("div", "pulldown-content");
+    content.appendChild(this.el("div", "pulldown-label", group.name.toUpperCase()));
 
-      deleteButton.addEventListener("click", (e) => {
+    (group.children || []).forEach((childId) => {
+      const child = window.appState.elements[childId];
+      if (!child) return;
+      const node = this.createElementElement(childId, child);
+      if (node) content.appendChild(node);
+    });
+
+    const add = this.el("button", "add-button group-editor-add");
+    add.appendChild(this.el("span", "plus", "+"));
+    add.appendChild(document.createTextNode(" ADD COMMAND"));
+    add.addEventListener("click", (e) => {
+      e.stopPropagation();
+      window.ModalHandlers.openButtonModal(group.type, groupId);
+    });
+    content.appendChild(add);
+
+    const close = this.el("button", "add-button", "CLOSE");
+    close.style.marginTop = "10px";
+    close.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.closeGroupEditor();
+    });
+    content.appendChild(close);
+
+    container.appendChild(content);
+    container.style.display = "block";
+    container.dataset.groupId = groupId;
+
+    const rect = anchorNode.getBoundingClientRect();
+    container.style.position = "absolute";
+    container.style.top = rect.bottom + 5 + "px";
+    container.style.left = Math.max(8, rect.left) + "px";
+    container.style.zIndex = "1000";
+  },
+
+  closeGroupEditor() {
+    const container = document.getElementById("pulldownContentContainer");
+    if (!container) return;
+    container.style.display = "none";
+    container.innerHTML = "";
+    delete container.dataset.groupId;
+    window.appState.activePulldown = null;
+  },
+
+  createStackElement(elementId, element) {
+    const typeDef = window.BundleTypes.get("stack");
+    const node = this.el("div", "stack");
+    node.dataset.type = "stack";
+    node.dataset.buttonId = elementId;
+    node.draggable = true;
+    node.title = "Stack - " + typeDef.postfix;
+
+    const children = element.children || [];
+    children.forEach((childId) => {
+      const child = window.appState.elements[childId];
+      if (!child) return;
+      const childNode = this.createElementElement(childId, child);
+      if (childNode) node.appendChild(childNode);
+    });
+
+    const remaining = typeDef.maxChildren - children.length;
+    if (remaining > 0) {
+      const add = this.el(
+        "div",
+        "stack-add-button",
+        remaining + " slot" + (remaining === 1 ? "" : "s") + " free"
+      );
+      add.addEventListener("click", (e) => {
         e.stopPropagation();
-
-        if (Object.keys(window.appState.tabs).length <= 1) {
-          alert("Cannot delete the last tab. Add another tab first.");
-          return;
-        }
-
-        // Removed confirmation dialog and performing action directly
-        const tab = window.appState.tabs[tabId];
-
-        tab.panels.forEach((panelId) => {
-          const panel = window.appState.panels[panelId];
-
-          if (panel && panel.elements) {
-            panel.elements.forEach((elementId) => {
-              const element = window.appState.elements[elementId];
-
-              if (
-                element &&
-                (element.type === "stack" || element.type === "pulldown") &&
-                element.children
-              ) {
-                element.children.forEach((childId) => {
-                  delete window.appState.elements[childId];
-                });
-              }
-              delete window.appState.elements[elementId];
-            });
-          }
-
-          delete window.appState.panels[panelId];
-        });
-
-        delete window.appState.tabs[tabId];
-
-        const remainingTabIds = Object.keys(window.appState.tabs);
-        if (remainingTabIds.length > 0) {
-          window.EventHandlers.activateTab(remainingTabIds[0]);
-        }
-
-        tabElement.remove();
-
-        window.FolderStructure.updateFolderPreview();
+        window.ModalHandlers.openButtonModal("stack", elementId);
       });
+      node.appendChild(add);
+    }
 
-      deleteButton.addEventListener("mouseover", function () {
-        this.style.opacity = "1";
-      });
-
-      deleteButton.addEventListener("mouseout", function () {
-        this.style.opacity = "0.7";
-      });
-
-      tabElement.style.position = "relative";
-
-      tabElement.appendChild(deleteButton);
-    });
-  },
-  addPanelDeleteButton: function (panelElement, panelId) {
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "panel-delete-button";
-    deleteButton.innerHTML = "";
-    deleteButton.title = "Delete Panel";
-    deleteButton.style.position = "absolute";
-
-    deleteButton.addEventListener("click", (e) => {
+    const name = this.el("div", "stack-name", element.name);
+    name.addEventListener("click", (e) => {
       e.stopPropagation();
+      this.makeEditable(name, element.name, (next) => {
+        this.renameElement(elementId, next);
+        name.textContent = window.appState.elements[elementId].name;
+      });
+    });
+    node.appendChild(name);
 
-      const panel = window.appState.panels[panelId];
+    if (children.length < typeDef.minChildren) {
+      node.classList.add("stack-invalid");
+      node.title =
+        "A stack needs at least " +
+        typeDef.minChildren +
+        " commands. With fewer, pyRevit will not show it at all.";
+    }
+
+    this.addDeleteButton(node, elementId, "element");
+    node.addEventListener("dblclick", (e) => {
+      e.stopPropagation();
+      window.ModalHandlers.editElement(elementId);
+    });
+    window.DragDrop.setupElementDragEvents(node);
+    return node;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Mutation
+  // ---------------------------------------------------------------------------
+
+  renameElement(elementId, next) {
+    const element = window.appState.elements[elementId];
+    if (!element) return;
+    const trimmed = String(next || "").trim();
+    if (!trimmed) {
+      window.UIElements.renderPanels();
+      return;
+    }
+    element.name = trimmed;
+    window.FolderStructure.updateFolderPreview();
+  },
+
+  /**
+   * Delete an element and everything under it. One place, so a delete can no
+   * longer leave a dangling child behind.
+   */
+  removeElementRecursive(elementId) {
+    const element = window.appState.elements[elementId];
+    if (!element) return;
+
+    const def = window.BundleTypes.get(element.type);
+    if (def && def.container && element.children) {
+      element.children.forEach((childId) => {
+        this.removeElementRecursive(childId);
+      });
+    }
+
+    if (element.panelId) {
+      const panel = window.appState.panels[element.panelId];
+      if (panel) {
+        panel.elements = panel.elements.filter((id) => id !== elementId);
+      }
+    } else if (element.parentId) {
+      const parent = window.appState.elements[element.parentId];
+      if (parent && parent.children) {
+        parent.children = parent.children.filter((id) => id !== elementId);
+      }
+    }
+
+    delete window.appState.elements[elementId];
+  },
+
+  // ---------------------------------------------------------------------------
+  // Delete buttons
+  // ---------------------------------------------------------------------------
+
+  addDeleteButton(node, id, kind) {
+    const button = this.el("button", kind + "-delete-button");
+    button.title = "Delete";
+    button.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.handleDelete(id, kind);
+    });
+    node.appendChild(button);
+  },
+
+  handleDelete(id, kind) {
+    if (kind === "tab") {
+      if (Object.keys(window.appState.tabs).length <= 1) {
+        alert("Cannot delete the last tab. Add another tab first.");
+        return;
+      }
+      const tab = window.appState.tabs[id];
+      (tab.panels || []).forEach((panelId) => {
+        const panel = window.appState.panels[panelId];
+        if (!panel) return;
+        (panel.elements || []).forEach((elementId) => {
+          this.removeElementRecursive(elementId);
+        });
+        delete window.appState.panels[panelId];
+      });
+      delete window.appState.tabs[id];
+
+      const remaining = Object.keys(window.appState.tabs);
+      if (remaining.length) window.EventHandlers.activateTab(remaining[0]);
+      window.FolderStructure.updateFolderPreview();
+      return;
+    }
+
+    if (kind === "panel") {
+      const panel = window.appState.panels[id];
       if (!panel) return;
-
-      const tabId = panel.tabId;
-      const tab = window.appState.tabs[tabId];
-
-      if (tab.panels.length <= 1) {
+      const tab = window.appState.tabs[panel.tabId];
+      if (tab && tab.panels.length <= 1) {
         alert(
           "Cannot delete the last panel in a tab. Add another panel first or delete the entire tab."
         );
         return;
       }
-
-      // Removed confirmation dialog and performing action directly
-      if (panel.elements && panel.elements.length > 0) {
-        panel.elements.forEach((elementId) => {
-          const element = window.appState.elements[elementId];
-
-          if (
-            element &&
-            (element.type === "stack" || element.type === "pulldown") &&
-            element.children
-          ) {
-            element.children.forEach((childId) => {
-              delete window.appState.elements[childId];
-            });
-          }
-          delete window.appState.elements[elementId];
-        });
-      }
-
-      tab.panels = tab.panels.filter((id) => id !== panelId);
-
-      delete window.appState.panels[panelId];
-
-      window.UIElements.renderPanels();
-
-      window.FolderStructure.updateFolderPreview();
-    });
-
-    deleteButton.addEventListener("mouseover", function () {
-      this.style.opacity = "1";
-    });
-
-    deleteButton.addEventListener("mouseout", function () {
-      this.style.opacity = "0.7";
-    });
-
-    panelElement.appendChild(deleteButton);
-  },
-  addDeleteButton: function (elementElement, elementId) {
-    const deleteButton = document.createElement("button");
-    deleteButton.className = "delete-button";
-    deleteButton.innerHTML = "";
-    deleteButton.title = "Delete Element";
-
-    deleteButton.addEventListener("click", (e) => {
-      e.stopPropagation();
-      const element = window.appState.elements[elementId];
-
-      // Removed confirmation dialog and performing action directly
-      if (element.type === "stack" || element.type === "pulldown") {
-        if (element.children && element.children.length > 0) {
-          // Removed confirmation dialog for child elements
-          element.children.forEach((childId) => {
-            delete window.appState.elements[childId];
-          });
+      (panel.elements || []).forEach((elementId) => {
+        this.removeElementRecursive(elementId);
+      });
+      if (tab) tab.panels = tab.panels.filter((pid) => pid !== id);
+      delete window.appState.panels[id];
+    } else {
+      const element = window.appState.elements[id];
+      const def = element ? window.BundleTypes.get(element.type) : null;
+      if (def && def.container && (element.children || []).length) {
+        const kindLabel = def.label.toLowerCase();
+        if (
+          !confirm(
+            "This " +
+              kindLabel +
+              " contains " +
+              element.children.length +
+              " command(s). Delete them too?"
+          )
+        ) {
+          return;
         }
       }
+      this.removeElementRecursive(id);
+    }
 
-      if (element.panelId) {
-        const panel = window.appState.panels[element.panelId];
-        panel.elements = panel.elements.filter((id) => id !== elementId);
-      } else if (element.parentId) {
-        const parent = window.appState.elements[element.parentId];
-        parent.children = parent.children.filter((id) => id !== elementId);
-      }
-
-      delete window.appState.elements[elementId];
-
-      window.UIElements.renderPanels();
-
-      window.FolderStructure.updateFolderPreview();
-    });
-
-    deleteButton.addEventListener("mouseover", function () {
-      this.style.opacity = "1";
-    });
-
-    deleteButton.addEventListener("mouseout", function () {
-      this.style.opacity = "0.7";
-    });
-
-    elementElement.appendChild(deleteButton);
+    this.closeGroupEditor();
+    window.UIElements.renderPanels();
+    window.FolderStructure.updateFolderPreview();
   },
 
-  /**
-   * Renders panels for the active tab
-   */
+  // ---------------------------------------------------------------------------
+  // Render
+  // ---------------------------------------------------------------------------
+
   renderPanels() {
     const tabId = window.appState.activeTabId;
-    const panelIds = window.appState.tabs[tabId].panels;
+    const tab = window.appState.tabs[tabId];
     const ribbonContainer = document.getElementById("ribbonContainer");
+    if (!tab || !ribbonContainer) return;
 
+    this.closeGroupEditor();
     ribbonContainer.innerHTML = "";
 
-    panelIds.forEach((panelId) => {
+    (tab.panels || []).forEach((panelId) => {
       const panel = window.appState.panels[panelId];
-      const panelElement = this.createPanelElement(panelId, panel);
-      ribbonContainer.appendChild(panelElement);
+      if (!panel) return;
+      ribbonContainer.appendChild(this.createPanelElement(panelId, panel));
     });
-
-    this.addTabDeleteButton();
   },
+
   setupDocumentClickHandler() {
     document.addEventListener("click", (e) => {
-      const pulldownContentContainer = document.getElementById(
-        "pulldownContentContainer"
-      );
-
-      if (
-        pulldownContentContainer &&
-        pulldownContentContainer.style.display === "block"
-      ) {
-        if (!pulldownContentContainer.contains(e.target)) {
-          const clickedPulldown = e.target.closest(".pulldown");
-          if (
-            !clickedPulldown ||
-            clickedPulldown.dataset.buttonId !== window.appState.activePulldown
-          ) {
-            pulldownContentContainer.style.display = "none";
-            window.appState.activePulldown = null;
-          }
-        }
-      }
+      const container = document.getElementById("pulldownContentContainer");
+      if (!container || container.style.display !== "block") return;
+      if (container.contains(e.target)) return;
+      if (e.target.closest(".group")) return;
+      this.closeGroupEditor();
     });
   },
 };

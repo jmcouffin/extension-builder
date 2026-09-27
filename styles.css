@@ -324,12 +324,19 @@ h1 {
 /* ===== BUTTON STYLES ===== */
 .button,
 .stack,
-.pulldown,
+.group,
 .smartbutton,
 .splitbutton,
-.togglebutton,
+.splitpushbutton,
+.urlbutton,
+.panelbutton,
 .linkbutton,
-.invokebutton {
+.invokebutton,
+.combobox,
+.nobutton,
+.content,
+.pushbutton,
+.toggle {
   background-color: rgb(124, 41, 124);
   border: 1px dashed #ccc;
   border-radius: var(--border-radius-sm);
@@ -347,7 +354,7 @@ h1 {
 }
 
 .panel-content .stack,
-.panel-content .pulldown {
+.panel-content .group {
   width: 85px;
   margin-bottom: 5px;
 }
@@ -392,68 +399,56 @@ h1 {
   padding: 2px;
 }
 
-/* Button Type Indicators */
-.smartbutton::after {
-  content: "🧠";
+/* ===== BUTTON POSTFIX BADGE =====
+   The folder suffix is what pyRevit actually keys off, so it is worth seeing.
+   It is hidden at rest because a 70px-wide button cannot hold ".splitpushbutton"
+   without colliding with the delete control; hover reveals it, and the exact
+   postfix is also in the element's tooltip. */
+.smartbutton::after,
+.toggle::after { content: ".smartbutton"; }
+.splitbutton::after { content: ".splitbutton"; }
+.splitpushbutton::after { content: ".splitpushbutton"; }
+.urlbutton::after { content: ".urlbutton"; }
+.panelbutton::after { content: ".panelbutton"; }
+.linkbutton::after,
+.invokebutton::after { content: ".NET assembly"; }
+.combobox::after,
+.nobutton::after { content: "no script"; }
+.content::after { content: "needs .rfa"; }
+
+.smartbutton::after,
+.toggle::after,
+.splitbutton::after,
+.splitpushbutton::after,
+.urlbutton::after,
+.panelbutton::after,
+.linkbutton::after,
+.invokebutton::after,
+.combobox::after,
+.nobutton::after,
+.content::after {
   position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 1px 3px;
+  top: 3px;
+  left: 3px;
+  max-width: none;
+  white-space: nowrap;
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  background-color: rgba(0, 0, 0, 0.85);
+  color: #b8ffb8;
+  padding: 2px 4px;
   border-radius: 2px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.12s;
+  z-index: 6;
 }
 
-.splitbutton::after {
-  content: "⚡";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 1px 3px;
-  border-radius: 2px;
+.button:hover::after,
+.button:focus-within::after {
+  opacity: 1;
 }
-
-.togglebutton::after {
-  content: "🔄";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 1px 3px;
-  border-radius: 2px;
-}
-
-.linkbutton::after {
-  content: "🔗";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 1px 3px;
-  border-radius: 2px;
-}
-
-.invokebutton::after {
-  content: "⚙️";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  font-size: 10px;
-  background-color: rgba(0, 0, 0, 0.7);
-  color: white;
-  padding: 1px 3px;
-  border-radius: 2px;
-}
-
-/* Delete Buttons */
 .delete-button {
   width: var(--bt-delete-size-small);
   height: var(--bt-delete-size-small);
@@ -462,7 +457,8 @@ h1 {
 }
 
 .tab-delete-button,
-.panel-delete-button {
+.panel-delete-button,
+.element-delete-button {
   width: var(--bt-delete-size);
   height: var(--bt-delete-size);
   top: var(--bt-delete-offset-big);
@@ -471,7 +467,8 @@ h1 {
 
 .delete-button,
 .tab-delete-button,
-.panel-delete-button {
+.panel-delete-button,
+.element-delete-button {
   position: absolute;
   background-color: var(--delete-btn-color);
   color: white;
@@ -489,7 +486,8 @@ h1 {
 
 .delete-button:hover,
 .tab-delete-button:hover,
-.panel-delete-button:hover {
+.panel-delete-button:hover,
+.element-delete-button:hover {
   opacity: 1;
   background-color: var(--delete-btn-hover);
 }
@@ -599,77 +597,120 @@ h1 {
   color: var(--text-pink);
 }
 
-/* ===== PULLDOWN STYLES ===== */
-.pulldown {
+/* ===== GROUP STYLES (pulldown / splitbutton / splitpushbutton) ===== */
+.group {
+  display: flex;
+  flex-direction: column;
+  width: 70px;
+  height: 152px;
+  cursor: pointer;
+}
+
+.group .group-header {
   display: flex;
   flex-direction: column;
   align-items: center;
-  min-height: 90px;
-  width: 70px;
-  height: 140px;
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.25);
+  flex: 1;
+  overflow: hidden;
 }
 
-.pulldown-indicator {
-  position: absolute;
-  bottom: 2px;
-  right: 2px;
-  font-size: 10px;
-  color: var(--text-secondary);
-  padding: 2px;
-  margin-right: 10px;
-  cursor: pointer;
-  background-color: var(--bg-color-grey);
-  border-radius: var(--border-radius-sm);
-  transition: background-color 0.2s;
+.group .group-header .button-icon {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.pulldown-indicator:hover {
-  background-color: #ddd;
+.group .group-header .button-icon img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
+.group .group-header .button-name {
+  font-size: 0.7rem;
+  color: var(--text-pink);
+  text-align: center;
+  word-break: break-word;
+  -webkit-line-clamp: 2;
+}
+
+.group .group-count {
+  font-size: 0.65rem;
+  color: var(--bg-yellow);
+  margin-top: 2px;
+}
+
+.group .group-body {
+  display: none;
+}
+
+/* The in-ribbon add button lives in .group-body, which is collapsed. The
+   floating editor's add button must stay visible, hence the descendant scope. */
+.group-body .group-add {
+  display: none;
+}
+
+/* The floating editor for a group's contents. */
 .pulldown-content-container {
   background-color: white;
   border: 1px solid var(--border-color);
   border-radius: var(--border-radius-md);
-  padding: 15px;
-  margin-top: 10px;
+  padding: 10px;
   display: none;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
   z-index: 1000 !important;
 }
 
 .pulldown-content {
-  min-width: 180px !important;
-  width: auto !important;
-  max-width: 300px;
-  margin: 0 auto;
+  min-width: 150px;
+  max-width: 320px;
+  max-height: 60vh;
+  overflow-y: auto;
   border: 1px solid #eee;
   padding: 5px;
 }
 
 .pulldown-label {
   text-align: center;
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
-  margin-bottom: 5px;
+  margin-bottom: 6px;
 }
 
 .pulldown-content .button {
   width: 100% !important;
-  min-height: 35px;
-  padding: 5px;
-  margin-bottom: 5px;
+  height: auto !important;
+  min-height: 34px;
+  flex-direction: row;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+
+.pulldown-content .button .button-icon {
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  margin-bottom: 0;
 }
 
 .pulldown-content .button .button-name {
+  text-align: left;
+  height: auto;
+  font-size: 0.75rem;
+  -webkit-line-clamp: unset;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   width: auto;
 }
 
-/* ===== ADD BUTTON STYLES ===== */
-.add-button {
+/* ===== ADD BUTTON STYLES ===== */.add-button {
   background-color: transparent;
   color: var(--text-pink);
   border: 1px solid var(--bg-yellow);
@@ -1028,46 +1069,6 @@ input[type="file"] {
   user-select: none;
 }
 
-/* ===== LOADING OVERLAY ===== */
-.loading-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 1000;
-}
-
-.loading-content {
-  background-color: white;
-  padding: 20px;
-  border-radius: var(--border-radius-md);
-  text-align: center;
-}
-
-.spinner {
-  border: 4px solid #f3f3f3;
-  border-top: 4px solid #3498db;
-  border-radius: 50%;
-  width: 30px;
-  height: 30px;
-  animation: spin 2s linear infinite;
-  margin: 0 auto 10px;
-}
-
-@keyframes spin {
-  0% {
-    transform: rotate(0deg);
-  }
-  100% {
-    transform: rotate(360deg);
-  }
-}
-
 /* ===== ANIMATIONS ===== */
 @keyframes textGlow {
   0% {
@@ -1097,4 +1098,171 @@ input[type="file"] {
 .glowing-text-title {
   animation: textGlow 8s infinite;
   color: var(--bg-yellow);
+}
+/* ============================================================
+   BUNDLE TYPE PICKER
+   ============================================================ */
+.modal-section-title {
+  color: var(--text-pink);
+  font-size: 0.85rem;
+  margin: 0 0 6px 0;
+  letter-spacing: 1px;
+}
+
+#buttonTypeGrid {
+  max-height: 210px;
+  overflow-y: auto;
+  margin-bottom: 14px;
+}
+
+.type-group {
+  margin-bottom: 10px;
+}
+
+.type-group h4 {
+  margin: 0 0 4px 0;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--text-secondary);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.button-types {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.button-type {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  padding: 5px 7px;
+  cursor: pointer;
+  min-width: 74px;
+  text-align: center;
+  background: #fbfbfb;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.button-type:hover:not(.selected) {
+  border-color: var(--bg-yellow);
+}
+
+.button-type.selected {
+  border-color: #7c297c;
+  background: #f3e6f3;
+  box-shadow: inset 0 0 0 1px #7c297c;
+}
+
+.type-icon {
+  font-family: Arial, Helvetica, sans-serif;
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #7c297c;
+}
+
+.type-name {
+  font-size: 0.65rem;
+  color: var(--text-primary, #333);
+  line-height: 1.2;
+  margin-top: 2px;
+}
+
+.type-postfix {
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 0.55rem;
+  color: #888;
+  margin-top: 2px;
+}
+
+.type-note {
+  font-size: 0.7rem;
+  color: #a33;
+  margin-bottom: 10px;
+  padding: 5px 7px;
+  background: #fdf0f0;
+  border-left: 3px solid #a33;
+}
+
+/* ============================================================
+   ADVANCED DISCLOSURE
+   ============================================================ */
+.advanced-disclosure {
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-sm);
+  margin: 12px 0;
+  background: #fafafa;
+}
+
+.advanced-disclosure > summary {
+  cursor: pointer;
+  padding: 7px 10px;
+  font-size: 0.75rem;
+  color: #7c297c;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.advanced-hint {
+  text-transform: none;
+  letter-spacing: 0;
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.advanced-body {
+  padding: 4px 12px 12px 12px;
+  border-top: 1px solid var(--border-color);
+}
+
+.advanced-field {
+  margin-top: 10px;
+}
+
+.field-help {
+  font-size: 0.65rem;
+  color: var(--text-secondary);
+  margin-top: 3px;
+  line-height: 1.35;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+.field-help code,
+.form-group code {
+  background: #eee;
+  padding: 0 3px;
+  border-radius: 2px;
+  font-size: 0.95em;
+}
+
+.form-group select {
+  background-color: white;
+  border: 1px solid var(--border-color);
+  padding: 4px;
+  font-size: 0.8rem;
+  width: 100%;
+}
+
+/* ============================================================
+   STACK VALIDITY
+   ============================================================ */
+.stack-invalid {
+  outline: 2px solid #e6a700;
+  outline-offset: -2px;
+}
+
+.stack-invalid .stack-add-button {
+  border-color: #e6a700;
+  color: #e6a700;
+}
+
+.unknown-type {
+  border-color: #a33 !important;
+  border-style: dashed;
+}
+
+.unknown-type .button-name {
+  color: #a33;
 }

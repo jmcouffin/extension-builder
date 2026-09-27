@@ -1,52 +1,48 @@
-// Main application entry point for pyRevit Extension Builder
-document.addEventListener('DOMContentLoaded', function() {
-    // Make sure all modules are loaded and available
-    if (
-        window.templates && 
-        window.appState && 
-        window.UIElements && 
-        window.EventHandlers && 
-        window.ModalHandlers && 
-        window.DragDrop && 
-        window.FolderStructure &&
-        window.SaveLoad  // Add SaveLoad module check
-    ) {
-        // Initialize UI Elements first to load default icons
-        if (typeof window.UIElements.initialize === 'function') {
-            window.UIElements.initialize();
-        }
-        
-        // Initialize Save/Load functionality
-        if (typeof window.SaveLoad.initialize === 'function') {
-            window.SaveLoad.initialize();
-        }
-        
-        // Initialize the application
-        window.EventHandlers.initializeApp();
-        
-        console.log('pyRevit Extension Builder initialized successfully');
-    } else {
-        console.error('Failed to initialize pyRevit Extension Builder: Missing modules');
-        
-        // Check which modules are missing
-        const modules = {
-            'templates': window.templates,
-            'appState': window.appState,
-            'UIElements': window.UIElements,
-            'EventHandlers': window.EventHandlers,
-            'ModalHandlers': window.ModalHandlers,
-            'DragDrop': window.DragDrop,
-            'FolderStructure': window.FolderStructure,
-            'SaveLoad': window.SaveLoad
-        };
-        
-        const missingModules = [];
-        for (const [name, module] of Object.entries(modules)) {
-            if (!module) {
-                missingModules.push(name);
-            }
-        }
-        
-        console.error('Missing modules:', missingModules.join(', '));
+// Main application entry point.
+document.addEventListener("DOMContentLoaded", function () {
+  const modules = {
+    BundleTypes: window.BundleTypes,
+    templates: window.templates,
+    appState: window.appState,
+    UIElements: window.UIElements,
+    EventHandlers: window.EventHandlers,
+    ModalHandlers: window.ModalHandlers,
+    DragDrop: window.DragDrop,
+    FolderStructure: window.FolderStructure,
+    SaveLoad: window.SaveLoad,
+  };
+
+  const missing = Object.keys(modules).filter((name) => !modules[name]);
+  if (missing.length) {
+    console.error("Extension Builder failed to start. Missing:", missing.join(", "));
+    return;
+  }
+
+  // Every postfix in the table must be one pyRevit actually knows, otherwise
+  // the type would be skipped silently on load.
+  Object.keys(window.BundleTypes.types).forEach((id) => {
+    if (!window.BundleTypes.isRealPostfix(window.BundleTypes.types[id].postfix)) {
+      console.error(
+        "Bundle type '" +
+          id +
+          "' uses postfix '" +
+          window.BundleTypes.types[id].postfix +
+          "', which pyRevit does not recognise."
+      );
     }
+  });
+
+  // Render the initial shell before icons arrive, so the app is usable even
+  // if icon.png fails to load.
+  window.EventHandlers.renderTabs();
+  window.EventHandlers.activateTab(window.appState.activeTabId);
+  window.FolderStructure.updateFolderPreview();
+
+  window.UIElements.initialize();
+  window.SaveLoad.initialize();
+  window.EventHandlers.initializeApp();
+
+  if (typeof JSZip === "undefined") {
+    console.warn("JSZip did not load; the DOWNLOAD button will not work.");
+  }
 });

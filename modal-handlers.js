@@ -1,484 +1,629 @@
 const ModalHandlers = {
+  DEFAULT_ICON:
+    "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==",
+
+  // ---------------------------------------------------------------------------
+  // Type picker, generated from BundleTypes
+  // ---------------------------------------------------------------------------
+
   /**
-   * Opens the button creation modal
+   * Render one tile per type legal in the target container.
+   *
+   * mode "command"   -> every non-container type legal in the container.
+   * mode "container" -> only the container types, for the +GROUP button. Without
+   *                    this the pulldown / splitbutton / splitpushbutton /
+   *                    combobox bundles could never be created.
    */
-  openButtonModal(target, containerId) {
-    const buttonModal = document.getElementById("buttonModal");
+  buildTypePicker(containerKey, mode) {
+    const host = document.getElementById("buttonTypeGrid");
+    host.innerHTML = "";
+    const wantContainers = mode === "container";
 
-    buttonModal.dataset.target = target;
-    buttonModal.dataset.containerId = containerId;
+    const groups = new Map();
+    window.BundleTypes.orderedIds().forEach((id) => {
+      const def = window.BundleTypes.get(id);
+      if (!!def.container !== wantContainers) return;
+      if (window.BundleTypes.rejectionReason(containerKey, id)) return;
+      if (!groups.has(def.group)) groups.set(def.group, []);
+      groups.get(def.group).push({ id: id, def: def });
+    });
 
-    let defaultButtonName = "Button 1";
+    groups.forEach((items, label) => {
+      const section = document.createElement("div");
+      section.className = "type-group";
+      const heading = document.createElement("h4");
+      heading.textContent = label;
+      section.appendChild(heading);
 
-    if (target === "panel") {
-      const panel = window.appState.panels[containerId];
-      if (panel && panel.elements) {
-        const buttonNames = panel.elements
-          .map((id) => window.appState.elements[id])
-          .filter((el) => el && el.name && el.name.match(/^Button \d+$/))
-          .map((el) => parseInt(el.name.replace("Button ", "")));
+      const row = document.createElement("div");
+      row.className = "button-types";
+      items.forEach(({ id, def }) => {
+        const tile = document.createElement("div");
+        tile.className = "button-type";
+        tile.dataset.type = id;
+        tile.title = def.help || def.postfix;
 
-        if (buttonNames.length > 0) {
-          buttonNames.sort((a, b) => a - b);
+        const glyph = document.createElement("div");
+        glyph.className = "type-icon";
+        glyph.textContent = def.glyph;
+        tile.appendChild(glyph);
 
-          let nextNum = 1;
-          for (const num of buttonNames) {
-            if (num !== nextNum) {
-              break;
-            }
-            nextNum++;
-          }
-          defaultButtonName = `Button ${nextNum}`;
-        }
+        const name = document.createElement("div");
+        name.className = "type-name";
+        name.textContent = def.label;
+        tile.appendChild(name);
+
+        const postfix = document.createElement("div");
+        postfix.className = "type-postfix";
+        postfix.textContent = def.postfix;
+        tile.appendChild(postfix);
+
+        tile.addEventListener("click", () => this.selectButtonType(tile));
+        row.appendChild(tile);
+      });
+      section.appendChild(row);
+      host.appendChild(section);
+    });
+  },
+
+  selectButtonType(tile) {
+    if (!tile) return;
+    document.querySelectorAll(".button-type").forEach((t) => {
+      t.classList.remove("selected");
+    });
+    tile.classList.add("selected");
+    this.applyModeVisibility();
+  },
+
+  selectedType() {
+    const tile = document.querySelector(".button-type.selected");
+    return tile ? tile.dataset.type : null;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Advanced fields, declared by the type table
+  // ---------------------------------------------------------------------------
+
+  buildAdvancedFields() {
+    const host = document.getElementById("advancedFields");
+    host.innerHTML = "";
+    this.fieldNodes = {};
+
+    Object.keys(window.BundleTypes.FIELDS).forEach((key) => {
+      const def = window.BundleTypes.FIELDS[key];
+      const group = document.createElement("div");
+      group.className = "form-group advanced-field";
+      group.dataset.field = key;
+
+      const label = document.createElement("label");
+      label.setAttribute("for", "adv_" + key);
+      label.textContent = def.label + (def.optional ? " (optional)" : "");
+      group.appendChild(label);
+
+      let input;
+      if (def.input === "select") {
+        input = document.createElement("select");
+        def.options.forEach((opt) => {
+          const o = document.createElement("option");
+          o.value = opt.value;
+          o.textContent = opt.label;
+          input.appendChild(o);
+        });
+      } else if (def.input === "textarea") {
+        input = document.createElement("textarea");
+        input.rows = def.rows || 4;
+      } else {
+        input = document.createElement("input");
+        input.type = def.input === "url" ? "url" : "text";
       }
-    } else if (target === "stack" || target === "pulldown") {
-      const container = window.appState.elements[containerId];
-      if (container && container.children) {
-        const buttonNames = container.children
-          .map((id) => window.appState.elements[id])
-          .filter((el) => el && el.name && el.name.match(/^Button \d+$/))
-          .map((el) => parseInt(el.name.replace("Button ", "")));
+      input.id = "adv_" + key;
+      if (def.placeholder) input.placeholder = def.placeholder;
+      group.appendChild(input);
 
-        if (buttonNames.length > 0) {
-          buttonNames.sort((a, b) => a - b);
-          let nextNum = 1;
-          for (const num of buttonNames) {
-            if (num !== nextNum) {
-              break;
-            }
-            nextNum++;
-          }
-          defaultButtonName = `Button ${nextNum}`;
-        }
+      if (def.help) {
+        const help = document.createElement("div");
+        help.className = "field-help";
+        help.textContent = def.help;
+        group.appendChild(help);
       }
-    }
 
-    document.getElementById("buttonName").value = defaultButtonName;
+      this.fieldNodes[key] = { group: group, input: input, def: def };
+      host.appendChild(group);
+    });
+  },
+
+  /** Show only the fields the selected type declares, and nothing else. */
+  syncAdvancedFields() {
+    const typeId = this.selectedType();
+    const typeDef = typeId ? window.BundleTypes.get(typeId) : null;
+    if (!typeDef) return;
+
+    let anyVisible = false;
+
+    Object.keys(this.fieldNodes).forEach((key) => {
+      const node = this.fieldNodes[key];
+      const wanted = typeDef.fields.indexOf(key) !== -1;
+
+      if (!wanted) {
+        node.group.style.display = "none";
+        return;
+      }
+
+      anyVisible = true;
+      node.group.style.display = "block";
+      node.input.disabled = false;
+
+      if (typeDef.forcedContext && key === "context") {
+        // pyRevit forces these to zero-doc regardless (genericcomps.py:633-635)
+        node.input.value = typeDef.forcedContext;
+        node.input.disabled = true;
+      }
+    });
+
+    const disclosure = document.getElementById("advancedDisclosure");
+    const body = document.getElementById("advancedBody");
+    body.style.display = anyVisible ? "block" : "none";
+    disclosure.style.display = anyVisible ? "block" : "none";
+    if (!anyVisible) disclosure.open = false;
+
+    // Extra icon slots only matter for some types.
+    const onIconGroup = document.getElementById("onIconGroup");
+    if (onIconGroup) onIconGroup.style.display = typeDef.toggle ? "block" : "none";
+  },
+
+  readAdvancedFields() {
+    const values = {};
+    const typeId = this.selectedType();
+    const typeDef = typeId ? window.BundleTypes.get(typeId) : null;
+    if (!typeDef) return values;
+
+    typeDef.fields.forEach((key) => {
+      const node = this.fieldNodes[key];
+      if (!node) return;
+      values[key] = node.input.value.trim();
+    });
+    return values;
+  },
+
+  setAdvancedFields(element, typeDef) {
+    Object.keys(this.fieldNodes).forEach((key) => {
+      const node = this.fieldNodes[key];
+      const value = element ? element[key] : "";
+      node.input.value =
+        typeDef.forcedContext && key === "context"
+          ? typeDef.forcedContext
+          : value || "";
+    });
+  },
+
+  // ---------------------------------------------------------------------------
+  // Open / close
+  // ---------------------------------------------------------------------------
+
+  openButtonModal(target, containerId, presetType) {
+    const modal = document.getElementById("buttonModal");
+    modal.dataset.target = target;
+    modal.dataset.containerId = containerId;
+    modal.dataset.mode = "command";
+    delete modal.dataset.elementId;
+    delete modal.dataset.originalType;
+
+    const containerKey = target === "panel" ? "panel" : target;
+
+    this.resetCommonFields();
+    this.buildTypePicker(containerKey, "command");
+    this.buildAdvancedFields();
+
+    const first = presetType
+      ? document.querySelector('.button-type[data-type="' + presetType + '"]')
+      : document.querySelector(".button-type");
+    this.selectButtonType(first || document.querySelector(".button-type"));
+
+    document.getElementById("modalTitle").textContent = "New Command";
+    document.getElementById("createButton").textContent = "Create";
+    this.applyModeVisibility();
+    modal.style.display = "block";
+  },
+
+  /** +GROUP: pick a container type, hide the fields a container cannot use. */
+  openGroupModal(containerId) {
+    const modal = document.getElementById("buttonModal");
+    modal.dataset.target = "panel";
+    modal.dataset.containerId = containerId;
+    modal.dataset.mode = "container";
+    delete modal.dataset.elementId;
+    delete modal.dataset.originalType;
+
+    this.resetCommonFields();
+    this.buildTypePicker("panel", "container");
+    this.buildAdvancedFields();
+    this.selectButtonType(document.querySelector(".button-type"));
+
+    document.getElementById("modalTitle").textContent = "New Group";
+    document.getElementById("createButton").textContent = "Create";
+    this.applyModeVisibility();
+    modal.style.display = "block";
+  },
+
+  resetCommonFields() {
+    document.getElementById("buttonName").value = this.nextDefaultGroupName();
     document.getElementById("buttonTitle").value = "";
     document.getElementById("buttonTooltip").value = "";
     document.getElementById("buttonCode").value = "";
-    document.getElementById("buttonUrl").value = "";
-    document.getElementById("buttonCommand").value = "";
-    document.getElementById("iconPreview").innerHTML =
-      '<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==" alt="Default Icon">';
     document.getElementById("buttonIcon").value = "";
+    document.getElementById("buttonDarkIcon").value = "";
+    document.getElementById("buttonOnIcon").value = "";
+    const host = document.getElementById("iconPreview");
+    host.innerHTML = "";
+    const img = document.createElement("img");
+    img.src = this.DEFAULT_ICON;
+    img.alt = "Default Icon";
+    host.appendChild(img);
+    const note = document.getElementById("typeNote");
+    note.style.display = "none";
+    note.textContent = "";
+  },
 
-    const buttonTypes = document.querySelectorAll(".button-type");
+  nextDefaultGroupName() {
+    const taken = Object.keys(window.appState.elements)
+      .map((k) => window.appState.elements[k])
+      .filter((e) => e && window.BundleTypes.get(e.type).container)
+      .map((e) => e.name);
+    if (taken.indexOf("NEW GROUP") === -1) return "NEW GROUP";
+    let n = 1;
+    while (taken.indexOf("NEW GROUP " + n) !== -1) n++;
+    return "NEW GROUP " + n;
+  },
 
-    buttonTypes.forEach((type) => {
-      type.style.display = "block";
-    });
+  /** Containers have no script, so those fields go away for them. */
+  applyModeVisibility() {
+    const typeId = this.selectedType();
+    const typeDef = typeId ? window.BundleTypes.get(typeId) : null;
+    const isCommand = !!(typeDef && typeDef.script);
 
-    if (target === "pulldown") {
-      const pulldownOption = document.querySelector(
-        '.button-type[data-type="pulldown"]'
-      );
-      if (pulldownOption) {
-        pulldownOption.style.display = "none";
-      }
+    document.getElementById("buttonCodeGroup").style.display = isCommand
+      ? "block"
+      : "none";
+    document.getElementById("buttonTitle").disabled = !typeDef || !typeDef.script;
+    document.getElementById("buttonTooltip").disabled = !typeDef || !typeDef.script;
 
-      this.selectButtonType(
-        document.querySelector('.button-type[data-type="pushbutton"]')
-      );
-    } else {
-      this.selectButtonType(
-        document.querySelector('.button-type[data-type="pushbutton"]')
-      );
+    const iconGroup = document.getElementById("buttonIconGroup");
+    if (iconGroup) {
+      iconGroup.style.display = typeDef && (typeDef.icons || []).length ? "block" : "none";
     }
 
-    // Hide special fields initially
-    document.getElementById("linkUrlGroup").style.display = "none";
-    document.getElementById("invokeCommandGroup").style.display = "none";
+    const onIconGroup = document.getElementById("onIconGroup");
+    if (onIconGroup) onIconGroup.style.display = typeDef && typeDef.toggle ? "block" : "none";
 
-    buttonModal.style.display = "block";
-    buttonModal.style.zIndex = "2000";
-
-    this.setupModalKeyboardEvents();
+    this.syncAdvancedFields();
   },
 
-  setupModalKeyboardEvents() {
-    document.removeEventListener("keydown", this.handleModalKeyDown);
-
-    document.addEventListener("keydown", this.handleModalKeyDown);
-  },
-
-  /**
-   * Handle keyboard events for the modal
-   */
-  handleModalKeyDown(e) {
-    const buttonModal = document.getElementById("buttonModal");
-
-    if (buttonModal.style.display !== "block") return;
-
-    if (e.key === "Enter") {
-      e.preventDefault();
-      window.ModalHandlers.createNewElement();
-    }
-
-    if (e.key === "Escape") {
-      e.preventDefault();
-      window.ModalHandlers.closeModal();
-    }
-  },
-
-  /**
-   * Closes the button creation modal
-   */
-  closeModal() {
-    const buttonModal = document.getElementById("buttonModal");
-    buttonModal.style.display = "none";
-
-    document.getElementById("createButton").textContent = "Create";
-
-    document.removeEventListener("keydown", this.handleModalKeyDown);
-  },
-
-  /**
-   * Selects a button type in the modal
-   */
-  selectButtonType(typeElement) {
-    document.querySelectorAll(".button-type").forEach((type) => {
-      type.classList.remove("selected");
-    });
-    typeElement.classList.add("selected");
-
-    // Show/hide special fields based on button type
-    const selectedType = typeElement.dataset.type;
-    const linkUrlGroup = document.getElementById("linkUrlGroup");
-    const invokeCommandGroup = document.getElementById("invokeCommandGroup");
-
-    // Hide all special fields first
-    linkUrlGroup.style.display = "none";
-    invokeCommandGroup.style.display = "none";
-
-    // Show relevant fields
-    if (selectedType === "linkbutton") {
-      linkUrlGroup.style.display = "block";
-    } else if (selectedType === "invokebutton") {
-      invokeCommandGroup.style.display = "block";
-    }
-  },
-
-  /**
-   * Shows a preview of the selected icon
-   */
-  previewIcon() {
-    const file = this.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function (e) {
-        document.getElementById(
-          "iconPreview"
-        ).innerHTML = `<img src="${e.target.result}" alt="Icon Preview">`;
-      };
-      reader.readAsDataURL(file);
-    }
-  },
-
-  /**
-   * Edit an existing element
-   */
   editElement(elementId) {
     const element = window.appState.elements[elementId];
     if (!element) return;
 
-    const buttonModal = document.getElementById("buttonModal");
+    const typeDef = window.BundleTypes.get(element.type);
+    if (!typeDef) {
+      alert(
+        'Element "' +
+          element.name +
+          '" has an unrecognised type (' +
+          element.type +
+          "). It cannot be edited."
+      );
+      return;
+    }
 
-    buttonModal.dataset.target = "edit";
-    buttonModal.dataset.elementId = elementId;
-    buttonModal.dataset.originalType = element.type;
+    const modal = document.getElementById("buttonModal");
+    modal.dataset.target = "edit";
+    modal.dataset.containerId = element.panelId || element.parentId;
+    modal.dataset.elementId = elementId;
+    modal.dataset.originalType = element.type;
 
     document.getElementById("buttonName").value = element.name || "";
     document.getElementById("buttonTitle").value = element.title || "";
     document.getElementById("buttonTooltip").value = element.tooltip || "";
     document.getElementById("buttonCode").value = element.code || "";
-    document.getElementById("buttonUrl").value = element.url || "";
-    document.getElementById("buttonCommand").value = element.command || "";
+    document.getElementById("buttonIcon").value = "";
+    document.getElementById("buttonDarkIcon").value = "";
+    document.getElementById("buttonOnIcon").value = "";
 
+    const previewHost = document.getElementById("iconPreview");
+    previewHost.innerHTML = "";
+    const preview = document.createElement("img");
+    preview.src = this.DEFAULT_ICON;
     if (element.iconData) {
-      document.getElementById(
-        "iconPreview"
-      ).innerHTML = `<img src="${element.iconData}" alt="Icon Preview">`;
-    } else {
-      document.getElementById(
-        "iconPreview"
-      ).innerHTML = `<img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg==" alt="Default Icon">`;
+      preview.src = element.iconData;
+      preview.alt = "Current Icon";
     }
+    previewHost.appendChild(preview);
 
-    const buttonTypes = document.querySelectorAll(".button-type");
+    // The picker is scoped to the container this element already lives in, and
+    // must offer the type it currently has.
+    const containerKey = element.parentId
+      ? window.appState.elements[element.parentId].type
+      : "panel";
+    const isContainer = !!typeDef.container;
+    this.buildTypePicker(containerKey, isContainer ? "container" : "command");
+    this.buildAdvancedFields();
 
-    buttonTypes.forEach((type) => {
-      type.style.display = "block";
-    });
-
-    if (
-      element.parentId &&
-      window.appState.elements[element.parentId].type === "pulldown"
-    ) {
-      const pulldownOption = document.querySelector(
-        '.button-type[data-type="pulldown"]'
-      );
-      if (pulldownOption) {
-        pulldownOption.style.display = "none";
-      }
-    }
-
-    this.selectButtonType(
-      document.querySelector(`.button-type[data-type="${element.type}"]`)
+    const tile = document.querySelector(
+      '.button-type[data-type="' + element.type + '"]'
     );
+    if (tile) {
+      this.selectButtonType(tile);
+    }
+
+    const note = document.getElementById("typeNote");
+    if (tile) {
+      note.style.display = "none";
+      note.textContent = "";
+    } else {
+      // Reached via an old layout: the type is legal in pyRevit but not
+      // creatable in this container, so say so instead of crashing.
+      note.textContent =
+        "A " +
+        typeDef.label +
+        " (" +
+        typeDef.postfix +
+        ") already exists here, but it cannot be created from this container.";
+      note.style.display = "block";
+    }
+
+    this.setAdvancedFields(element, typeDef);
+    this.applyModeVisibility();
 
     document.getElementById("createButton").textContent = "Update";
-
-    buttonModal.style.display = "block";
+    document.getElementById("modalTitle").textContent = "Edit " + typeDef.label;
+    modal.style.display = "block";
   },
+
+  closeModal() {
+    document.getElementById("buttonModal").style.display = "none";
+    document.getElementById("createButton").textContent = "Create";
+  },
+
+  // ---------------------------------------------------------------------------
+  // Naming
+  // ---------------------------------------------------------------------------
+
+  /** Lowest unused "Button N" among a container's children. */
+  nextDefaultName(containerId) {
+    let siblings = [];
+    const panel = window.appState.panels[containerId];
+    if (panel) siblings = panel.elements || [];
+    else {
+      const container = window.appState.elements[containerId];
+      if (container) siblings = container.children || [];
+    }
+
+    const used = siblings
+      .map((id) => window.appState.elements[id])
+      .filter((el) => el && /^Button \d+$/.test(el.name || ""))
+      .map((el) => parseInt(el.name.replace("Button ", ""), 10));
+
+    let n = 1;
+    while (used.indexOf(n) !== -1) n++;
+    return "Button " + n;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Icons
+  // ---------------------------------------------------------------------------
+
+  bindIconInput(inputId, previewHostId) {
+    const input = document.getElementById(inputId);
+    const host = document.getElementById(previewHostId);
+    if (!input || !host) return;
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        host.innerHTML = "";
+        const img = document.createElement("img");
+        img.src = e.target.result;
+        img.alt = "Icon Preview";
+        host.appendChild(img);
+      };
+      reader.readAsDataURL(file);
+    });
+  },
+
+  readFileAsDataUrl(inputId) {
+    const input = document.getElementById(inputId);
+    if (!input || !input.files || !input.files.length) {
+      return Promise.resolve(null);
+    }
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => resolve(e.target.result);
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(input.files[0]);
+    });
+  },
+
+  // ---------------------------------------------------------------------------
+  // Create / update
+  // ---------------------------------------------------------------------------
 
   createNewElement() {
-    const buttonModal = document.getElementById("buttonModal");
-    const target = buttonModal.dataset.target;
-
-    const newType = document.querySelector(".button-type.selected").dataset
-      .type;
-    let name = document.getElementById("buttonName").value;
-    const title = document.getElementById("buttonTitle").value;
-    const tooltip = document.getElementById("buttonTooltip").value;
-    const code = document.getElementById("buttonCode").value;
-    const url = document.getElementById("buttonUrl").value;
-    const command = document.getElementById("buttonCommand").value;
-
-    // Validation for special button types
-    if (newType === "linkbutton" && !url) {
-      alert("URL is required for Link Button");
+    const modal = document.getElementById("buttonModal");
+    const newType = this.selectedType();
+    if (!newType) {
+      alert("Pick a command type first.");
       return;
     }
 
-    if (newType === "invokebutton" && !command) {
-      alert("Revit Command is required for Invoke Button");
+    const typeDef = window.BundleTypes.get(newType);
+    const name = document.getElementById("buttonName").value.trim();
+    if (!name) {
+      alert("A name is required - it becomes the bundle folder name.");
       return;
     }
 
-    if (!name || name.trim() === "") {
-      name = this.generateDefaultButtonName(
-        target,
-        buttonModal.dataset.containerId
-      );
-    }
+    const advanced = this.readAdvancedFields();
 
-    const iconInput = document.getElementById("buttonIcon");
-    let iconData = null;
-
-    if (target === "edit") {
-      const elementId = buttonModal.dataset.elementId;
-      const element = window.appState.elements[elementId];
-      const originalType = buttonModal.dataset.originalType;
-
-      const isTypeChanged = originalType !== newType;
-
-      if (iconInput.files.length === 0) {
-        iconData = element.iconData;
-        updateElement();
-      } else {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          iconData = e.target.result;
-          updateElement();
-        };
-        reader.readAsDataURL(iconInput.files[0]);
-      }
-
-      function updateElement() {
-        if (
-          (originalType === "pulldown" || originalType === "stack") &&
-          newType === "pushbutton"
-        ) {
-          if (element.children && element.children.length > 0) {
-            if (
-              !confirm(
-                `This ${originalType} contains ${element.children.length} button(s). Changing it to a pushbutton will delete these buttons. Continue?`
-              )
-            ) {
-              ModalHandlers.closeModal();
-              return;
-            }
-          }
-
-          if (element.children) {
-            element.children.forEach((childId) => {
-              delete window.appState.elements[childId];
-            });
-            delete element.children;
-          }
-        }
-
-        if (
-          (newType === "pulldown" || newType === "stack") &&
-          originalType === "pushbutton"
-        ) {
-          element.children = [];
-        }
-
-        element.type = newType;
-        element.name = name;
-        element.title = title;
-        element.tooltip = tooltip;
-        element.code = code;
-        element.iconData = iconData;
-
-        // Set special properties for new button types
-        if (newType === "linkbutton") {
-          element.url = url;
-        } else {
-          delete element.url;
-        }
-
-        if (newType === "invokebutton") {
-          element.command = command;
-        } else {
-          delete element.command;
-        }
-
-        ModalHandlers.closeModal();
-
-        document.getElementById("createButton").textContent = "Create";
-
-        window.UIElements.renderPanels();
-
-        window.FolderStructure.updateFolderPreview();
-      }
-    } else {
-      const containerId = buttonModal.dataset.containerId;
-
-      if (iconInput.files.length > 0) {
-        const reader = new FileReader();
-        reader.onload = function (e) {
-          iconData = e.target.result;
-          finishElementCreation();
-        };
-        reader.readAsDataURL(iconInput.files[0]);
-      } else {
-        finishElementCreation();
-      }
-
-      function finishElementCreation() {
-        const isDuplicate = ModalHandlers.checkDuplicateButtonName(
-          name,
-          target,
-          containerId
-        );
-        if (isDuplicate) {
+    // Required fields: without these pyRevit logs an error and the button
+    // never binds.
+    if (typeDef.required) {
+      for (let i = 0; i < typeDef.required.length; i++) {
+        const key = typeDef.required[i];
+        if (!advanced[key]) {
+          const fieldDef = window.BundleTypes.FIELDS[key];
           alert(
-            "A button with this name already exists in the same container. Please choose a different name."
+            (fieldDef ? fieldDef.label : key) + " is required for a " + typeDef.label + "."
           );
+          this.openDisclosure();
           return;
         }
-
-        const elementId = `element${window.appState.nextIds.element++}`;
-
-        const elementData = {
-          type: newType,
-          name: name,
-          title: title,
-          tooltip: tooltip,
-          code: code,
-          iconData: iconData,
-          children:
-            newType === "pulldown" || newType === "stack" ? [] : undefined,
-        };
-
-        // Add special properties for new button types
-        if (newType === "linkbutton") {
-          elementData.url = url;
-        }
-
-        if (newType === "invokebutton") {
-          elementData.command = command;
-        }
-
-        window.appState.elements[elementId] = elementData;
-
-        if (target === "panel") {
-          window.appState.panels[containerId].elements.push(elementId);
-          window.appState.elements[elementId].panelId = containerId;
-        } else if (target === "stack" || target === "pulldown") {
-          if (!window.appState.elements[containerId].children) {
-            window.appState.elements[containerId].children = [];
-          }
-          window.appState.elements[containerId].children.push(elementId);
-          window.appState.elements[elementId].parentId = containerId;
-        }
-
-        ModalHandlers.closeModal();
-
-        if (target === "pulldown") {
-          window.UIElements.showPulldownContent(containerId);
-        } else {
-          window.UIElements.renderPanels();
-        }
-
-        window.FolderStructure.updateFolderPreview();
       }
     }
+
+    const target = modal.dataset.target;
+    const containerId = modal.dataset.containerId;
+
+    Promise.all([
+      this.readFileAsDataUrl("buttonIcon"),
+      this.readFileAsDataUrl("buttonDarkIcon"),
+      this.readFileAsDataUrl("buttonOnIcon"),
+    ]).then(([iconData, iconDarkData, iconOnData]) => {
+      const payload = {
+        type: newType,
+        name: name,
+        title: document.getElementById("buttonTitle").value.trim(),
+        tooltip: document.getElementById("buttonTooltip").value.trim(),
+        code: document.getElementById("buttonCode").value,
+        iconData: iconData,
+        iconDarkData: iconDarkData,
+        iconOnData: iconOnData,
+      };
+      Object.keys(advanced).forEach((k) => {
+        payload[k] = advanced[k];
+      });
+
+      if (target === "edit") {
+        this.applyEdit(modal.dataset.elementId, payload, modal.dataset.originalType);
+      } else {
+        this.applyCreate(payload, target, containerId);
+      }
+    });
   },
 
-  /**
-   * Generate a default button name for a new element
-   */
-  generateDefaultButtonName(target, containerId) {
-    let existingButtons = [];
+  openDisclosure() {
+    const disclosure = document.getElementById("advancedDisclosure");
+    if (disclosure) disclosure.open = true;
+  },
 
+  applyCreate(payload, target, containerId) {
+    if (this.isDuplicateName(payload.name, containerId, target)) {
+      alert(
+        "A command with this name already exists in the same container. Please choose a different name."
+      );
+      return;
+    }
+
+    const elementId = "element" + window.appState.nextIds.element++;
+    if (window.BundleTypes.get(payload.type).container) payload.children = [];
+    window.appState.elements[elementId] = payload;
+
+    if (target === "panel") {
+      window.appState.panels[containerId].elements.push(elementId);
+      payload.panelId = containerId;
+    } else {
+      const container = window.appState.elements[containerId];
+      if (!container.children) container.children = [];
+      container.children.push(elementId);
+      payload.parentId = containerId;
+    }
+
+    this.closeModal();
+    this.afterMutation();
+  },
+
+  applyEdit(elementId, payload, originalType) {
+    const element = window.appState.elements[elementId];
+    if (!element) return;
+
+    const originalDef = window.BundleTypes.get(originalType);
+    const newDef = window.BundleTypes.get(payload.type);
+
+    if (originalType !== payload.type) {
+      const originalChildren = (element.children || []).length;
+      const wasContainer = originalDef && originalDef.container;
+      const isContainer = newDef.container;
+
+      if (wasContainer && !isContainer) {
+        if (originalChildren) {
+          if (
+            !confirm(
+              "This " +
+                originalDef.label.toLowerCase() +
+                " contains " +
+                originalChildren +
+                " command(s). Changing it to a " +
+                newDef.label.toLowerCase() +
+                " will delete them. Continue?"
+            )
+          ) {
+            this.closeModal();
+            return;
+          }
+          element.children.forEach((childId) => {
+            window.UIElements.removeElementRecursive(childId);
+          });
+        }
+        delete element.children;
+        delete payload.children;
+      } else if (!wasContainer && isContainer) {
+        payload.children = [];
+      }
+    }
+
+    // A container keeps its children; a leaf must never carry any, because
+    // FolderStructure would otherwise recurse into folders pyRevit ignores.
+    if (newDef.container) {
+      payload.children = element.children || [];
+    } else {
+      delete payload.children;
+    }
+
+    // Icon fields: an empty upload means "keep what is there".
+    if (!payload.iconData) payload.iconData = element.iconData || null;
+    if (!payload.iconDarkData) payload.iconDarkData = element.iconDarkData || null;
+    if (!payload.iconOnData) payload.iconOnData = element.iconOnData || null;
+
+    Object.keys(payload).forEach((key) => {
+      if (payload[key] === undefined) {
+        delete element[key];
+      } else {
+        element[key] = payload[key];
+      }
+    });
+
+    this.closeModal();
+    this.afterMutation();
+  },
+
+  afterMutation() {
+    window.UIElements.renderPanels();
+    window.FolderStructure.updateFolderPreview();
+  },
+
+  isDuplicateName(name, containerId, target) {
+    const lowered = name.toLowerCase();
+    let siblings = [];
     if (target === "panel") {
       const panel = window.appState.panels[containerId];
-      if (panel && panel.elements) {
-        existingButtons = panel.elements
-          .map((id) => window.appState.elements[id])
-          .filter((el) => el && el.name && el.name.match(/^Button \d+$/))
-          .map((el) => parseInt(el.name.replace("Button ", "")));
-      }
-    } else if (target === "stack" || target === "pulldown") {
+      siblings = panel ? panel.elements || [] : [];
+    } else {
       const container = window.appState.elements[containerId];
-      if (container && container.children) {
-        existingButtons = container.children
-          .map((id) => window.appState.elements[id])
-          .filter((el) => el && el.name && el.name.match(/^Button \d+$/))
-          .map((el) => parseInt(el.name.replace("Button ", "")));
-      }
+      siblings = container ? container.children || [] : [];
     }
-
-    let buttonNum = 1;
-
-    if (existingButtons.length > 0) {
-      existingButtons.sort((a, b) => a - b);
-
-      for (const num of existingButtons) {
-        if (num !== buttonNum) {
-          break;
-        }
-        buttonNum++;
-      }
-    }
-
-    return `Button ${buttonNum}`;
-  },
-
-  /**
-   * Check if a button name is duplicate within its container
-   */
-  checkDuplicateButtonName(name, target, containerId) {
-    if (target === "panel") {
-      const panelElements = window.appState.panels[containerId].elements;
-      return panelElements.some(
-        (id) =>
-          window.appState.elements[id].name.toLowerCase() === name.toLowerCase()
-      );
-    } else if (target === "stack" || target === "pulldown") {
-      const container = window.appState.elements[containerId];
-      if (!container.children) return false;
-
-      return container.children.some(
-        (id) =>
-          window.appState.elements[id].name.toLowerCase() === name.toLowerCase()
-      );
-    }
-    return false;
+    return siblings.some((id) => {
+      const el = window.appState.elements[id];
+      return el && (el.name || "").toLowerCase() === lowered;
+    });
   },
 };
 

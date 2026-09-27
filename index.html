@@ -5,25 +5,24 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pyRevit Extension Builder</title>
+    <link rel="icon" href="icon.png">
     <link rel="stylesheet" href="styles.css">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link href="https://fonts.cdnfonts.com/css/pixelcraft-2" rel="stylesheet">
-
-
 </head>
 
 <body>
     <header>
         <div class="audio-container">
-            <button id="audioBtn" class="audio-btn" aria-label="Pause music">
-                <svg class="play-icon" viewBox="0 0 24 24" style="display:none;">
+            <button id="audioBtn" class="audio-btn" aria-label="Play music">
+                <svg class="play-icon" viewBox="0 0 24 24">
                     <path d="M8 5v14l11-7z" />
                 </svg>
-                <svg class="pause-icon" viewBox="0 0 24 24">
+                <svg class="pause-icon" viewBox="0 0 24 24" style="display:none;">
                     <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
                 </svg>
             </button>
-            <p id="statusText" class="status-text">Now Playing</p>
+            <p id="statusText" class="status-text">Music Off</p>
         </div>
         <div class="logo">
             <img src="logo.png" alt="pyRevit Logo">
@@ -33,14 +32,14 @@
             <div class="pixel-container">
                 <div class="pixel-border">
                     <button id="loadConfig" class="load-button">
-                        LOAD CONFIG <span class="load-icon">🖿</span>
+                        LOAD LAYOUT <span class="load-icon">&#x1F5BF;</span>
                     </button>
                 </div>
             </div>
             <div class="pixel-container">
                 <div class="pixel-border">
                     <button id="saveConfig" class="save-button">
-                        SAVE CONFIG <span class="save-icon">🖪</span>
+                        SAVE LAYOUT <span class="save-icon">&#x1F5AA;</span>
                     </button>
                 </div>
             </div>
@@ -48,7 +47,7 @@
                 <div class="pixel-border">
                     <button class="glowing-text-slow" id="downloadZip">
                         DOWNLOAD
-                        <span class="download-icon">⬇</span>
+                        <span class="download-icon">&#x2B07;</span>
                     </button>
                 </div>
             </div>
@@ -59,240 +58,120 @@
         <div class="pixel-container">
             <div class="pixel-border">
                 <div class="pixel-content">
-                    <div><input class="glowing-text" type="text" id="extensionName" value="Extension Name"></div>
-
+                    <input class="glowing-text" type="text" id="extensionName" value="My Extension">
                 </div>
             </div>
         </div>
     </div>
 
-
-
     <main>
         <div class="tabs-container">
-            <div class="tabs" id="tabsContainer">
-                <!-- Default tab -->
-                <div class="tab active" data-tab-id="tab1">
-                    <input type="text" class="tab-name" value="TAB NAME">
-                </div>
-            </div>
-
+            <div class="tabs" id="tabsContainer"></div>
             <button class="add-button" id="addTab">
                 <span class="plus">+</span>TAB
             </button>
         </div>
 
         <div class="ribbon-container">
-            <div class="ribbon" id="ribbonContainer">
-                <!-- Default panel -->
-                <div class="panel" data-panel-id="panel1" data-tab-id="tab1">
-                    <div class="panel-content" id="panelContent1">
-                        <!-- Default button -->
-                        <div class="button" draggable="true" data-type="pushbutton" data-button-id="button1">
-                            <div class="button-icon">
-                                <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
-                                    alt="Button Icon">
-                            </div>
-                            <div class="button-name">Button 1</div>
-                        </div>
-                    </div>
-                    <div class="panel-controls">
-                        <button class="add-button" data-panel-id="panel1" data-action="add-button">
-                            <span class="plus">+</span>BUTTON
-                        </button>
-                        <button class="add-button" data-panel-id="panel1" data-action="add-stack">
-                            <span class="plus">+</span>STACK
-                        </button>
-                    </div>
-                    <div class="panel-name-container">
-                        <input type="text" class="panel-name" value="PANEL NAME">
-                    </div>
-                </div>
-            </div>
+            <div class="ribbon" id="ribbonContainer"></div>
         </div>
 
         <div class="add-panel-container">
-            <button class="add-button" id="addPanel" data-tab-id="tab1">
+            <button class="add-button" id="addPanel">
                 <span class="plus">+</span>PANEL
             </button>
         </div>
 
-        <div class="pulldown-content-container" id="pulldownContentContainer">
-            <!-- Pulldown content will be shown here when needed -->
-        </div>
+        <div class="pulldown-content-container" id="pulldownContentContainer"></div>
     </main>
+
     <div class="pixel-container">
         <div class="pixel-border">
-
             <div class="extension-preview">
                 <div class="preview-header">EXTENSION FOLDER PREVIEW</div>
-                <div class="preview-content" id="folderPreview">
-                    <!-- Folder structure preview will be populated by JavaScript -->
-                </div>
-
-
+                <div class="preview-content" id="folderPreview"></div>
             </div>
         </div>
     </div>
 
-        <!-- Modal for button creation -->
-        <div class="modal" id="buttonModal">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <h2>Create New Element</h2>
+    <!-- Modal for creating and editing a bundle -->
+    <div class="modal" id="buttonModal">
+        <div class="modal-content">
+            <span class="close-modal">&times;</span>
+            <h2 id="modalTitle">New Command</h2>
 
-                <div class="button-type-selector">
-                    <h3>Element Type:</h3>
-                    <div class="button-types">
-                        <div class="button-type selected" data-type="pushbutton">
-                            <div class="type-icon">🔘</div>
-                            <div class="type-name">Push Button</div>
-                        </div>
-                        <div class="button-type" data-type="pulldown">
-                            <div class="type-icon">🔽</div>
-                            <div class="type-name">Pulldown</div>
-                        </div>
-                        <div class="button-type" data-type="smartbutton">
-                            <div class="type-icon">🧠</div>
-                            <div class="type-name">Smart Button</div>
-                        </div>
-                        <div class="button-type" data-type="splitbutton">
-                            <div class="type-icon">⚡</div>
-                            <div class="type-name">Split Button</div>
-                        </div>
-                        <div class="button-type" data-type="togglebutton">
-                            <div class="type-icon">🔄</div>
-                            <div class="type-name">Toggle Button</div>
-                        </div>
-                        <div class="button-type" data-type="linkbutton">
-                            <div class="type-icon">🔗</div>
-                            <div class="type-name">Link Button</div>
-                        </div>
-                        <div class="button-type" data-type="invokebutton">
-                            <div class="type-icon">⚙️</div>
-                            <div class="type-name">Invoke Button</div>
-                        </div>
-                    </div>
-                </div>
+            <h3 class="modal-section-title">Bundle Type</h3>
+            <div id="buttonTypeGrid"></div>
+            <div class="type-note" id="typeNote" style="display:none;"></div>
 
-                <div class="form-group">
-                    <label for="buttonName">Name (Required):</label>
-                    <input type="text" id="buttonName" required>
-                </div>
+            <div class="form-group">
+                <label for="buttonName">Name (required)</label>
+                <input type="text" id="buttonName" placeholder="Button 1">
+                <div class="field-help">Becomes the bundle folder name, e.g. <code>Button 1.pushbutton</code></div>
+            </div>
 
-                <div class="form-group">
-                    <label for="buttonTitle">Title (Optional):</label>
-                    <input type="text" id="buttonTitle">
-                </div>
+            <div class="form-group">
+                <label for="buttonTitle">Title (optional)</label>
+                <input type="text" id="buttonTitle" placeholder="Defaults to the name">
+            </div>
 
-                <div class="form-group">
-                    <label for="buttonTooltip">Tooltip (Optional):</label>
-                    <input type="text" id="buttonTooltip">
-                </div>
+            <div class="form-group">
+                <label for="buttonTooltip">Tooltip (optional)</label>
+                <input type="text" id="buttonTooltip" placeholder="Shown when hovering">
+            </div>
 
-                <div class="form-group" id="linkUrlGroup" style="display: none;">
-                    <label for="buttonUrl">URL (Required for Link Button):</label>
-                    <input type="url" id="buttonUrl" placeholder="https://example.com">
-                </div>
-
-                <div class="form-group" id="invokeCommandGroup" style="display: none;">
-                    <label for="buttonCommand">Revit Command (Required for Invoke Button):</label>
-                    <input type="text" id="buttonCommand" placeholder="ID_REVIT_COMMAND">
-                </div>
-
-                <div class="form-group">
-                    <label for="buttonIcon">Icon:</label>
-                    <div class="icon-upload">
-                        <input type="file" id="buttonIcon" accept="image/png">
-                        <div class="icon-preview" id="iconPreview">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjQiIGhlaWdodD0iNjQiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PHJlY3QgeD0iMiIgeT0iMiIgd2lkdGg9IjYwIiBoZWlnaHQ9IjYwIiBmaWxsPSIjMDAwIiBzdHJva2U9IiMwMDAiIHN0cm9rZS13aWR0aD0iMiIvPjwvc3ZnPg=="
-                                alt="Default Icon">
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-group code-input">
-                    <label for="buttonCode">Python Code (Optional):</label>
-                    <textarea id="buttonCode" rows="4" placeholder="# Your Python code here..."></textarea>
-                </div>
-
-                <div class="modal-actions">
-                    <button id="createButton">Create</button>
-                    <button class="cancel-button">Cancel</button>
+            <div class="form-group" id="buttonIconGroup">
+                <label for="buttonIcon">Icon (optional)</label>
+                <div class="icon-upload">
+                    <input type="file" id="buttonIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
+                    <div class="icon-preview" id="iconPreview"></div>
                 </div>
             </div>
-        </div>
 
-        <!-- Loading overlay for operations -->
-        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
-            <div class="loading-content">
-                <div class="spinner"></div>
-                <div id="loadingMessage">Loading...</div>
+            <div class="form-group" id="onIconGroup" style="display:none;">
+                <label for="buttonOnIcon">On-state Icon (optional)</label>
+                <div class="icon-upload">
+                    <input type="file" id="buttonOnIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
+                    <div class="icon-preview" id="onIconPreview"></div>
+                </div>
+                <div class="field-help">A Toggle is a <code>.smartbutton</code> with <code>on.png</code> / <code>off.png</code>.
+                    Add an on-state icon so the button shows both states.</div>
+            </div>
+
+            <div class="form-group" id="buttonCodeGroup">
+                <label for="buttonCode">Python (optional)</label>
+                <textarea id="buttonCode" rows="6" placeholder="# Leave empty for a starter script."></textarea>
+            </div>
+
+            <details class="advanced-disclosure" id="advancedDisclosure">
+                <summary>Advanced <span class="advanced-hint">(bundle.yaml)</span></summary>
+                <div class="advanced-body" id="advancedBody">
+                    <div id="advancedFields"></div>
+                    <div class="form-group">
+                        <label for="buttonDarkIcon">Dark-theme Icon (optional)</label>
+                        <input type="file" id="buttonDarkIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
+                    </div>
+                </div>
+            </details>
+
+            <div class="modal-actions">
+                <button id="createButton">Create</button>
+                <button class="cancel-button">Cancel</button>
             </div>
         </div>
+    </div>
 
-        <!-- Load scripts in correct order with proper dependencies -->
-        <script src="template.js"></script>
-        <script src="state.js"></script>
-        <script src="folder-structure.js"></script>
-        <script src="drag-drop.js"></script>
-        <script src="ui-elements.js"></script>
-        <script src="modal-handlers.js"></script>
-        <script src="event-handlers.js"></script>
-        <!-- Add the new save-load.js file -->
-        <script src="save-load.js"></script>
-        <script src="app.js"></script>
-        <script>
-            document.addEventListener('DOMContentLoaded', function () {
-                const audioBtn = document.getElementById('audioBtn');
-                const statusText = document.getElementById('statusText');
-                const audio = new Audio('the-return-of-the-8-bit-era-301292.mp3');
-                let isPlaying = true;
-
-                // Play automatically
-                audio.play().then(() => {
-                    playIcon.style.display = 'none';
-                    pauseIcon.style.display = 'block';
-                    audioBtn.setAttribute('aria-label', 'Pause music');
-                    statusText.textContent = 'Now Playing';
-                }).catch(error => {
-                    // Autoplay might be blocked by browser
-                    console.log('Autoplay prevented:', error);
-                    playIcon.style.display = 'block';
-                    pauseIcon.style.display = 'none';
-                    isPlaying = false;
-                });
-
-                const playIcon = audioBtn.querySelector('.play-icon');
-                const pauseIcon = audioBtn.querySelector('.pause-icon');
-
-                audioBtn.addEventListener('click', function () {
-                    if (isPlaying) {
-                        audio.pause();
-                        playIcon.style.display = 'block';
-                        pauseIcon.style.display = 'none';
-                        audioBtn.setAttribute('aria-label', 'Play music');
-                        statusText.textContent = 'Click to Play';
-                        isPlaying = false;
-                    } else {
-                        audio.play();
-                        playIcon.style.display = 'none';
-                        pauseIcon.style.display = 'block';
-                        audioBtn.setAttribute('aria-label', 'Pause music');
-                        statusText.textContent = 'Now Playing';
-                        isPlaying = true;
-                    }
-                });
-
-                audio.addEventListener('ended', function () {
-                    playIcon.style.display = 'block';
-                    pauseIcon.style.display = 'none';
-                    audioBtn.setAttribute('aria-label', 'Play music');
-                    statusText.textContent = 'Click to Play';
-                    isPlaying = false;
-                });
-            });
-        </script>
+    <script src="bundle-types.js"></script>
+    <script src="template.js"></script>
+    <script src="state.js"></script>
+    <script src="folder-structure.js"></script>
+    <script src="drag-drop.js"></script>
+    <script src="ui-elements.js"></script>
+    <script src="modal-handlers.js"></script>
+    <script src="event-handlers.js"></script>
+    <script src="save-load.js"></script>
+    <script src="audio.js"></script>
+    <script src="app.js"></script>
 </body>
 
 </html>
