@@ -251,6 +251,13 @@ h1 {
      to the far edge of the ribbon, where it read as belonging to the folder
      preview sitting beside it. */
   border-bottom: 1px solid var(--border-color);
+  /* The tab strip is chrome sitting on the app background, so it carries the
+     ribbon surface itself. Without this an unfocused tab is transparent and
+     the darker app background shows through it, which made the inactive tabs
+     look like a different material from the ribbon directly below them. */
+  background-color: var(--surface-ribbon);
+  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+  padding-left: 4px;
 }
 
 /* ============================================================
@@ -278,6 +285,13 @@ h1 {
   min-width: max-content;
   border-bottom: 2px solid transparent;
   border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+  /* Explicit, so an unfocused tab reads as the same ribbon surface as the
+     strip around it rather than inheriting whatever is behind. */
+  background-color: var(--surface-ribbon);
+}
+
+.tab:hover:not(.active) {
+  background-color: var(--surface-raised);
 }
 
 .tab.active {

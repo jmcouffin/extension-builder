@@ -17,6 +17,19 @@ The draft is written from `FolderStructure.updateFolderPreview()` because every
 mutation already passes through it — one hook rather than a dozen call sites
 that would eventually miss one.
 
+## The folder preview
+
+The generated tree sits in a collapsible panel **beside** the ribbon, not below
+it: the ribbon takes ~80% of the width and the preview ~20%, and the two columns
+are `align-items: flex-start` so expanding a deep tree does not stretch the
+toolbar. It is a native `<details>`, so it toggles and is keyboard accessible
+without any JavaScript, and it starts collapsed — the ribbon is what you work in
+and the tree is a reference. Whether it is open is remembered separately from the
+draft (`pyrevit-extension-builder:prefs:v1`), because it is a view preference
+rather than part of the extension. The summary shows the folder and file counts,
+so the state is visible without expanding it. The tree scrolls inside its own
+panel rather than growing the page.
+
 ## The ribbon
 
 The canvas is laid out the way Revit's ribbon is: tabs along the top, panels
@@ -26,12 +39,28 @@ bottom. Item sizing follows the same rules:
 | | size | label |
 | --- | --- | --- |
 | single command | fills the panel height, 48px icon | below the icon |
-| stack of 2 or 3 | centred column of rows, 16px icon (one third) | beside the icon |
-| pulldown / split | full-height large button | below the icon, with a caret |
+| stack of 2 or 3 | column of rows, top-aligned, 16px icon (one third) | beside the icon |
+| pulldown / split | full-height large button, 48px icon | below the icon, with a chevron |
 
-A stack is centred rather than stretched, which is why a 2-stack sits in the
-middle of its panel. The one-third relationship is a single custom property on
-`.button`, so the two numbers cannot drift apart.
+A stack is top-aligned rather than centred, so its first row's icon lands on the
+same line as a full-height command's icon; the geometry is asserted in
+`verify-browser.js` (`firstIcon` within 1px of `solo`). The one-third
+relationship is a single custom property on `.button`, so the two numbers cannot
+drift apart. The ribbon's height is sized to its tallest item rather than fixed,
+so there is no dead space under a stack's last row or a group's chevron.
+
+A group shows no chevron overlapping its title: the chevron is a rotated CSS
+border, sized to its own content, and anchored to the header's padded bottom
+edge, so it sits under the label whether that label is one line or wraps to two.
+It is a border, not a text glyph, because a literal `▼` was re-encoded into
+mojibake on the way to disk.
+
+Add affordances are inline, not floating. The tab's `+` follows the last tab
+(the strip rule lives on the container so the tab list can hug its own tabs),
+and a stack's `+` is the last row of the column, exactly where the next command
+will appear, sized like a real row. Both are keyboard reachable. A stack's `+`
+is always visible: a hover-revealed one cannot be found, and it is the only way
+to reach a stack's minimum of two.
 
 Delete is a small red cross in the top-right of the thing it removes. It
 appears on hover, and its tooltip names the command and its bundle type.
@@ -112,6 +141,14 @@ expects or produces. It also asserts the modal, its type picker and the Advanced
 section need no scrollbar at 1400x1050, 1280x800 or 1024x768, with Advanced
 either collapsed or open, and that a draft survives a reload while RESET does
 not.
+
+`verify-dom.js` also asserts that every local asset in `index.html` is
+cache-busted with a single shared `?v=` token. This matters more than it looks:
+GitHub Pages serves these files with `Cache-Control: max-age=600`, so without a
+version query a browser can pair a **fresh** `index.html` with a **stale**
+`styles.css` or `ui-elements.js` and the published site renders differently from
+the working copy for no visible reason. **Bump the token whenever you change a
+local CSS or JS file** — the check fails loudly if you forget.
 
 `verify-contrast.js` walks every rendered text — including text drawn by
 `::after` and `::placeholder`, which a naive check misses entirely — resolves

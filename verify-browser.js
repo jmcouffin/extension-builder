@@ -415,7 +415,40 @@ const REAL_POSTFIXES = new Set([
   const stillReset = await page.evaluate(() => Object.keys(window.appState.elements).length);
   ok(stillReset === 1, "reset sticks across a further reload, got " + stillReset);
 
-  section("ribbon icon alignment, and the collapsible preview");
+  section("an unfocused tab is the same surface as the toolbar");
+{
+  await page.click(".tabs-container .add-tab-inline");
+  await new Promise((r) => setTimeout(r, 300));
+  await page.click(".tabs-container .add-tab-inline");
+  await new Promise((r) => setTimeout(r, 300));
+  const first = await page.$("#tabsContainer .tab");
+  if (first) await first.click();
+  await new Promise((r) => setTimeout(r, 250));
+  // park the pointer away, or :hover is what gets measured
+  await page.mouse.move(1400, 640);
+  await new Promise((r) => setTimeout(r, 200));
+  const tabInfo = await page.evaluate(() => {
+    const list = [...document.querySelectorAll("#tabsContainer .tab")];
+    const strip = document.querySelector(".tabs-container");
+    const unfocused = list.find((t) => !t.classList.contains("active"));
+    return {
+      tabs: list.length,
+      stripBg: getComputedStyle(strip).backgroundColor,
+      unfocusedBg: unfocused ? getComputedStyle(unfocused).backgroundColor : null,
+      anyTransparent: list.some(
+        (t) => getComputedStyle(t).backgroundColor === "rgba(0, 0, 0, 0)"
+      ),
+    };
+  });
+  console.log("  " + JSON.stringify(tabInfo));
+  ok(tabInfo.tabs >= 2, "there is an unfocused tab to compare, got " + tabInfo.tabs);
+  ok(tabInfo.unfocusedBg === tabInfo.stripBg,
+     "an unfocused tab matches the toolbar surface (" + tabInfo.unfocusedBg +
+     " vs " + tabInfo.stripBg + ")");
+  ok(!tabInfo.anyTransparent, "no tab is left transparent over the app background");
+}
+
+section("ribbon icon alignment, and the collapsible preview");
   // Build a deterministic fixture: one full-height command, a 2-stack, a
   // 3-stack and a group, all in the same panel. Built through the app's own
   // API so the renderer is what gets measured.
