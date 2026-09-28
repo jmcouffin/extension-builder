@@ -5,7 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>pyRevit Extension Builder</title>
-    <link rel="icon" href="icon.png?v=fix-tabs-1">
+    <link rel="icon" href="icon.png?v=ribbon-strip-2">
     <!--
       Every local asset carries the same ?v= token below. GitHub Pages serves these with
       Cache-Control: max-age=600, so without a version query a browser can pair
@@ -14,7 +14,7 @@
       filenames change whenever the assets do, so the pair can never mismatch.
       Bump BUILD whenever you change a local CSS or JS file.
     -->
-    <link rel="stylesheet" href="styles.css?v=fix-tabs-1">
+    <link rel="stylesheet" href="styles.css?v=ribbon-strip-2">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 
@@ -54,14 +54,18 @@
     </div>
 
     <main>
-        <div class="tabs-container">
-            <div class="tabs" id="tabsContainer"></div>
-            <button class="add-button add-tab-inline" id="addTab"
-                title="Add a tab" aria-label="Add a tab"></button>
-        </div>
-
         <div class="workspace">
             <div class="ribbon-container">
+                <!-- The tab strip lives inside the ribbon column, not above the
+                     whole workspace: it is the top of the ribbon, so it has to
+                     stop where the ribbon stops. Sibling to the folder preview
+                     it ran the full width and read as belonging to the tree. -->
+                <div class="tabs-container">
+                    <div class="tabs" id="tabsContainer"></div>
+                    <button class="add-button add-tab-inline" id="addTab"
+                        title="Add a tab" aria-label="Add a tab"></button>
+                </div>
+
                 <div class="ribbon" id="ribbonContainer"></div>
             </div>
 
@@ -147,17 +151,17 @@
         </div>
     </div>
 
-    <script src="bundle-types.js?v=fix-tabs-1"></script>
-    <script src="template.js?v=fix-tabs-1"></script>
-    <script src="state.js?v=fix-tabs-1"></script>
-    <script src="folder-structure.js?v=fix-tabs-1"></script>
-    <script src="drag-drop.js?v=fix-tabs-1"></script>
-    <script src="ui-elements.js?v=fix-tabs-1"></script>
-    <script src="modal-handlers.js?v=fix-tabs-1"></script>
-    <script src="event-handlers.js?v=fix-tabs-1"></script>
-    <script src="save-load.js?v=fix-tabs-1"></script>
-    <script src="draft.js?v=fix-tabs-1"></script>
-    <script src="app.js?v=fix-tabs-1"></script>
+    <script src="bundle-types.js?v=ribbon-strip-2"></script>
+    <script src="template.js?v=ribbon-strip-2"></script>
+    <script src="state.js?v=ribbon-strip-2"></script>
+    <script src="folder-structure.js?v=ribbon-strip-2"></script>
+    <script src="drag-drop.js?v=ribbon-strip-2"></script>
+    <script src="ui-elements.js?v=ribbon-strip-2"></script>
+    <script src="modal-handlers.js?v=ribbon-strip-2"></script>
+    <script src="event-handlers.js?v=ribbon-strip-2"></script>
+    <script src="save-load.js?v=ribbon-strip-2"></script>
+    <script src="draft.js?v=ribbon-strip-2"></script>
+    <script src="app.js?v=ribbon-strip-2"></script>
 </body>
 
 </html>

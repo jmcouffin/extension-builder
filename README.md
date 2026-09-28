@@ -55,12 +55,25 @@ edge, so it sits under the label whether that label is one line or wraps to two.
 It is a border, not a text glyph, because a literal `▼` was re-encoded into
 mojibake on the way to disk.
 
-Add affordances are inline, not floating. The tab's `+` follows the last tab
-(the strip rule lives on the container so the tab list can hug its own tabs),
-and a stack's `+` is the last row of the column, exactly where the next command
-will appear, sized like a real row. Both are keyboard reachable. A stack's `+`
-is always visible: a hover-revealed one cannot be found, and it is the only way
-to reach a stack's minimum of two.
+Add affordances are inline, not floating. A stack's `+` is the last row of the
+column, exactly where the next command will appear, sized like a real row, and
+it is always visible: a hover-revealed one cannot be found, and it is the only
+way to reach a stack's minimum of two. The tab strip's `+` sits at the
+right-hand end instead, because it is a control for the whole strip rather than
+part of the tab list. Both are keyboard reachable.
+
+The tab strip is the *top of the ribbon*, so it lives inside the ribbon column
+and stops where the ribbon stops — as a sibling of the folder preview it ran the
+full width and read as belonging to the tree. It is grey chrome while the panel
+area below is near-white, and the active tab is pulled up over the strip's rule
+so it reads as dropping into the panels; there is no underline marking the
+selection, because the interrupted rule already does that. The strip's top
+corners are square: rounding them clipped its own background and let the darker
+app background show through as a grey wedge at the top left. `verify-browser.js`
+asserts the strip is flush with the ribbon's right edge, does not overlap the
+preview, that the `+` is inset at the far end, that the active tab matches the
+panel surface while reaching the rule an unfocused tab stops short of, and that
+no app-background grey appears in the strip's corners.
 
 Delete is a small red cross in the top-right of the thing it removes. It
 appears on hover, and its tooltip names the command and its bundle type.

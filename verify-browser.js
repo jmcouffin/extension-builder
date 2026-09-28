@@ -448,6 +448,80 @@ const REAL_POSTFIXES = new Set([
   ok(!tabInfo.anyTransparent, "no tab is left transparent over the app background");
 }
 
+section("the tab strip is the top of the ribbon, and its + is at the far end");
+{
+  const geo = await page.evaluate(() => {
+    const r = (s) => {
+      const e = document.querySelector(s);
+      if (!e) return null;
+      const b = e.getBoundingClientRect();
+      return { l: b.left, r: b.right, t: b.top, b: b.bottom };
+    };
+    const strip = r(".tabs-container");
+    const ribbon = r("#ribbonContainer");
+    const preview = r(".preview-panel");
+    const plus = r("#addTab");
+    const tabs = [...document.querySelectorAll("#tabsContainer .tab")];
+    const last = tabs[tabs.length - 1];
+    const active = document.querySelector("#tabsContainer .tab.active");
+    return {
+      stripOverhang: +(strip.r - ribbon.r).toFixed(1),
+      stripOverPreview: +(strip.r - preview.l).toFixed(1),
+      plusInsetRight: +(strip.r - plus.r).toFixed(1),
+      gapAfterLastTab: +(plus.l - last.getBoundingClientRect().right).toFixed(1),
+      tabCount: tabs.length,
+      stripBg: getComputedStyle(document.querySelector(".tabs-container")).backgroundColor,
+      ribbonBg: getComputedStyle(document.querySelector("#ribbonContainer")).backgroundColor,
+      stripTopRadius: getComputedStyle(document.querySelector(".tabs-container"))
+        .borderTopLeftRadius,
+      bodyBg: getComputedStyle(document.body).backgroundColor,
+      topLeftBg: (() => {
+        const s = document.querySelector(".tabs-container");
+        const b = s.getBoundingClientRect();
+        const e = document.elementFromPoint(b.left, b.top);
+        return e ? getComputedStyle(e).backgroundColor : null;
+      })(),
+      activeBg: active ? getComputedStyle(active).backgroundColor : null,
+      activeReachesRule: active
+        ? +(active.getBoundingClientRect().bottom - strip.b).toFixed(1)
+        : null,
+      unfocusedStopsShort: (() => {
+        const u = tabs.find((t) => !t.classList.contains("active"));
+        return u ? +(u.getBoundingClientRect().bottom - strip.b).toFixed(1) : null;
+      })(),
+    };
+  });
+  console.log("  " + JSON.stringify(geo));
+  ok(geo.tabCount >= 2, "there is more than one tab");
+  ok(Math.abs(geo.stripOverhang) <= 1,
+     "the tab strip is flush with the ribbon's right edge (" + geo.stripOverhang + "px)");
+  ok(geo.stripOverPreview <= 0,
+     "the tab strip does not run over the folder preview (" + geo.stripOverPreview + "px)");
+  ok(Math.abs(geo.plusInsetRight - 4) <= 1.5,
+     "the tab + is inset at the right-hand end (" + geo.plusInsetRight + "px)");
+  ok(geo.gapAfterLastTab > 40,
+     "the + is pushed clear of the last tab, not sitting beside it (" +
+     geo.gapAfterLastTab + "px)");
+  ok(geo.activeBg === geo.ribbonBg,
+     "the active tab matches the panel surface below it (" + geo.activeBg +
+     " vs " + geo.ribbonBg + ")");
+  // Rounding the strip's top corners clipped its own background and let the
+  // darker app background through as a grey wedge at the top left.
+  ok(geo.stripTopRadius === "0px",
+     "the tab strip has square top corners, so no app background shows through (" +
+     geo.stripTopRadius + ")");
+  ok(geo.topLeftBg !== geo.bodyBg,
+     "no app-background grey in the strip's top-left corner");
+  ok(geo.stripBg !== geo.ribbonBg,
+     "the strip is a different surface from the panels, as in Revit");
+  // The active tab is pulled up over the strip's border-bottom, so it reaches
+  // the rule; an unfocused tab stops above it. That difference IS the state -
+  // there is no underline to mark the selection.
+  ok(geo.activeReachesRule >= -0.5 && geo.unfocusedStopsShort < -0.5,
+     "the active tab covers the strip rule while an unfocused one stops short (" +
+     geo.activeReachesRule + " vs " + geo.unfocusedStopsShort + ")");
+}
+
 section("ribbon icon alignment, and the collapsible preview");
   // Build a deterministic fixture: one full-height command, a 2-stack, a
   // 3-stack and a group, all in the same panel. Built through the app's own

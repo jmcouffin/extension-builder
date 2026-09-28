@@ -247,17 +247,18 @@ h1 {
   align-items: flex-end;
   margin-bottom: 0;
   /* The strip rule lives on the container, not on .tabs, so the tab list can
-     hug its own tabs. The + then follows the last tab instead of being pushed
-     to the far edge of the ribbon, where it read as belonging to the folder
-     preview sitting beside it. */
+     hug its own tabs while the + still reaches the right-hand end. */
+  /* The line separating the strip from the panels. The active tab is pulled up
+     over it, so the light tab reads as running down into the panel area. */
   border-bottom: 1px solid var(--border-color);
-  /* The tab strip is chrome sitting on the app background, so it carries the
-     ribbon surface itself. Without this an unfocused tab is transparent and
-     the darker app background shows through it, which made the inactive tabs
-     look like a different material from the ribbon directly below them. */
   background-color: var(--surface-ribbon);
-  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
-  padding-left: 4px;
+  /* Horizontal room so the tabs and the + are inset from the strip's edges. */
+  padding: 0 4px;
+  /* Square top corners. Rounding them clipped the strip's own background, so
+     the darker app background showed through the corner as a grey wedge at the
+     top left. Revit's tab strip is flush with the top edge, so it is square
+     here too. */
+  border-radius: 0;
 }
 
 /* ============================================================
@@ -269,11 +270,11 @@ h1 {
    abstract diagram of it.
    ============================================================ */
 
-/* --- Tabs: small text, active one underlined --- */
+/* --- Tabs: the strip is grey, the active one drops into the panels below --- */
 .tabs {
   display: flex;
   gap: 2px;
-  /* hug the tabs, so the + sits right after the last one */
+  /* hug the tabs, so the + can be pushed to the far end of the strip */
   flex: 0 1 auto;
   align-items: flex-end;
 }
@@ -284,7 +285,8 @@ h1 {
   position: relative;
   min-width: max-content;
   border-bottom: 2px solid transparent;
-  border-radius: var(--border-radius-sm) var(--border-radius-sm) 0 0;
+  /* Square, like the strip it sits in. */
+  border-radius: 0;
   /* Explicit, so an unfocused tab reads as the same ribbon surface as the
      strip around it rather than inheriting whatever is behind. */
   background-color: var(--surface-ribbon);
@@ -294,9 +296,22 @@ h1 {
   background-color: var(--surface-raised);
 }
 
+/* Revit draws the active tab as a light panel that runs down through the strip
+   rule and joins the ribbon below, rather than as a tinted pill with an
+   underline. So the active tab is pulled up over the strip's border-bottom and
+   carries the same surface as the panels, and there is no underline: the
+   missing rule under it IS the state. */
 .tab.active {
-  border-bottom-color: var(--accent);
-  background-color: var(--surface-hover);
+  /* The same near-white as the panel area, so the selected tab reads as
+     dropping through the strip rule into the panels rather than as a
+     differently coloured button. */
+  background-color: var(--surface-sunken);
+  border-bottom-color: transparent;
+  /* Pulled up over the strip's border-bottom, and given the 1px back as extra
+     padding, so it stays the same height as the tabs beside it. */
+  margin-bottom: -1px;
+  padding-bottom: 6px;
+  z-index: 1;
 }
 
 .tab input {
@@ -338,9 +353,13 @@ h1 {
 
 .ribbon-container {
   display: flex;
+  /* column, so the tab strip sits directly on top of the ribbon and both stop
+     at the same right-hand edge, instead of the strip spanning the whole
+     workspace and overrunning the folder preview beside it. */
+  flex-direction: column;
   flex: 1 1 80%;
   min-width: 0;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 .preview-panel {
@@ -367,9 +386,17 @@ h1 {
 }
 
 .ribbon {
+  /* No top border: the tab strip's border-bottom is that line, and drawing it
+     twice put two rules a pixel apart. */
   border: 1px solid var(--border-color);
-  background-color: var(--surface-ribbon);
-  border-radius: var(--border-radius-sm);
+  border-top: none;
+  /* Lighter than the tab strip, as in Revit: the strip is grey chrome and the
+     panel area below is near-white. That contrast is also what makes the
+     active tab read - it is the same surface as the panels, and only the strip
+     rule it interrupts tells you which one is selected. */
+  background-color: var(--surface-sunken);
+  /* Square at the top to match the strip, rounded at the bottom only. */
+  border-radius: 0 0 var(--border-radius-sm) var(--border-radius-sm);
   flex-grow: 1;
   display: flex;
   align-items: stretch;
@@ -465,7 +492,11 @@ h1 {
   flex: 0 0 auto;
   /* sits on the strip rule rather than half under it */
   margin-bottom: 2px;
-  margin-left: 4px;
+  /* Push the + to the right-hand end of the strip, level with the ribbon's
+     right edge. margin-left:auto absorbs the free space, because .tabs hugs
+     its own tabs. A fixed margin left it stranded next to the last tab, which
+     read as a fifth tab rather than as a control for the strip. */
+  margin-left: auto;
   width: 22px;
   height: 22px;
   min-width: 22px;
@@ -523,7 +554,10 @@ h1 {
   width: 26px;
   height: 26px;
   min-width: 26px;
-  margin-left: 5px;
+  /* auto, so the + sits at the right-hand end of the strip: it is a control for
+     the whole tab strip, not part of the tab list. A fixed margin left it
+     stranded beside the last tab, where it read as another tab. */
+  margin-left: auto;
   align-self: flex-end;
 }
 
