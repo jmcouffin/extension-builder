@@ -147,7 +147,6 @@
   }
 
   & .toolbar-action {
-    padding-inline: 9px;
     border-color: var(--legacy-pink);
     border-radius: 0;
     background-color: var(--legacy-pink);

@@ -1765,7 +1765,9 @@ select.prop-input {
    bar (wrapping), options bar, ribbon, drawing area, Properties, Project
    Browser, status bar, and the page scrolls. */
 @media (max-width: 1100px) {
-  .app-title {
+  .app-title,
+  .title-bar .logo-text span,
+  .theme-hint-text {
     display: none;
   }
 
