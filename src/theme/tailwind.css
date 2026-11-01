@@ -21,6 +21,7 @@
 @import "./surface.css" layer(components);
 @import "./frame.css" layer(frame);
 @import "./themes/revit-dark.css" layer(themes);
+@import "./themes/pyrevit.css" layer(themes);
 @import "./themes/legacy-8bit.css" layer(themes);
 
 /*

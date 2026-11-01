@@ -112,7 +112,7 @@ test.describe("Revit frame", () => {
   });
 
   test("a dark theme paints each button's dark icon", async ({ page, theme }) => {
-    test.skip(theme !== "revit-dark", "only the Revit dark ribbon swaps icons");
+    test.skip(!["revit-dark", "pyrevit"].includes(theme), "only a dark ribbon swaps icons");
     const icon = item(page, "Button 1").locator(".button-icon");
     await expect(icon).toHaveCSS("background-image", /url\(/);
     await expect(icon.locator("img")).toHaveCSS("opacity", "0");

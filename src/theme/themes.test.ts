@@ -2,8 +2,8 @@ import { switchTheme, useTheme, WIPE_END_MS, WIPE_SWAP_MS } from "./store";
 import { LOGO_COLORS, nextTheme, THEMES } from "./themes";
 
 describe("themes", () => {
-  it("offers Revit Light, Revit Dark and Legacy 8-bit, in that order", () => {
-    expect(THEMES.map((t) => t.id)).toEqual(["builder", "revit-dark", "legacy-8bit"]);
+  it("offers Revit Light, Revit Dark, pyRevit and Legacy 8-bit, in that order", () => {
+    expect(THEMES.map((t) => t.id)).toEqual(["builder", "revit-dark", "pyrevit", "legacy-8bit"]);
     expect(THEMES[0]?.label).toBe("Revit Light");
   });
 

@@ -22,7 +22,7 @@ export const VIEWPORTS = [
  * "<viewport>-<theme>", with the theme saved in localStorage before the first
  * page load, exactly as a returning visitor would have it.
  */
-export const THEMES = ["builder", "revit-dark", "legacy-8bit"] as const;
+export const THEMES = ["builder", "revit-dark", "pyrevit", "legacy-8bit"] as const;
 
 function seededTheme(theme: string) {
   return {

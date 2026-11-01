@@ -287,14 +287,14 @@ test.describe("theme switcher", () => {
     await expect(page.locator(".theme-hint kbd")).toHaveText("T");
     await page.locator("#themeSwitcher").click();
     const options = page.locator("[data-theme-option]");
-    await expect(options).toHaveCount(3);
-    await expect(options.locator(".theme-thumb")).toHaveCount(3);
+    await expect(options).toHaveCount(4);
+    await expect(options.locator(".theme-thumb")).toHaveCount(4);
     await expect(page.locator(`[data-theme-option="${theme}"] .theme-option-check`)).toHaveCount(1);
     await page.keyboard.press("Escape");
   });
 
   test("T cycles through the themes and Shift+T goes back", async ({ page, theme }) => {
-    const order = ["builder", "revit-dark", "legacy-8bit"];
+    const order = ["builder", "revit-dark", "pyrevit", "legacy-8bit"];
     const at = order.indexOf(theme);
     const next = order[(at + 1) % order.length];
     await page.locator("body").press("t");

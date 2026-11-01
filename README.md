@@ -171,6 +171,7 @@ flashes the default.
 | --- | --- | --- |
 | `builder` | Revit Light (default) | Revit's light interface, `src/theme/frame.css` |
 | `revit-dark` | Revit Dark | Revit 2024+ dark interface; the ribbon shows each button's dark icon, as pyRevit does |
+| `pyrevit` | pyRevit | the logo's palette: its slates for the chrome, its yellows for the active tab, panel titles and selection |
 | `legacy-8bit` | Legacy 8-bit | the original design, ported from commit `2a7e8dd` (the last before the Revit redesign in `283e834`) |
 
 **A theme is CSS and nothing else.** Switching sets `data-theme` on `<html>`;
@@ -316,7 +317,7 @@ console error, a failed request or a native dialog. Across all sizes it checks:
   no `__init__.py` / `entrypoint.py` / `.pyrevit`; broken extensions are refused
   with a list; save and load of a layout file round-trips.
 
-Every one of those runs three times: once per theme (`builder` keeps the bare project
+Every one of those runs four times: once per theme (`builder` keeps the bare project
 names, other themes run as `<size>-<theme>`), with the theme seeded into
 `localStorage` before the first page load, and with reduced motion so a
 switch is instant. `theme.spec.ts` adds switching, persistence, `?theme=`, the

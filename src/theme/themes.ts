@@ -8,7 +8,7 @@
  * "builder" keeps its id so a visitor's saved choice still means the same
  * thing; it is the Revit light interface.
  */
-export type ThemeId = "builder" | "revit-dark" | "legacy-8bit";
+export type ThemeId = "builder" | "revit-dark" | "pyrevit" | "legacy-8bit";
 
 /** The colours of a theme's thumbnail in the menu: a tiny window. */
 export interface ThemePreview {
@@ -55,6 +55,20 @@ export const THEMES: ThemeDef[] = [
       iconFill: "#2d4c6b",
       accent: "#f1c40f",
       canvas: "#1e2329",
+    },
+  },
+  {
+    id: "pyrevit",
+    label: "pyRevit",
+    description: "The pyRevit logo's slate blues, lit by its yellows.",
+    preview: {
+      frame: "#22313f",
+      ribbon: "#2c3e50",
+      line: "#4a6178",
+      icon: "#ffd633",
+      iconFill: "#34495e",
+      accent: "#ffd633",
+      canvas: "#16212b",
     },
   },
   {
