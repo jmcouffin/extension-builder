@@ -1,6 +1,13 @@
 // Folder structure generation and validation, as pure functions of a layout.
 
-import { type ContainerKey, FIELDS, getType, rejectionReason, TYPES } from "./bundleTypes";
+import {
+  type ContainerKey,
+  FIELDS,
+  type FieldKey,
+  getType,
+  rejectionReason,
+  TYPES,
+} from "./bundleTypes";
 import type { Element, Layout, Panel } from "./model";
 import {
   buildBundle,
@@ -98,6 +105,29 @@ function buildElement(
 }
 
 /**
+ * Parameters still holding the sample value a new Link or Invoke Button
+ * starts with. Not an error - the bundle is well-formed - but the button will
+ * not find "MyAddin" in Revit until the real assembly is named.
+ */
+export function sampleValues(layout: LayoutParts): string[] {
+  const notes: string[] = [];
+  for (const element of Object.values(layout.elements)) {
+    const typeDef = getType(element.type);
+    if (!typeDef?.defaults) continue;
+    for (const [key, sample] of Object.entries(typeDef.defaults) as [FieldKey, string][]) {
+      if (!SAMPLE_KEYS.includes(key) || element[key] !== sample) continue;
+      notes.push(
+        `${typeDef.label} "${element.name}": ${FIELDS[key].label} is still the sample "${sample}".`,
+      );
+    }
+  }
+  return notes;
+}
+
+/** Defaults that are placeholders to replace, as opposed to real values like a URL. */
+const SAMPLE_KEYS: FieldKey[] = ["assembly", "command_class"];
+
+/**
  * Everything that would produce a bundle pyRevit silently ignores, or a
  * folder collision in the ZIP. Returns [] when the extension is sound.
  */
@@ -154,7 +184,7 @@ export function validate(layout: LayoutParts): string[] {
     const missing = typeDef.required.filter((key) => !element[key]);
     if (missing.length) {
       problems.push(
-        `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Set them in Properties or in Edit Type.`,
+        `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Set them in Properties.`,
       );
     }
   }

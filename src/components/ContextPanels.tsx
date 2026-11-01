@@ -1,8 +1,8 @@
-import { ChevronLeftIcon, ChevronRightIcon, SquarePenIcon, Trash2Icon } from "lucide-react";
+import { ChevronLeftIcon, ChevronRightIcon, Trash2Icon } from "lucide-react";
 import type { ReactNode } from "react";
 import { siblingsOf } from "../domain/rules";
 import { useStore } from "../state/store";
-import { deleteAsking, openEditor } from "./RibbonItems";
+import { deleteAsking } from "./RibbonItems";
 
 function Panel({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -83,13 +83,6 @@ export function ContextPanels() {
 
   return (
     <>
-      <Panel title="Properties">
-        <Large
-          label="Edit Type"
-          icon={<SquarePenIcon aria-hidden="true" />}
-          onClick={() => openEditor(selectedId)}
-        />
-      </Panel>
       <Panel title="Arrange">
         <div className="ctx-stack">
           <Small

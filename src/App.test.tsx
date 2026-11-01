@@ -16,15 +16,15 @@ describe("App", () => {
     expect(screen.getByText("Button 1")).toBeInTheDocument();
   });
 
-  it("creates a command through the modal", async () => {
+  it("BUTTON adds a command at once and selects it in Properties", async () => {
     const user = userEvent.setup();
-    render(<App />);
+    const { container } = render(<App />);
     await user.click(screen.getByRole("button", { name: "BUTTON" }));
-    expect(screen.getByRole("heading", { name: "New Command" })).toBeInTheDocument();
-    expect(screen.getByLabelText("Name (required)")).toHaveValue("Button 2");
-    await user.click(screen.getByRole("button", { name: "Create" }));
-    expect(screen.queryByRole("heading", { name: "New Command" })).not.toBeInTheDocument();
-    expect(screen.getByText("Button 2")).toBeInTheDocument();
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(container.querySelector('[data-name="Button 2"]')).toHaveClass("is-selected");
+    expect(container.querySelector('#propertiesPalette [data-field="name"]')).toHaveValue(
+      "Button 2",
+    );
   });
 
   it("adds a stack with two rows", async () => {

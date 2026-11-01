@@ -1,12 +1,12 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { TYPES } from "../domain/bundleTypes";
 import type { Element } from "../domain/model";
 import { buildYaml, defaultScript } from "../domain/templates";
 import { FALLBACK_ICON } from "../state/defaultIcons";
-import { useStore } from "../state/store";
+import { type DrawingView, useStore } from "../state/store";
 import { useIcons } from "./IconsContext";
 
-type View = "preview" | "yaml" | "script";
+type View = DrawingView;
 
 function Slice({
   tone,
@@ -72,13 +72,53 @@ function Preview({ elementId, element }: { elementId: string; element: Element }
 }
 
 /**
+ * The script.py editor. The starter script follows the bundle's title and
+ * author until it is edited; an edit is kept from then on, and clearing it
+ * brings the starter back. Applied when focus leaves the editor.
+ */
+function ScriptEditor({ elementId, element }: { elementId: string; element: Element }) {
+  const def = TYPES[element.type];
+  const starter = defaultScript(element, def);
+  const value = element.code || starter;
+  const [draft, setDraft] = useState(value);
+  useEffect(() => setDraft(value), [value]);
+  const commit = () => {
+    const next = draft.trim() === "" || draft === starter ? "" : draft;
+    if (next === (element.code ?? "")) return;
+    const { children: _c, panelId: _p, parentId: _q, ...payload } = element;
+    useStore.getState().updateElement(elementId, { ...payload, code: next });
+  };
+  return (
+    <textarea
+      className="code-editor"
+      aria-label={`script.py of ${element.name}`}
+      value={draft}
+      spellCheck={false}
+      onChange={(e) => setDraft(e.target.value)}
+      onBlur={commit}
+      onKeyDown={(e) => {
+        if (e.key !== "Tab") return;
+        e.preventDefault();
+        const el = e.currentTarget;
+        const { selectionStart: start, selectionEnd: end } = el;
+        const next = `${draft.slice(0, start)}    ${draft.slice(end)}`;
+        setDraft(next);
+        requestAnimationFrame(() => el.setSelectionRange(start + 4, start + 4));
+      }}
+    />
+  );
+}
+
+/**
  * Revit's drawing area, with its view tabs: how the selected bundle will look
- * on a light and a dark ribbon, and the files it will produce.
+ * on a light and a dark ribbon, its bundle.yaml, and its script, which is
+ * edited here.
  */
 export function DrawingArea() {
   const selectedId = useStore((s) => s.selectedId);
   const element = useStore((s) => (s.selectedId ? s.elements[s.selectedId] : undefined));
-  const [view, setView] = useState<View>("preview");
+  const view = useStore((s) => s.drawingView);
+  const setView = useStore((s) => s.setDrawingView);
   const def = element ? TYPES[element.type] : undefined;
   const hasScript = !!def?.script;
   const shown: View = view === "script" && !hasScript ? "preview" : view;
@@ -114,15 +154,24 @@ export function DrawingArea() {
         ) : shown === "preview" ? (
           <Preview elementId={selectedId} element={element} />
         ) : (
-          <div className="code-sheet">
+          <div className={shown === "script" ? "code-sheet code-sheet-edit" : "code-sheet"}>
             <div className="code-path">
               {`${name}${def.postfix}/${shown === "yaml" ? "bundle.yaml" : "script.py"}`}
+              {shown === "script" && (
+                <span className="code-hint">
+                  {element.code
+                    ? "Edited. Clear it to get the starter back."
+                    : "Starter script: edit it here."}
+                </span>
+              )}
             </div>
-            <pre>
-              {shown === "yaml"
-                ? buildYaml(element, def) || "# nothing to set: pyRevit uses the folder name"
-                : element.code || defaultScript(element, def)}
-            </pre>
+            {shown === "yaml" ? (
+              <pre>
+                {buildYaml(element, def) || "# nothing to set: pyRevit uses the folder name"}
+              </pre>
+            ) : (
+              <ScriptEditor key={selectedId} elementId={selectedId} element={element} />
+            )}
           </div>
         )}
       </div>

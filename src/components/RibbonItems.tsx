@@ -4,7 +4,7 @@ import { TYPES } from "../domain/bundleTypes";
 import type { Element } from "../domain/model";
 import type { DropTarget } from "../domain/rules";
 import { FALLBACK_ICON } from "../state/defaultIcons";
-import { showConfirm } from "../state/dialogs";
+import { showAlert, showConfirm } from "../state/dialogs";
 import { useStore } from "../state/store";
 import { useIcons } from "./IconsContext";
 import { EditableLabel } from "./inputs";
@@ -88,8 +88,23 @@ function useSelection(elementId: string) {
   return { selected, select };
 }
 
-export function openEditor(elementId: string) {
-  useStore.getState().openModal({ mode: "edit", elementId });
+/**
+ * Select a bundle and put the cursor in its Name in the Properties palette:
+ * what a double-click on the ribbon does, now that every parameter lives there.
+ */
+export function editInProperties(elementId: string) {
+  useStore.getState().select(elementId);
+  requestAnimationFrame(() => {
+    const name = document.querySelector<HTMLInputElement>('#propertiesPalette [data-field="name"]');
+    name?.focus();
+    name?.select();
+  });
+}
+
+/** Add a Push Button to a container, explaining in a dialog when it cannot take one. */
+export function addCommandTo(target: DropTarget) {
+  const error = useStore.getState().addCommand(target);
+  if (error) void showAlert(error, { title: "Can't add a command here" });
 }
 
 function renamer(elementId: string) {
@@ -130,7 +145,7 @@ function CommandItem({ elementId, element, place }: ItemProps) {
       onFocus={select}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        openEditor(elementId);
+        editInProperties(elementId);
       }}
     >
       <Icon element={element} />
@@ -174,7 +189,7 @@ function GroupItem({ elementId, element, place }: ItemProps) {
       }}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        openEditor(elementId);
+        editInProperties(elementId);
       }}
     >
       <div className="group-header">
@@ -195,8 +210,7 @@ function StackItem({ elementId, element, place }: ItemProps) {
   const { selected, select } = useSelection(elementId);
   const remaining = (def.maxChildren ?? 3) - children.length;
   const childPlace: RibbonItemPlace = { container: into, axis: "y", layer: place.layer };
-  const add = () =>
-    useStore.getState().openModal({ mode: "create", kind: "command", target: into });
+  const add = () => addCommandTo(into);
 
   return (
     // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: role and tabIndex come from dnd-kit's attributes in dnd.props; the grip selects the stack on keyboard focus
@@ -214,10 +228,10 @@ function StackItem({ elementId, element, place }: ItemProps) {
       data-name={element.name}
       aria-current={selected || undefined}
       onClick={select}
-      title={`Stack - ${def.postfix} "${element.name}" with ${children.length} command(s). Double-click to edit.`}
+      title={`Stack - ${def.postfix} "${element.name}" with ${children.length} command(s).`}
       onDoubleClick={(e) => {
         e.stopPropagation();
-        openEditor(elementId);
+        editInProperties(elementId);
       }}
     >
       <button
@@ -299,7 +313,7 @@ function GroupEditorBody({
           className="add-button group-editor-add"
           onClick={(e) => {
             e.stopPropagation();
-            useStore.getState().openModal({ mode: "create", kind: "command", target });
+            addCommandTo(target);
           }}
         >
           <span className="plus">+</span> ADD COMMAND

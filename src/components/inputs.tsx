@@ -68,7 +68,7 @@ export function EditableLabel({
 
   if (!editing) {
     return (
-      // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: double-click opens the full editor; this is a shortcut
+      // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: double-click edits the bundle in Properties; this is a shortcut
       <div
         className={className}
         onClick={(e) => {

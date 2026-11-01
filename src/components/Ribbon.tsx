@@ -4,7 +4,7 @@ import { showAlert } from "../state/dialogs";
 import { useStore } from "../state/store";
 import { ContextPanels } from "./ContextPanels";
 import { CommitInput } from "./inputs";
-import { DeleteButton, RibbonElement } from "./RibbonItems";
+import { addCommandTo, DeleteButton, RibbonElement } from "./RibbonItems";
 
 /** Revit's green "Modify | <type>" tab, there while something is selected. */
 function ContextTab() {
@@ -79,19 +79,19 @@ function RibbonPanel({ panelId }: { panelId: string }) {
   const target = { kind: "panel", panelId } as const;
   const drop = useContainerDrop(target, 0);
   if (!panel) return null;
-  const { openModal, addStack, addPanel, renamePanel, deletePanel } = useStore.getState();
+  const { addGroup, addStack, addPanel, renamePanel, deletePanel } = useStore.getState();
 
   const actions = [
     {
       label: "BUTTON",
       title: "Add a command",
-      run: () => openModal({ mode: "create", kind: "command", target }),
+      run: () => addCommandTo(target),
     },
     { label: "STACK", title: "Add a stack of 2-3 commands", run: () => addStack(panelId) },
     {
       label: "GROUP",
       title: "Add a pulldown or split button",
-      run: () => openModal({ mode: "create", kind: "container", target }),
+      run: () => addGroup(panelId),
     },
   ];
 

@@ -43,7 +43,7 @@ test.describe("Revit frame", () => {
 
   test("Properties edits apply on Enter and reach the files", async ({ page }) => {
     await select(page, "Button 1");
-    const name = props(page).getByLabel("Name", { exact: true });
+    const name = props(page).locator('[data-field="name"]');
     await name.fill("Renumber");
     await name.press("Enter");
     await expect(item(page, "Renumber")).toBeVisible();
@@ -72,21 +72,17 @@ test.describe("Revit frame", () => {
     await expect(props(page).locator(".type-selector")).toContainText("Toggle");
   });
 
-  test("the Modify tab moves, edits and deletes the selection", async ({ page }) => {
+  test("the Modify tab moves and deletes the selection", async ({ page }) => {
     await addStack(page);
     await select(page, "Button 1");
     await page.locator("#contextTab").click();
-    await expect(page.locator(".context-panel")).toHaveCount(3);
+    await expect(page.locator(".context-panel")).toHaveCount(2);
     // The tab's own panels stay in view, so the move is seen.
     await expect(page.locator("#ribbonContainer .panel")).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Move Left" })).toBeDisabled();
 
     await page.getByRole("button", { name: "Move Right" }).click();
     expect((await namesIn(panelItems(page)))[1]).toBe("Button 1");
-
-    await page.getByRole("button", { name: "Edit Type" }).first().click();
-    await expect(page.locator("#buttonModal")).toBeVisible();
-    await page.locator(".cancel-button").click();
 
     await page.getByRole("button", { name: "Delete", exact: true }).click();
     await expect(page.locator(".panel-content > [data-name='Button 1']")).toHaveCount(0);

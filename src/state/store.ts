@@ -1,21 +1,20 @@
 import { temporal } from "zundo";
 import { create } from "zustand";
 import { immer } from "zustand/middleware/immer";
-import { TYPES, type TypeId } from "../domain/bundleTypes";
+import { rejectionReason, TYPES } from "../domain/bundleTypes";
 import { type Element, initialLayout, type Layout } from "../domain/model";
 import {
+  containerKeyOf,
   type DropTarget,
   hasSiblingNamed,
   isSameContainer,
   moveRejection,
   newPushButton,
+  nextDefaultButtonName,
+  nextDefaultGroupName,
   siblingsOf,
   uniqueName,
 } from "../domain/rules";
-
-export type ModalRequest =
-  | { mode: "create"; kind: "command" | "container"; target: DropTarget; presetType?: TypeId }
-  | { mode: "edit"; elementId: string };
 
 export interface OpenGroup {
   elementId: string;
@@ -29,12 +28,15 @@ export type ElementPayload = Omit<Element, "children" | "panelId" | "parentId">;
 export type RibbonMode = "tab" | "modify";
 
 interface Ui {
-  modal: ModalRequest | null;
   openGroup: OpenGroup | null;
   /** The bundle the Properties palette edits, as in Revit's selection. */
   selectedId: string | null;
   ribbonMode: RibbonMode;
+  /** The drawing area's open view tab. */
+  drawingView: DrawingView;
 }
+
+export type DrawingView = "preview" | "yaml" | "script";
 
 interface Actions {
   setExtensionName(name: string): void;
@@ -53,8 +55,14 @@ interface Actions {
   moveElement(elementId: string, target: DropTarget, index?: number): string | null;
   loadLayout(layout: Layout): void;
   reset(): void;
-  openModal(request: ModalRequest): void;
-  closeModal(): void;
+  /**
+   * Add a Push Button to a panel, stack or group, named "Button N", and
+   * select it. Returns the reason when the container cannot take one.
+   */
+  addCommand(target: DropTarget): string | null;
+  /** Add a Pulldown holding one Push Button to a panel, and select it. */
+  addGroup(panelId: string): void;
+  setDrawingView(view: DrawingView): void;
   openGroupEditor(group: OpenGroup): void;
   closeGroupEditor(): void;
   select(elementId: string | null): void;
@@ -177,7 +185,7 @@ export const useStore = create<Store>()(
   temporal(
     immer((set, get) => ({
       ...initialLayout(),
-      modal: null,
+      drawingView: "preview",
       openGroup: null,
       selectedId: null,
       ribbonMode: "tab",
@@ -313,6 +321,7 @@ export const useStore = create<Store>()(
             panelId,
           };
           panel.elements.push(stackId);
+          s.selectedId = stackId;
         }),
 
       renameElement: (elementId, name) =>
@@ -395,7 +404,6 @@ export const useStore = create<Store>()(
         set((s) => {
           Object.assign(s, layout);
           s.openGroup = null;
-          s.modal = null;
           s.selectedId = null;
           s.ribbonMode = "tab";
         }),
@@ -404,19 +412,55 @@ export const useStore = create<Store>()(
         set((s) => {
           Object.assign(s, initialLayout());
           s.openGroup = null;
-          s.modal = null;
           s.selectedId = null;
           s.ribbonMode = "tab";
         }),
 
-      openModal: (request) =>
+      addCommand: (target) => {
+        const layout = get();
+        const container = containerKeyOf(layout, target);
+        if (!container) return "That container no longer exists.";
+        const reason = rejectionReason(container, "pushbutton");
+        if (reason) return reason;
+        if (target.kind === "element") {
+          const max = TYPES[layout.elements[target.elementId]?.type ?? "pushbutton"].maxChildren;
+          if (max !== undefined && siblingsOf(layout, target).length >= max) {
+            return `A stack holds at most ${max} commands.`;
+          }
+        }
+        const name = nextDefaultButtonName(layout, target);
         set((s) => {
-          s.modal = request;
+          const elementId = `element${s.nextIds.element++}`;
+          s.elements[elementId] = newPushButton(name, {});
+          attach(s, elementId, target);
+          s.selectedId = elementId;
+        });
+        return null;
+      },
+
+      addGroup: (panelId) =>
+        set((s) => {
+          if (!s.panels[panelId]) return;
+          const groupId = `element${s.nextIds.element++}`;
+          const childId = `element${s.nextIds.element++}`;
+          s.elements[childId] = newPushButton("Button 1", { parentId: groupId });
+          s.elements[groupId] = {
+            type: "pulldown",
+            name: nextDefaultGroupName(s),
+            title: "",
+            tooltip: "",
+            iconData: null,
+            iconDarkData: null,
+            iconOnData: null,
+            children: [childId],
+          };
+          attach(s, groupId, { kind: "panel", panelId });
+          s.selectedId = groupId;
         }),
 
-      closeModal: () =>
+      setDrawingView: (view) =>
         set((s) => {
-          s.modal = null;
+          s.drawingView = view;
         }),
 
       openGroupEditor: (group) =>
