@@ -74,7 +74,10 @@
   --border-radius-sm: 2px;
   --border-radius-md: 4px;
   --border-radius-lg: 8px;
-  --control-radius: 2px;
+  --control-radius: 4px;
+  --modal: var(--palette-bg);
+  --modal-foreground: var(--text-primary);
+  --dialog-shadow: 0 12px 32px rgba(15, 23, 42, 0.22), 0 2px 6px rgba(15, 23, 42, 0.12);
   --font-ui:
     "Segoe UI", Selawik, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
   --font-mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
@@ -1758,6 +1761,313 @@ select.prop-input {
 .status-problems.has-problems {
   color: var(--warn);
   font-weight: 600;
+}
+
+/* ===== DIALOGS =====
+   Edit Type, the app's alerts and confirms, and Saved Layouts, styled like
+   Revit's current dialogs: rounded corners, sentence-case labels over 28px
+   fields, and one filled primary button at the bottom right. Everything comes
+   from the theme's tokens, so the same rules hold in light and dark. */
+.control,
+.field {
+  clip-path: none;
+  border-radius: var(--control-radius);
+  box-shadow: none;
+}
+
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"] {
+  border: 1px solid var(--frame-line);
+  border-radius: 10px;
+  background-color: var(--modal);
+  color: var(--modal-foreground);
+  box-shadow: var(--dialog-shadow);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.modal-content {
+  padding: 18px 20px 16px;
+}
+
+.modal-title {
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.close-modal {
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.close-modal:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.modal-section-title,
+.modal-content .form-group label,
+.advanced-disclosure > summary {
+  margin-bottom: 4px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.type-group h4 {
+  margin-bottom: 4px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
+}
+
+#buttonTypeGrid {
+  gap: 10px 18px;
+}
+
+.button-types {
+  gap: 6px;
+}
+
+.button-type {
+  min-width: 104px;
+  padding: 6px 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background-color: var(--field-bg);
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.button-type:hover:not(.selected) {
+  background-color: var(--hover-bg);
+}
+
+.button-type.selected {
+  border-color: var(--select-edge);
+  background-color: var(--select-bg);
+  box-shadow: 0 0 0 2px var(--select);
+  color: var(--text-primary);
+}
+
+.button-type .type-name {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.button-type .type-postfix {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="url"],
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.modal-content textarea {
+  padding: 6px 8px;
+  line-height: 1.45;
+}
+
+.modal-content #buttonCode {
+  font-family: var(--font-mono);
+}
+
+.modal-content input::placeholder,
+.modal-content textarea::placeholder {
+  color: var(--text-disabled);
+}
+
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+  border-color: var(--select-edge);
+  outline: 2px solid var(--select);
+  outline-offset: 0;
+}
+
+.modal-content select:disabled {
+  color: var(--text-disabled);
+  background-color: var(--palette-bg);
+}
+
+.icon-upload {
+  gap: 8px;
+  align-items: center;
+}
+
+.modal-content input[type="file"] {
+  padding: 4px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.modal-content input[type="file"]::file-selector-button {
+  margin-right: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.modal-content input[type="file"]::file-selector-button:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Room for "No file chosen" beside the picker, rather than "No...sen". */
+#buttonIconGroup {
+  grid-column: span 2;
+}
+
+.icon-upload input[type="file"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.icon-preview {
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+}
+
+.field-help {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.advanced-disclosure {
+  padding: 8px 10px;
+  border: 1px solid var(--frame-line);
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+.advanced-disclosure > summary {
+  margin: 0;
+  cursor: pointer;
+}
+
+.advanced-hint {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.type-note {
+  border-radius: 6px;
+}
+
+.modal-actions,
+[data-slot="alert-dialog-footer"] {
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* The dialog buttons: one filled primary, outlined secondaries. */
+.modal-actions button,
+[data-slot="alert-dialog-content"] .control {
+  min-width: 84px;
+  height: 30px;
+  padding: 0 16px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.modal-actions button:hover,
+[data-slot="alert-dialog-content"] .control:hover {
+  background-color: var(--hover-bg);
+}
+
+.modal-actions #createButton,
+[data-slot="alert-dialog-content"] .control-primary {
+  border-color: var(--accent-strong);
+  background-color: var(--accent-strong);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.modal-actions #createButton:hover,
+[data-slot="alert-dialog-content"] .control-primary:hover {
+  border-color: var(--accent-hover);
+  background-color: var(--accent-hover);
+}
+
+[data-slot="alert-dialog-content"] .control-primary[data-variant="dialog-danger"] {
+  border-color: var(--danger-fill);
+  background-color: var(--danger-fill);
+  color: #ffffff;
+}
+
+[data-slot="alert-dialog-content"] .control-primary[data-variant="dialog-danger"]:hover {
+  border-color: var(--delete-btn-hover);
+  background-color: var(--delete-btn-hover);
+}
+
+.modal-actions button:focus-visible,
+[data-slot="alert-dialog-content"] .control:focus-visible {
+  outline: 2px solid var(--select);
+  outline-offset: 2px;
 }
 
 /* ===== NARROW SCREENS =====

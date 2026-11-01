@@ -15,6 +15,7 @@ import {
   rejectionReason,
   TYPES,
   type TypeId,
+  withDefaults,
 } from "../domain/bundleTypes";
 import type { Element } from "../domain/model";
 import { sanitizeFileName } from "../domain/templates";
@@ -352,7 +353,7 @@ function ElementProperties({ elementId, element }: { elementId: string; element:
       );
       if (!ok) return;
     }
-    update({ type: next });
+    update(withDefaults(next, { ...payloadOf(element), type: next }));
   };
 
   const isStack = element.type === "stack";

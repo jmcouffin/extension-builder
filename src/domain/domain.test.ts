@@ -1,4 +1,4 @@
-import { KNOWN_POSTFIXES, rejectionReason, TYPES } from "./bundleTypes";
+import { KNOWN_POSTFIXES, rejectionReason, TYPES, withDefaults } from "./bundleTypes";
 import { migrate, validateLoadedState } from "./layoutFile";
 import { type Element, initialLayout, type Layout } from "./model";
 import {
@@ -305,5 +305,21 @@ describe("v1 -> v2 migration", () => {
         elements: {},
       }),
     ).not.toBeNull();
+  });
+});
+
+describe("required keys and defaults, as pyRevit reads them", () => {
+  it("a URL button requires a hyperlink and starts at pyrevitlabs.io", () => {
+    expect(TYPES.urlbutton.required).toEqual(["hyperlink"]);
+    expect(withDefaults("urlbutton", { hyperlink: "" }).hyperlink).toBe("https://pyrevitlabs.io");
+  });
+
+  it("never replaces a value the user typed", () => {
+    expect(withDefaults("urlbutton", { hyperlink: "https://x.io" }).hyperlink).toBe("https://x.io");
+  });
+
+  it("a link button needs assembly and command class; an invoke button only the assembly", () => {
+    expect(TYPES.linkbutton.required).toEqual(["assembly", "command_class"]);
+    expect(TYPES.invokebutton.required).toEqual(["assembly"]);
   });
 });
