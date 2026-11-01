@@ -1098,8 +1098,10 @@ main {
    family in bold over the type), the filter list with Edit Type beside it,
    the parameter grid in collapsible groups with the chevrons on the right,
    and "Properties help" with Apply at the foot. */
+/* Properties gets most of the column, as in Revit's default layout: it
+   holds every parameter of the selection; the browser is a reference. */
 .properties-palette {
-  flex: 1 1 0;
+  flex: 3 1 0;
   min-height: 220px;
   border-bottom: 1px solid var(--frame-line);
 }
@@ -1367,6 +1369,87 @@ select.prop-input {
   background-color: var(--hover-bg);
 }
 
+/* Required parameters: an asterisk on the name, and the row is marked while
+   its value is empty. */
+.prop-required {
+  color: var(--danger);
+  font-weight: 700;
+}
+
+.prop-row.is-missing .prop-value {
+  box-shadow: inset 0 0 0 1px var(--danger);
+}
+
+.prop-row.is-missing .prop-name {
+  color: var(--danger);
+}
+
+/* A multi-line value (combo box members) grows the row. */
+.prop-row:has(.prop-textarea) {
+  grid-template-columns: 1fr;
+}
+
+.prop-row:has(.prop-textarea) .prop-name {
+  border-right: none;
+  padding-top: 3px;
+  padding-bottom: 3px;
+}
+
+.prop-textarea {
+  height: auto;
+  min-height: 84px;
+  padding: 4px 6px;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  line-height: 1.45;
+  resize: vertical;
+}
+
+.prop-check {
+  display: flex;
+  align-items: center;
+  padding-left: 6px;
+}
+
+.prop-value .prop-check input {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--accent-strong);
+}
+
+.prop-edit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex: 0 0 auto;
+  height: 21px;
+  padding: 0 8px;
+  border: none;
+  border-left: 1px solid var(--row-line);
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.prop-icon .prop-edit svg {
+  width: 14px;
+  height: 14px;
+}
+
+.prop-edit:hover {
+  background-color: var(--hover-bg);
+}
+
+.type-help {
+  margin: 0 6px 6px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
 .palette-footer {
   display: flex;
   align-items: center;
@@ -1407,7 +1490,7 @@ select.prop-input {
 .preview-panel,
 .preview-panel.palette {
   overflow: hidden;
-  flex: 1 1 0;
+  flex: 2 1 0;
   width: auto;
   min-width: 0;
   max-width: none;
@@ -1720,6 +1803,45 @@ select.prop-input {
   font-size: 11px;
 }
 
+.code-sheet-edit {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  max-width: 900px;
+  box-sizing: border-box;
+}
+
+.code-hint {
+  margin-left: 12px;
+  font-family: var(--font-ui);
+  color: var(--text-secondary);
+}
+
+/* The script editor: the code sheet's own surface, with a caret and focus. */
+.code-editor {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 320px;
+  padding: 8px 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre;
+  tab-size: 4;
+  resize: none;
+  box-sizing: border-box;
+}
+
+.code-editor:focus {
+  border-color: var(--select-edge);
+  outline: 2px solid var(--select);
+  outline-offset: 0;
+}
+
 .code-sheet pre {
   margin: 0;
   overflow: auto;
@@ -1756,6 +1878,13 @@ select.prop-input {
   flex: 0 0 auto;
   color: var(--ok);
   white-space: nowrap;
+}
+
+.status-samples {
+  flex: 0 0 auto;
+  color: var(--warn);
+  white-space: nowrap;
+  cursor: help;
 }
 
 .status-problems.has-problems {
@@ -2072,8 +2201,9 @@ select.prop-input {
 
 /* ===== NARROW SCREENS =====
    A phone cannot dock palettes beside a canvas, so the frame stacks: title
-   bar (wrapping), options bar, ribbon, drawing area, Properties, Project
-   Browser, status bar, and the page scrolls. */
+   bar (wrapping), options bar, ribbon, Properties, Project Browser, drawing
+   area, status bar, and the page scrolls. Properties comes first because it
+   is where a bundle is edited; its script Edit button scrolls to the editor. */
 @media (max-width: 1100px) {
   .app-title,
   .title-bar .logo-text span,
@@ -2135,7 +2265,6 @@ select.prop-input {
   }
 
   .drawing-area {
-    order: -1;
     flex: 0 0 auto;
   }
 

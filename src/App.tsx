@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { DialogHost } from "./components/DialogHost";
 import { DrawingArea } from "./components/DrawingArea";
-import { ElementModal } from "./components/ElementModal";
 import { ExtensionName } from "./components/ExtensionName";
 import { FolderPreview } from "./components/FolderPreview";
 import { Header } from "./components/Header";
@@ -62,7 +61,6 @@ export function App() {
         <StatusBar />
         <GroupEditor />
       </DndProvider>
-      <ElementModal />
       <SavedLayouts />
       <DialogHost />
       <ThemeTransition />

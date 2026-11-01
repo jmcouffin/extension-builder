@@ -46,16 +46,11 @@ test.describe("@visual", () => {
     await shot(page, "populated");
   });
 
-  test("bundle modal", async ({ page }) => {
+  test("Properties of a URL button", async ({ page }) => {
     await page.getByRole("button", { name: "BUTTON", exact: true }).click();
-    await shot(page, "modal");
-  });
-
-  test("bundle modal with Advanced open", async ({ page }) => {
-    await page.getByRole("button", { name: "BUTTON", exact: true }).click();
-    await page.locator(".button-type", { hasText: "URL Button" }).click();
-    await page.locator("#advancedDisclosure > summary").click();
-    await shot(page, "modal-advanced");
+    await page.locator("#propertiesPalette").getByLabel("Bundle type").selectOption("urlbutton");
+    await page.mouse.move(0, 0);
+    await shot(page, "properties-urlbutton");
   });
 
   test("app dialog", async ({ page }) => {

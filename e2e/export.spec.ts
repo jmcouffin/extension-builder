@@ -10,6 +10,7 @@ import {
   expect,
   item,
   openApp,
+  setType,
   test,
 } from "./fixtures";
 
@@ -44,7 +45,7 @@ test.describe("export", () => {
     await addCommand(page, "Tool");
     await addGroup(page, "Tools");
     await drag(page, item(page, "Tool"), item(page, "Tools"));
-    await expect(item(page, "Tools")).toHaveAttribute("title", /with 1 command/);
+    await expect(item(page, "Tools")).toHaveAttribute("title", /with 2 command/);
 
     const downloadPromise = page.waitForEvent("download");
     await page.locator("#downloadZip").click();
@@ -85,10 +86,8 @@ test.describe("export", () => {
   });
 
   test("refuses to export a broken extension, and lists why", async ({ page }) => {
-    await page.getByRole("button", { name: "BUTTON", exact: true }).click();
-    await page.locator(".button-type", { hasText: "Content Button" }).click();
-    await page.getByLabel("Name (required)").fill("Family");
-    await page.locator("#createButton").click();
+    await addCommand(page, "Family");
+    await setType(page, "content");
 
     await page.locator("#downloadZip").click();
     await expect(appDialog(page)).toContainText("This extension will not work as built");

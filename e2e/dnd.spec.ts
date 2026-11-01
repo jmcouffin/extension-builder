@@ -59,7 +59,8 @@ test.describe("drag and drop", () => {
     await addGroup(page, "Tools");
     await drag(page, item(page, "Tool"), item(page, "Tools"));
     await expect(panelItems(page)).toHaveCount(2);
-    await expect(item(page, "Tools")).toHaveAttribute("title", /with 1 command/);
+    // A new pulldown starts with one command of its own.
+    await expect(item(page, "Tools")).toHaveAttribute("title", /with 2 command/);
 
     await item(page, "Tools").locator(".button-icon").click();
     const editor = page.getByTestId("group-editor");
@@ -67,7 +68,7 @@ test.describe("drag and drop", () => {
 
     await drag(page, editor.locator('[data-name="Tool"]'), item(page, "Button 1"), { x: 0.1 });
     await expect.poll(() => namesIn(panelItems(page))).toEqual(["Tool", "Button 1", "Tools"]);
-    await expect(item(page, "Tools")).toHaveAttribute("title", /with 0 command/);
+    await expect(item(page, "Tools")).toHaveAttribute("title", /with 1 command/);
   });
 
   test("an illegal drop is refused with the reason, and nothing moves", async ({ page }) => {
@@ -103,8 +104,8 @@ test.describe("drag and drop", () => {
     await page.getByTestId("group-editor").getByRole("button", { name: "CLOSE" }).click();
 
     await item(page, "Button 1").dblclick({ position: { x: 5, y: 5 } });
-    await expect(page.locator("#modalTitle")).toHaveText("Edit Push Button");
-    await page.keyboard.press("Escape");
+    await expect(page.locator('#propertiesPalette [data-field="name"]')).toBeFocused();
+    await expect(page.locator('#propertiesPalette [data-field="name"]')).toHaveValue("Button 1");
 
     await item(page, "Button 1").locator(".button-name").click();
     await expect(item(page, "Button 1").locator(".button-name input")).toBeFocused();

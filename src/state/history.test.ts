@@ -23,8 +23,9 @@ describe("history", () => {
     expect(useStore.temporal.getState().futureStates).toHaveLength(0);
   });
 
-  it("does not record opening a dialog", () => {
-    useStore.getState().openModal({ mode: "edit", elementId: "x" });
+  it("does not record a selection or a view change", () => {
+    useStore.getState().select("element1");
+    useStore.getState().setDrawingView("script");
     expect(useStore.temporal.getState().pastStates).toHaveLength(0);
   });
 

@@ -82,18 +82,24 @@ export function indent(text: string, spaces: number): string {
 }
 
 /**
- * A textarea field (only `members` today) is a YAML block the user authored;
- * everything else is a quoted scalar.
+ * One parameter as bundle.yaml writes it: a textarea is a YAML block the user
+ * authored, a yes/no is an unquoted true (and absent when no), a Revit version
+ * is an unquoted number, everything else a quoted scalar.
  */
 function yamlField(key: FieldKey, value: unknown): string {
   if (value === undefined || value === null || value === "") return "";
-  if (FIELDS[key].input === "textarea") return `${key}:\n${indent(String(value), 2)}\n`;
-  return yamlLine(key, value);
+  const def = FIELDS[key];
+  const name = def.yamlKey ?? key;
+  if (def.input === "textarea") return `${name}:\n${indent(String(value), 2)}\n`;
+  if (def.input === "bool") return value === "true" ? `${name}: true\n` : "";
+  if (def.input === "year") return `${name}: ${Number.parseInt(String(value), 10)}\n`;
+  return yamlLine(name, value);
 }
 
 /**
- * Build a bundle.yaml for one element.
- * Only keys pyRevit actually reads (BundleParser.cs:114-215) are emitted.
+ * Build a bundle.yaml for one element. Only keys pyRevit's parser reads are
+ * emitted (BundleParser.cs, ParseTopLevelNode and ParseEngine), required ones
+ * first, then the type's fields in order, then the `engine:` block.
  */
 export function buildYaml(element: Element, typeDef: TypeDef): string {
   let yaml = "";
@@ -101,16 +107,19 @@ export function buildYaml(element: Element, typeDef: TypeDef): string {
   yaml += yamlLine("tooltip", element.tooltip);
 
   // context drives availability-class generation; without it the button is
-  // always enabled (ExtensionParser.cs:1351-1370).
+  // always enabled (CommandTypeGenerator, ButtonBuilderBase).
   const context = typeDef.forcedContext || element.context;
   if (typeDef.fields.includes("context") && context) yaml += yamlLine("context", context);
 
   const required = typeDef.required ?? [];
   for (const key of required) yaml += yamlField(key, element[key]);
+  let engine = "";
   for (const key of typeDef.fields) {
     if (key === "context" || required.includes(key)) continue;
-    yaml += yamlField(key, element[key]);
+    if (FIELDS[key].engine) engine += yamlField(key, element[key]);
+    else yaml += yamlField(key, element[key]);
   }
+  if (engine) yaml += `engine:\n${indent(engine.trimEnd(), 2)}\n`;
   return yaml;
 }
 

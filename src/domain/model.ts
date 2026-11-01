@@ -1,4 +1,4 @@
-import type { TypeId } from "./bundleTypes";
+import type { FieldKey, TypeId } from "./bundleTypes";
 
 export interface Tab {
   name: string;
@@ -11,7 +11,11 @@ export interface Panel {
   tabId: string;
 }
 
-export interface Element {
+/**
+ * One bundle. Every bundle.yaml parameter (FIELDS in bundleTypes.ts) is an
+ * optional string; a yes/no parameter is "true" or absent.
+ */
+export interface Element extends Partial<Record<FieldKey, string>> {
   type: TypeId;
   name: string;
   title?: string;
@@ -23,13 +27,6 @@ export interface Element {
   children?: string[];
   panelId?: string;
   parentId?: string;
-  context?: string;
-  hyperlink?: string;
-  assembly?: string;
-  command_class?: string;
-  availability_class?: string;
-  members?: string;
-  author?: string;
 }
 
 export interface NextIds {

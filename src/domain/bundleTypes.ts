@@ -16,31 +16,128 @@
 export const LAYOUT_VERSION = 2;
 
 export type FieldKey =
-  | "context"
+  | "author"
+  | "help_url"
   | "hyperlink"
   | "assembly"
   | "command_class"
   | "availability_class"
-  | "members";
+  | "content"
+  | "content_alt"
+  | "members"
+  | "context"
+  | "min_revit_version"
+  | "max_revit_version"
+  | "engine_clean"
+  | "engine_full_frame"
+  | "engine_persistent"
+  | "large_icon"
+  | "highlight"
+  | "beta";
+
+/** Where a parameter sits in the Properties palette, in Revit's group names. */
+export type FieldGroup = "Identity Data" | "Data" | "Constraints" | "Engine" | "Graphics" | "Other";
+
+export const GROUP_ORDER: FieldGroup[] = [
+  "Identity Data",
+  "Data",
+  "Constraints",
+  "Engine",
+  "Graphics",
+  "Other",
+];
 
 export interface FieldDef {
   label: string;
-  input: "select" | "url" | "text" | "textarea";
+  group: FieldGroup;
+  input: "select" | "url" | "text" | "textarea" | "bool" | "year";
+  /** The bundle.yaml key, when it is not the field key itself. */
+  yamlKey?: string;
+  /** Written under `engine:` rather than at the top level. */
+  engine?: boolean;
   options?: { value: string; label: string }[];
   placeholder?: string;
-  optional?: boolean;
   rows?: number;
-  help?: string;
+  help: string;
 }
 
-// `yamlKey` is the key pyRevit actually reads (BundleParser.cs:114-215).
+const YEARS = ["2021", "2022", "2023", "2024", "2025", "2026", "2027", "2028"];
+
+// Every key is one pyRevit's parser reads
+// (dev/pyRevitLoader/pyRevitExtensionParser/BundleParser.cs, ParseTopLevelNode
+// and ParseEngine); what it does is from the loader that consumes it.
 export const FIELDS: Record<FieldKey, FieldDef> = {
+  author: {
+    label: "Author",
+    group: "Identity Data",
+    input: "text",
+    placeholder: "Your name",
+    help: "Shown in the button's tooltip, and written as __author__ in its script.",
+  },
+  help_url: {
+    label: "Help URL",
+    group: "Identity Data",
+    input: "url",
+    placeholder: "https://",
+    help: "Opened when the user presses F1 over the button.",
+  },
+  hyperlink: {
+    label: "Hyperlink",
+    group: "Data",
+    input: "url",
+    placeholder: "https://pyrevitlabs.io",
+    help: "The page a URL Button opens in the browser.",
+  },
+  assembly: {
+    label: "Assembly",
+    group: "Data",
+    input: "text",
+    placeholder: "MyAddin",
+    help: "The compiled .NET assembly (no .dll), resolved from this bundle's bin/ or Revit's add-ins.",
+  },
+  command_class: {
+    label: "Command Class",
+    group: "Data",
+    input: "text",
+    placeholder: "MyAddin.MyCommand",
+    help: "Namespace-qualified IExternalCommand class to run.",
+  },
+  availability_class: {
+    label: "Availability Class",
+    group: "Data",
+    input: "text",
+    placeholder: "MyAddin.MyAvailability",
+    help: "IExternalCommandAvailability class deciding when the button is enabled.",
+  },
+  content: {
+    label: "Family File",
+    group: "Data",
+    input: "text",
+    placeholder: "content.rfa",
+    help: "The .rfa family the button loads. Add the file to the bundle folder after unzipping.",
+  },
+  content_alt: {
+    label: "Ctrl+Click Family",
+    group: "Data",
+    input: "text",
+    placeholder: "other.rfa",
+    help: "An alternative family loaded on Ctrl+Click.",
+  },
+  members: {
+    label: "Members",
+    group: "Data",
+    input: "textarea",
+    rows: 5,
+    placeholder: "- id: first\n  text: First Item",
+    help: "The combo box's items, as a YAML list; each needs an id and a text.",
+  },
   context: {
     label: "Context",
+    group: "Constraints",
     input: "select",
     options: [
       { value: "", label: "(none - always enabled)" },
-      { value: "zero-doc", label: "zero-doc (enabled with no document)" },
+      { value: "zero-doc", label: "zero-doc (no document open)" },
       { value: "selection", label: "selection (needs a selection)" },
       { value: "doc-project", label: "doc-project" },
       { value: "doc-family", label: "doc-family" },
@@ -49,39 +146,69 @@ export const FIELDS: Record<FieldKey, FieldDef> = {
       { value: "active-detail-view", label: "active-detail-view" },
       { value: "active-drafting-view", label: "active-drafting-view" },
     ],
-    help: "No availability class is generated, so the button is always enabled.",
+    help: "When the button is enabled. With none, it always is.",
   },
-  hyperlink: {
-    label: "Hyperlink",
-    input: "url",
-    placeholder: "https://pyrevitlabs.io",
-    help: "Opens in a browser. The only key a .urlbutton needs.",
+  min_revit_version: {
+    label: "Min Revit Version",
+    group: "Constraints",
+    input: "year",
+    options: [{ value: "", label: "(any)" }, ...YEARS.map((y) => ({ value: y, label: y }))],
+    help: "Older Revit versions skip this button.",
   },
-  assembly: {
-    label: "Assembly",
-    input: "text",
-    placeholder: "MyCommands",
-    help: "Compiled DLL name (no .dll), resolved from this bundle's bin/.",
+  max_revit_version: {
+    label: "Max Revit Version",
+    group: "Constraints",
+    input: "year",
+    options: [{ value: "", label: "(any)" }, ...YEARS.map((y) => ({ value: y, label: y }))],
+    help: "Newer Revit versions skip this button.",
   },
-  command_class: {
-    label: "Command Class",
-    input: "text",
-    placeholder: "MyCommand",
-    help: "Namespace-qualified class implementing the command.",
+  engine_clean: {
+    label: "Clean Engine",
+    group: "Engine",
+    input: "bool",
+    yamlKey: "clean",
+    engine: true,
+    help: "Run in a fresh engine every time instead of a cached one.",
   },
-  availability_class: {
-    label: "Availability Class",
-    input: "text",
-    placeholder: "MyCommandAvail",
-    optional: true,
-    help: "IExternalCommand deciding whether the button is enabled.",
+  engine_full_frame: {
+    label: "Full Frame",
+    group: "Engine",
+    input: "bool",
+    yamlKey: "full_frame",
+    engine: true,
+    help: "IronPython full-frame mode, needed by some libraries.",
   },
-  members: {
-    label: "ComboBox Members",
-    input: "textarea",
-    rows: 4,
-    placeholder: "- id: first\n  text: First Item\n  group: Group A",
-    help: "YAML list; each item needs an id and a text.",
+  engine_persistent: {
+    label: "Persistent",
+    group: "Engine",
+    input: "bool",
+    yamlKey: "persistent",
+    engine: true,
+    help: "Keep the engine alive after the script ends, for scripts that leave windows open.",
+  },
+  large_icon: {
+    label: "Large Icon",
+    group: "Graphics",
+    input: "bool",
+    help: "Use the large icon size where Revit would use the medium one, in stacks and lists.",
+  },
+  highlight: {
+    label: "Highlight",
+    group: "Other",
+    input: "select",
+    options: [
+      { value: "", label: "(none)" },
+      { value: "new", label: "new" },
+      { value: "updated", label: "updated" },
+    ],
+    help: "Revit's orange dot marking a new or updated button.",
+  },
+  beta: {
+    label: "Beta",
+    group: "Other",
+    input: "bool",
+    yamlKey: "is_beta",
+    help: "Hidden unless the user turns on beta tools in pyRevit's settings.",
   },
 };
 
@@ -127,6 +254,24 @@ export interface TypeDef {
   maxChildren?: number;
 }
 
+/** What every button carries: who made it, its help, its Revit range, its badges. */
+const COMMON: FieldKey[] = [
+  "author",
+  "help_url",
+  "min_revit_version",
+  "max_revit_version",
+  "highlight",
+  "beta",
+];
+
+/** The engine options of a Python script bundle. */
+const ENGINE: FieldKey[] = ["engine_clean", "engine_full_frame", "engine_persistent"];
+
+/** Sample values that make the bundle well-formed but must be replaced. */
+export const SAMPLE_ASSEMBLY = "MyAddin";
+export const SAMPLE_COMMAND_CLASS = "MyAddin.MyCommand";
+export const SAMPLE_MEMBERS = "- id: option_a\n  text: Option A\n- id: option_b\n  text: Option B";
+
 const LEAVES_FOR_GROUP: TypeId[] = [
   "pushbutton",
   "toggle",
@@ -153,7 +298,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: ["icon.png"],
     darkIcons: ["icon.dark.png"],
-    fields: ["context"],
+    fields: ["context", ...ENGINE, "large_icon", ...COMMON],
   },
   toggle: {
     // A pyRevit toggle IS a smartbutton with on/off icons. There is no
@@ -169,7 +314,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     icons: ["icon.png"],
     darkIcons: ["icon.dark.png"],
     toggle: true,
-    fields: ["context"],
+    fields: ["context", ...ENGINE, "large_icon", ...COMMON],
   },
   panelbutton: {
     postfix: ".panelbutton",
@@ -183,7 +328,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     darkIcons: ["icon.dark.png"],
     // pyRevit forces these to zero-doc (genericcomps.py:633-635)
     forcedContext: "zero-doc",
-    fields: ["context"],
+    fields: ["context", ...ENGINE, ...COMMON],
   },
   urlbutton: {
     postfix: ".urlbutton",
@@ -198,7 +343,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // nothing without it (pyrevitlib/pyrevit/extensions/components.py).
     required: ["hyperlink"],
     defaults: { hyperlink: "https://pyrevitlabs.io" },
-    fields: ["hyperlink", "context"],
+    fields: ["hyperlink", "context", "large_icon", ...COMMON],
   },
   content: {
     postfix: ".content",
@@ -210,8 +355,10 @@ export const TYPES: Record<TypeId, TypeDef> = {
     icons: ["icon.png"],
     darkIcons: ["icon.dark.png"],
     contentFile: "content.rfa",
+    required: ["content"],
+    defaults: { content: "content.rfa" },
     help: "Needs a content.rfa family in this folder.",
-    fields: ["context"],
+    fields: ["content", "content_alt", "context", "large_icon", ...COMMON],
   },
   linkbutton: {
     postfix: ".linkbutton",
@@ -225,8 +372,9 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // LinkButton is built with needs_commandclass=True, and LinkButtonBuilder
     // returns no button without both (components.py, LinkButtonBuilder.cs).
     required: ["assembly", "command_class"],
+    defaults: { assembly: SAMPLE_ASSEMBLY, command_class: SAMPLE_COMMAND_CLASS },
     advanced: true,
-    fields: ["assembly", "command_class", "availability_class"],
+    fields: ["assembly", "command_class", "availability_class", "large_icon", ...COMMON],
     help: "Binds to a .NET class. For a web link, use URL Button.",
   },
   invokebutton: {
@@ -241,8 +389,9 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // Only the assembly is needed: with no command_class pyRevit invokes the
     // assembly itself (CommandTypeGenerator.BuildCommandArguments).
     required: ["assembly"],
+    defaults: { assembly: SAMPLE_ASSEMBLY },
     advanced: true,
-    fields: ["assembly", "command_class", "availability_class"],
+    fields: ["assembly", "command_class", "availability_class", "large_icon", ...COMMON],
     help: "Runs a .NET assembly; the command class is optional.",
   },
   stack: {
@@ -276,7 +425,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // GenericUICommandGroup.allowed_sub_cmps = [GenericUICommand, NoScriptButton]
     //   -> leaves only. No nested groups, no stacks.
     accepts: LEAVES_FOR_GROUP,
-    fields: ["context"],
+    fields: ["context", "large_icon", ...COMMON],
   },
   splitbutton: {
     postfix: ".splitbutton",
@@ -285,7 +434,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     group: "Groups",
     container: true,
     accepts: LEAVES_FOR_GROUP,
-    fields: ["context"],
+    fields: ["context", "large_icon", ...COMMON],
   },
   splitpushbutton: {
     postfix: ".splitpushbutton",
@@ -294,7 +443,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     group: "Groups",
     container: true,
     accepts: LEAVES_FOR_GROUP,
-    fields: ["context"],
+    fields: ["context", "large_icon", ...COMMON],
   },
   combobox: {
     postfix: ".combobox",
@@ -306,7 +455,8 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: [],
     required: ["members"],
-    fields: ["members"],
+    defaults: { members: SAMPLE_MEMBERS },
+    fields: ["members", ...COMMON],
   },
   nobutton: {
     postfix: ".nobutton",
@@ -317,12 +467,12 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: [],
     advanced: true,
-    fields: [],
+    fields: ["author", ...ENGINE, "min_revit_version", "max_revit_version"],
     help: "A script bundle with no ribbon button.",
   },
 };
 
-// Order used by the modal picker.
+// Order of the Type Selector.
 export const ORDER: TypeId[] = [
   "pushbutton",
   "toggle",

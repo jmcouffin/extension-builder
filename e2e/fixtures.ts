@@ -96,24 +96,49 @@ export async function handleOf(target: Locator): Promise<Locator> {
   return (await grip.count()) ? grip : target;
 }
 
+/** The selected bundle's Name in the Properties palette. */
+export function nameField(page: Page): Locator {
+  return page.locator('#propertiesPalette [data-field="name"]');
+}
+
+/** Rename the selected bundle in Properties, as a person does. */
+export async function renameSelected(page: Page, name: string) {
+  await nameField(page).fill(name);
+  await nameField(page).press("Enter");
+  await expect(item(page, name)).toBeVisible();
+}
+
+/** Change the selected bundle's type in the Type Selector. */
+export async function setType(page: Page, type: string) {
+  await page.locator("#propertiesPalette").getByLabel("Bundle type").selectOption(type);
+  await expect(page.locator("#propertiesPalette .type-selector")).toContainText(
+    `.${type === "toggle" ? "smartbutton" : type}`,
+  );
+}
+
+/** BUTTON adds a Push Button at once and selects it; it is then named in Properties. */
 export async function addCommand(page: Page, name: string, panelIndex = 0) {
   await page
     .locator(".panel")
     .nth(panelIndex)
     .getByRole("button", { name: "BUTTON", exact: true })
     .click();
-  await page.getByLabel("Name (required)").fill(name);
-  await page.locator("#createButton").click();
-  await expect(page.locator("#buttonModal")).toHaveCount(0);
-  await expect(item(page, name)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  await renameSelected(page, name);
 }
 
+const GROUP_TYPES: Record<string, string> = {
+  Pulldown: "pulldown",
+  "Split Button": "splitbutton",
+  "Split Push Button": "splitpushbutton",
+};
+
+/** GROUP adds a Pulldown with one command; its type and name are set in Properties. */
 export async function addGroup(page: Page, name: string, type = "Pulldown") {
   await page.locator(".panel").first().getByRole("button", { name: "GROUP", exact: true }).click();
-  await page.locator(".button-type", { hasText: type }).first().click();
-  await page.getByLabel("Name (required)").fill(name);
-  await page.locator("#createButton").click();
-  await expect(item(page, name)).toBeVisible();
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+  if (type !== "Pulldown") await setType(page, GROUP_TYPES[type] ?? type);
+  await renameSelected(page, name);
 }
 
 export async function addStack(page: Page) {

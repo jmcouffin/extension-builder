@@ -81,11 +81,12 @@ test.describe("ribbon", () => {
     await expect(page.locator(".stack")).toHaveCount(0);
   });
 
-  test("the stack add row opens the modal for that stack", async ({ page }) => {
+  test("the stack add row adds a command to that stack at once", async ({ page }) => {
     await addStack(page);
     await page.locator(".stack-add-button").click();
-    await page.locator("#createButton").click();
+    await expect(page.getByRole("dialog")).toHaveCount(0);
     await expect(page.locator(".stack .stack-items > .button")).toHaveCount(3);
+    await expect(page.locator(".stack .stack-items > .button").last()).toHaveClass(/is-selected/);
     await expect(page.locator(".stack-add-button")).toHaveCount(0);
   });
 

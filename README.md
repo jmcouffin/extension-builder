@@ -73,8 +73,8 @@ you will later find it:
 | Title bar and Quick Access Toolbar | logo, Load, Save, Undo, Redo, Reset, Download, the window title, the theme switch |
 | Options Bar | the extension name |
 | Ribbon, panels, panel title bars | the toolbar you are building |
-| Green **Modify \| &lt;type&gt;** tab | appears when a button is selected: Edit Type, Move Left/Right, Delete |
-| Properties palette | the selected bundle: Type Selector, Edit Type, parameter groups (Identity Data, Constraints, Data, Graphics, Folder), Properties help and Apply |
+| Green **Modify \| &lt;type&gt;** tab | appears when a button is selected: Move Left/Right, Delete |
+| Properties palette | the selected bundle, and the only editor: Type Selector, every parameter of its type in Revit's groups (Identity Data, Data, Constraints, Engine, Graphics, Other, Folder), Properties help and Apply |
 | Project Browser | the folder tree the ZIP will contain; a bundle row selects that bundle |
 | Drawing area and view tabs | the selected button on a light and a dark ribbon, its `bundle.yaml` and `script.py` |
 | Status bar | what a click does, and whether the extension is ready to download |
@@ -83,8 +83,17 @@ A click on a ribbon item (or keyboard focus) selects it, as in Revit; a click
 on empty ribbon clears the selection, and Properties then shows the extension
 itself. Selection is not part of undo history. Properties applies a value when
 you leave the cell or press Enter, Escape puts it back, and Apply is enabled
-while a value is being edited. Edit Type (and a double-click on an item) opens
-the full dialog, for icons, the script and the Advanced fields.
+while a value is being edited. Every group starts open and every required
+parameter is starred, and marked in red while it is empty.
+
+**There is no edit dialog.** A panel's BUTTON, STACK and GROUP, a stack's empty
+row and a pulldown's ADD COMMAND create the bundle on the spot ("Button 2", a
+Pulldown holding one command, a two-row stack) and select it; its type is then
+changed in the Type Selector (a command to any command, a group or stack to any
+group) and everything else in Properties. A double-click on an item puts the
+cursor in its Name. The script is edited in the drawing area's script.py tab
+(the starter follows the title and author until you edit it; clearing an edit
+brings it back), and a combo box's members in place in Properties.
 
 The one colour that is not Revit's is the pyRevit logo's yellow, and it only
 marks what you are building: the selection ring, drop markers, focus and the
@@ -93,7 +102,8 @@ Download button.
 The Project Browser can be folded to its title bar; whether it is open is a
 view preference (`pyrevit-extension-builder:prefs:v1`), kept apart from the
 draft. Its tree scrolls inside the palette, never the page. On phones the frame
-stacks: ribbon, drawing area, Properties, Project Browser.
+stacks: ribbon, Properties, Project Browser, drawing area; Properties comes first
+because it is where a bundle is edited.
 
 ## The ribbon
 
@@ -153,22 +163,20 @@ handle). Where you let go decides what happens:
 
 The target turns red when the drop is illegal (a stack in a stack, a fourth row,
 a duplicate name, a group inside its own command), and letting go there explains
-why in a dialog and changes nothing. The rules are the same ones the modal uses
-(`src/domain/rules.ts`), so the two paths cannot disagree. Movement has to pass
+why in a dialog and changes nothing. The rules are the same ones the Type
+Selector and the add buttons use (`src/domain/rules.ts`), so the paths cannot disagree. Movement has to pass
 6px before a drag starts, so click (open a group), click-to-rename and
-double-click (edit) still work on the same item. The keyboard works too: focus an
+double-click (edit in Properties) still work on the same item. The keyboard works too: focus an
 item, press Space, move with the arrow keys, press Space again.
 
 ## Dialogs
 
 There is no `window.alert` or `window.confirm` anywhere. Every message and
 question goes through `showAlert` / `showConfirm` (`src/state/dialogs.ts`),
-rendered by one `DialogHost` as a shadcn `AlertDialog` above the bundle modal
-(itself a shadcn `Dialog`). Escape cancels the dialog before it reaches the
-modal underneath: `DialogHost` claims Escape on `window` in the capture phase,
-because Radix only learns a new layer is on top after a re-render, and a key
-pressed in that gap would close the modal instead. The e2e suite fails any test
-in which a native dialog appears.
+rendered by one `DialogHost` as a shadcn `AlertDialog`, styled like Revit's own
+dialogs. `DialogHost` claims Escape on `window` in the capture phase, so Escape
+always closes the dialog on top (Saved Layouts can sit under a confirm). The
+e2e suite fails any test in which a native dialog appears.
 
 ## Themes
 
@@ -255,7 +263,7 @@ asks their system for reduced motion.
 
 `src/domain/bundleTypes.ts` is the single source of truth for every bundle type. Each row
 carries the folder postfix, the files it emits, its nesting whitelist and its
-`bundle.yaml` keys. Everything else — the modal picker, the folder tree, the
+`bundle.yaml` keys. Everything else — the Type Selector, Properties, the folder tree, the
 renderer, drag-and-drop rules, validation — reads from it.
 
 This is deliberate. pyRevit identifies a bundle purely by the folder suffix, and
@@ -273,32 +281,49 @@ Supported types, all 13 element postfixes pyRevit understands:
 | Push Button | `.pushbutton` | `script.py` |
 | Toggle | `.smartbutton` | a toggle *is* a smartbutton with `on.png` / `off.png`; there is no `.togglebutton` in pyRevit |
 | Panel Button | `.panelbutton` | context is forced to `zero-doc` |
-| URL Button | `.urlbutton` | needs `hyperlink:` |
-| Content Button | `.content` | needs a `content.rfa` you add yourself |
+| URL Button | `.urlbutton` | needs `hyperlink:`; starts at `https://pyrevitlabs.io` |
+| Content Button | `.content` | `content:` names the family (`content.rfa`), which you add yourself |
 | Pulldown | `.pulldown` | group |
 | Split Button | `.splitbutton` | group |
 | Split Push Button | `.splitpushbutton` | group |
-| Combo Box | `.combobox` | items come from `members:`, not child folders |
+| Combo Box | `.combobox` | items come from `members:` (starts with two sample items), not child folders |
 | No Button | `.nobutton` | script with no ribbon button |
 | Stack | `.stack` | 2–3 commands; fewer than 2 is skipped by pyRevit |
-| Link Button | `.linkbutton` | needs `assembly:` + `command_class:` |
-| Invoke Button | `.invokebutton` | needs `assembly:` + `command_class:` |
+| Link Button | `.linkbutton` | needs `assembly:` + `command_class:` (start as samples to replace) |
+| Invoke Button | `.invokebutton` | needs `assembly:` (a sample to replace); `command_class:` is optional |
 
 Nesting is enforced where you build it, not at export time: a pulldown only
 offers leaf commands, a stack refuses a nested stack, and dropping something
 illegal is rejected with the reason.
 
-## The Advanced section
+## Parameters
 
-`context`, `hyperlink`, `assembly`, `command_class`, `availability_class`,
-`members` and the dark-theme icon are behind a disclosure, because most
-extensions do not need them. Two of them are load-bearing when present:
+Every `bundle.yaml` key pyRevit's parser reads that a builder user can set
+(`BundleParser.cs`, `ParseTopLevelNode` and `ParseEngine`) is a parameter in
+the type table, attached to the types whose loader uses it, and appears in
+Properties for those types:
 
-- **`context`** — without it pyRevit generates no availability class at all, so
-  the button is enabled unconditionally.
-- **`assembly` / `command_class`** — `.linkbutton` and `.invokebutton` bind
-  straight to a compiled .NET class. Without them the button is created and does
-  nothing.
+| Group | Parameters | Types |
+| --- | --- | --- |
+| Identity Data | Name, Title, Tooltip, `author`, `help_url` (F1) | all buttons and groups |
+| Data | `hyperlink`; `assembly`, `command_class`, `availability_class`; `content`, `content_alt`; `members` | URL; Link / Invoke; Content; Combo Box |
+| Constraints | `context` (forced to `zero-doc` on Panel Button), `min_revit_version`, `max_revit_version` | script buttons, URL, Content, groups; versions on all |
+| Engine | `engine: clean`, `full_frame`, `persistent` | Push Button, Toggle, Panel Button, No Button |
+| Graphics | icon, dark icon, on icon (Toggle), script, `large_icon` | per type |
+| Other | `highlight` (new / updated), `is_beta` | all buttons and groups |
+
+Required keys start filled, so a new bundle is always well-formed:
+`hyperlink` with `https://pyrevitlabs.io`, `content` with `content.rfa`,
+`members` with two sample items, and `assembly` / `command_class` with
+`MyAddin` / `MyAddin.MyCommand`. Those two are placeholders: the status bar
+counts them as "sample values to replace" until they are changed, without
+blocking the download. A yes/no parameter is written only when it is on, a
+Revit version as a bare number, and the engine options as an `engine:` block.
+
+Left out on purpose: `templates`, `modules` (C# script references; the builder
+writes Python), `layout` (written for you from the order you build),
+`inherit_icon` (its default, on, is what you want), localized titles, and the
+panel- and tab-level keys (`background`, `collapsed`).
 
 ## Before you download
 
@@ -321,8 +346,13 @@ console error, a failed request or a native dialog. Across all sizes it checks:
   apart, ribbon and folder preview not overlapping, tab strip flush with the
   ribbon, items inside their panel, a stack's first row level with a
   full-height command's icon;
-- **modal**: every bundle type fits the screen with Advanced open and closed,
-  with no scrollbar from 1024x768 up; validation errors appear in app dialogs;
+- **properties**: creating never opens a dialog and selects what it made;
+  every bundle type shows every parameter of the type table with required
+  ones starred and filled and groups open; required values start working or
+  as counted samples; an emptied required value blocks the download; yes/no,
+  version, engine, author and highlight reach `bundle.yaml` and the ZIP; the
+  script is edited in the drawing area; members in place; a stack becomes a
+  pulldown;
 - **ribbon**: tabs, panels, rename, delete guards, stack confirm, draft restore
   and RESET;
 - **drag and drop**: reorder in a panel and in a stack, into and out of a stack,
@@ -341,8 +371,8 @@ shortcut and the pixel transition (in the logo's colours, and absent with
 reduced motion). `frame.spec.ts` covers selection, the Properties palette, the
 Type Selector, the Modify tab, the Project Browser and the ribbon preview.
 
-`pnpm test:visual` compares full-page screenshots of six states (default,
-populated, modal, modal with Advanced, dialog, group editor) at every size in
+`pnpm test:visual` compares full-page screenshots of five states (default,
+populated, Properties of a URL button, dialog, group editor) at every size in
 every theme. No pixel may differ, and colour may drift by at most a hair
 (`threshold: 0.02`; Playwright's default of 0.2 is wide enough to pass a brown
 ribbon for a purple one).
