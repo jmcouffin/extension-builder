@@ -1,5 +1,11 @@
 node_modules/
+dist/
 .env
+*.tsbuildinfo
+.playwright-mcp/
+test-results/
+playwright-report/
+visual.spec.ts-snaphots/
 
-# local test output
-.verify-out/
+# Visual baselines are local to each machine and OS; never committed.
+e2e/*-snapshots/

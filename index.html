@@ -1,167 +1,30 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyRevit Extension Builder</title>
-    <link rel="icon" href="icon.png?v=ribbon-strip-2">
-    <!--
-      Every local asset carries the same ?v= token below. GitHub Pages serves these with
-      Cache-Control: max-age=600, so without a version query a browser can pair
-      a FRESH index.html with a STALE styles.css or ui-elements.js - which looks
-      like the site rendering differently for no reason. The version makes the
-      filenames change whenever the assets do, so the pair can never mismatch.
-      Bump BUILD whenever you change a local CSS or JS file.
-    -->
-    <link rel="stylesheet" href="styles.css?v=ribbon-strip-2">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-</head>
-
-<body>
-    <header>
-        <div class="logo">
-            <img src="logo.svg" alt="pyRevit Logo" width="198" height="218">
-            <div class="logo-text">
-                <h1 class="glowing-text-title">pyRevit</h1>
-                <span class="glowing-text-title">extension builder</span>
-            </div>
-        </div>
-        <div class="download-button">
-            <button id="loadConfig" class="toolbar-action">
-                <span class="toolbar-action-label">Load layout</span>
-            </button>
-            <button id="saveConfig" class="toolbar-action">
-                <span class="toolbar-action-label">Save layout</span>
-            </button>
-            <button class="toolbar-action toolbar-action-danger" id="resetToolbar">
-                <span class="toolbar-action-label">Reset</span>
-            </button>
-            <button class="toolbar-action toolbar-action-primary" id="downloadZip">
-                <span class="toolbar-action-label">Download</span>
-            </button>
-        </div>
-    </header>
-
-    <div class="extension-name">
-        <label class="extension-name-label" for="extensionName">Extension name</label>
-        <div class="extension-name-row">
-            <input class="glowing-text" type="text" id="extensionName"
-                value="My Extension" spellcheck="false" autocomplete="off"
-                maxlength="60" placeholder="My Extension">
-            <div class="extension-name-hint" id="extensionNameHint"></div>
-        </div>
-    </div>
-
-    <main>
-        <div class="workspace">
-            <div class="ribbon-container">
-                <!-- The tab strip lives inside the ribbon column, not above the
-                     whole workspace: it is the top of the ribbon, so it has to
-                     stop where the ribbon stops. Sibling to the folder preview
-                     it ran the full width and read as belonging to the tree. -->
-                <div class="tabs-container">
-                    <div class="tabs" id="tabsContainer"></div>
-                    <button class="add-button add-tab-inline" id="addTab"
-                        title="Add a tab" aria-label="Add a tab"></button>
-                </div>
-
-                <div class="ribbon" id="ribbonContainer"></div>
-            </div>
-
-            <div class="preview-panel pixel-container">
-                <div class="pixel-border">
-                    <details class="preview-disclosure" id="previewDisclosure">
-                        <summary>
-                            <span class="preview-title">Folder preview</span>
-                            <span class="preview-summary-meta" id="previewSummaryMeta"></span>
-                        </summary>
-                        <div class="preview-content" id="folderPreview"></div>
-                    </details>
-                </div>
-            </div>
-        </div>
-
-        <div class="pulldown-content-container" id="pulldownContentContainer"></div>
-    </main>
-
-    <!-- Modal for creating and editing a bundle -->
-    <div class="modal" id="buttonModal">
-        <div class="modal-content">
-            <span class="close-modal">&times;</span>
-            <h2 id="modalTitle">New Command</h2>
-
-            <h3 class="modal-section-title">Bundle Type</h3>
-            <div id="buttonTypeGrid"></div>
-            <div class="type-note" id="typeNote" style="display:none;"></div>
-
-            <div class="modal-grid">
-                <div class="form-group span-2">
-                    <label for="buttonName">Name (required)</label>
-                    <input type="text" id="buttonName" placeholder="Button 1">
-                </div>
-
-                <div class="form-group">
-                    <label for="buttonTitle">Title</label>
-                    <input type="text" id="buttonTitle" placeholder="Defaults to name">
-                </div>
-
-                <div class="form-group span-3">
-                    <label for="buttonTooltip">Tooltip</label>
-                    <input type="text" id="buttonTooltip" placeholder="Shown on hover">
-                </div>
-
-                <div class="form-group" id="buttonIconGroup">
-                    <label for="buttonIcon">Icon</label>
-                    <div class="icon-upload">
-                        <input type="file" id="buttonIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
-                        <div class="icon-preview" id="iconPreview"></div>
-                    </div>
-                </div>
-
-                <div class="form-group" id="onIconGroup" style="display:none;">
-                    <label for="buttonOnIcon">On-state Icon</label>
-                    <div class="icon-upload">
-                        <input type="file" id="buttonOnIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
-                        <div class="icon-preview" id="onIconPreview"></div>
-                    </div>
-                </div>
-
-                <div class="form-group span-3" id="buttonCodeGroup">
-                    <label for="buttonCode">Python</label>
-                    <textarea id="buttonCode" placeholder="Leave empty for a starter script."></textarea>
-                </div>
-            </div>
-
-            <details class="advanced-disclosure" id="advancedDisclosure">
-                <summary>Advanced <span class="advanced-hint">(bundle.yaml)</span></summary>
-                <div class="advanced-body" id="advancedBody">
-                    <div id="advancedFields"></div>
-                    <div class="form-group" id="darkIconGroup">
-                        <label for="buttonDarkIcon">Dark-theme Icon</label>
-                        <input type="file" id="buttonDarkIcon" accept="image/png,image/jpeg,image/gif,image/bmp,image/svg+xml">
-                    </div>
-                </div>
-            </details>
-
-            <div class="modal-actions">
-                <button id="createButton">Create</button>
-                <button class="cancel-button">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script src="bundle-types.js?v=ribbon-strip-2"></script>
-    <script src="template.js?v=ribbon-strip-2"></script>
-    <script src="state.js?v=ribbon-strip-2"></script>
-    <script src="folder-structure.js?v=ribbon-strip-2"></script>
-    <script src="drag-drop.js?v=ribbon-strip-2"></script>
-    <script src="ui-elements.js?v=ribbon-strip-2"></script>
-    <script src="modal-handlers.js?v=ribbon-strip-2"></script>
-    <script src="event-handlers.js?v=ribbon-strip-2"></script>
-    <script src="save-load.js?v=ribbon-strip-2"></script>
-    <script src="draft.js?v=ribbon-strip-2"></script>
-    <script src="app.js?v=ribbon-strip-2"></script>
-</body>
-
+    <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" />
+    <script>
+      // Apply the theme before first paint, so a reload never flashes the
+      // default look. Same rule as src/theme/store.ts: ?theme= wins over the
+      // saved choice. Unknown ids are corrected once the app boots.
+      (() => {
+        var root = document.documentElement;
+        var theme = "builder";
+        var prefs = {};
+        try {
+          prefs = JSON.parse(localStorage.getItem("pyrevit-extension-builder:prefs:v1") || "{}");
+        } catch (_error) {}
+        if (prefs && typeof prefs.theme === "string") theme = prefs.theme;
+        var fromUrl = new URLSearchParams(location.search).get("theme");
+        if (fromUrl) theme = fromUrl;
+        if (/^[a-z0-9-]+$/.test(theme)) root.setAttribute("data-theme", theme);
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
 </html>

@@ -1,0 +1,37 @@
+{
+  "mcpServers": {
+    "playwright-desktop": {
+      "command": "pnpm",
+      "args": [
+        "exec",
+        "playwright-mcp",
+        "--isolated",
+        "--headless",
+        "--viewport-size=1920x1080",
+        "--output-dir=.playwright-mcp/desktop"
+      ]
+    },
+    "playwright-laptop": {
+      "command": "pnpm",
+      "args": [
+        "exec",
+        "playwright-mcp",
+        "--isolated",
+        "--headless",
+        "--viewport-size=1280x800",
+        "--output-dir=.playwright-mcp/laptop"
+      ]
+    },
+    "playwright-mobile": {
+      "command": "pnpm",
+      "args": [
+        "exec",
+        "playwright-mcp",
+        "--isolated",
+        "--headless",
+        "--device=iPhone 15",
+        "--output-dir=.playwright-mcp/mobile"
+      ]
+    }
+  }
+}

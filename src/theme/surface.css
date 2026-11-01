@@ -1,0 +1,146 @@
+:root {
+  --frame-width: 4px;
+  --frame: #d3d6da;
+  --frame-light: #eef0f2;
+  --frame-dark: #7d848b;
+  --frame-edge: #aab0b6;
+  --face: var(--surface-ribbon);
+  --face-header: #c4c8cd;
+  --control-face: #c9ced2;
+  --control-face-hover: #d6dade;
+  --control-radius: 0;
+}
+
+.surface {
+  --notch: 4px;
+  border: var(--frame-width) solid var(--frame);
+  border-right-color: var(--frame-edge);
+  border-bottom-color: var(--frame-edge);
+  border-radius: 0;
+  background-color: var(--face);
+  box-shadow: inset 1px 1px 0 var(--frame-dark);
+  color: var(--text-primary);
+  clip-path: polygon(
+    var(--notch) 0,
+    calc(100% - var(--notch)) 0,
+    calc(100% - var(--notch)) var(--notch),
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    var(--notch) calc(100% - var(--notch)),
+    0 calc(100% - var(--notch)),
+    0 var(--notch),
+    var(--notch) var(--notch)
+  );
+}
+
+.surface-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  background-color: var(--face-header);
+  border-bottom: 1px solid var(--frame-edge);
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-primary);
+}
+
+.surface-body {
+  font-family: var(--font-mono);
+  font-weight: 300;
+  color: var(--text-primary);
+}
+
+.control {
+  --notch: 2px;
+  border: 1px solid var(--frame-edge);
+  border-radius: 0;
+  background-color: var(--control-face);
+  color: var(--text-primary);
+  box-shadow: inset 1px 1px 0 var(--frame-light);
+  clip-path: polygon(
+    var(--notch) 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    0 calc(100% - var(--notch)),
+    0 var(--notch)
+  );
+  cursor: pointer;
+  transition: background-color 120ms;
+}
+
+.control:hover {
+  background-color: var(--control-face-hover);
+}
+
+.control:active {
+  box-shadow: inset 1px 1px 0 var(--frame-dark);
+}
+
+.control:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: -3px;
+}
+
+.control-primary {
+  background-color: var(--accent-strong);
+  border-color: var(--accent);
+  color: var(--on-accent);
+  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 0.3);
+}
+
+.control-primary:hover {
+  background-color: var(--accent-hover);
+}
+
+.control-danger {
+  color: var(--danger);
+  border-color: var(--danger-fill);
+}
+
+.control-danger:hover {
+  background-color: var(--danger-fill);
+  color: #fff;
+}
+
+.control:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.field {
+  --notch: 3px;
+  border: 1px solid var(--frame-edge);
+  border-radius: 0;
+  background-color: var(--surface-sunken);
+  color: var(--text-primary);
+  box-shadow: inset 1px 1px 0 var(--frame-dark);
+  clip-path: polygon(
+    var(--notch) 0,
+    calc(100% - var(--notch)) 0,
+    100% var(--notch),
+    100% calc(100% - var(--notch)),
+    calc(100% - var(--notch)) 100%,
+    var(--notch) 100%,
+    0 calc(100% - var(--notch)),
+    0 var(--notch)
+  );
+}
+
+.field:hover {
+  border-color: var(--frame-dark);
+}
+
+.field:focus {
+  outline: none;
+  border-color: var(--accent);
+  box-shadow: inset 1px 1px 0 var(--accent);
+}

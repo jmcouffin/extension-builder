@@ -1,0 +1,42 @@
+/*
+ * Cascade order, lowest first. Tailwind's preflight is deliberately NOT
+ * imported: the app's own stylesheet was written against browser defaults
+ * (heading weights, input fonts, line height), and preflight would silently
+ * restyle all of it. The legacy sheet sits in its own layer below utilities,
+ * so shadcn components' classes always win over it, and its `* { padding: 0 }`
+ * reset cannot flatten them. Theme files come last of all: a theme is an
+ * explicit override of everything below it, including component utilities,
+ * so `:root[data-theme="..."]` rules win without specificity games.
+ */
+@layer theme, base, legacy, components, utilities, themes;
+
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
+@import "tw-animate-css";
+@import "../styles.css" layer(legacy);
+@import "./tokens.css";
+@import "./surface.css" layer(components);
+@import "./themes/legacy-8bit.css" layer(themes);
+
+/*
+ * The part of preflight shadcn components actually need, scoped to the
+ * component parts themselves. Every shadcn part carries a data-slot
+ * attribute; app markup rendered inside one (the bundle form inside the
+ * dialog) is deliberately not reset, so it keeps the look it was built with.
+ */
+@layer base {
+  :where([data-slot]),
+  :where([data-slot])::before,
+  :where([data-slot])::after {
+    box-sizing: border-box;
+    border: 0 solid;
+    margin: 0;
+    padding: 0;
+  }
+
+  :where([data-slot]):is(button, input, select, textarea) {
+    font: inherit;
+    color: inherit;
+    background-color: transparent;
+  }
+}

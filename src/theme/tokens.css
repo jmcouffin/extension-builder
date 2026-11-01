@@ -1,0 +1,69 @@
+/*
+ * The shadcn/ui token contract, derived from the app's own design tokens
+ * (defined per theme). Components are written against --background,
+ * --primary, ... ; a theme only has to set the app tokens, and may override
+ * any shadcn token directly when it wants something different.
+ *
+ * There is no dark: variant in the components. A dark theme is just a theme
+ * whose tokens are dark; Tailwind's default dark: would follow the OS setting
+ * and repaint components regardless of the theme the user picked.
+ */
+@layer base {
+  :root {
+    --background: var(--surface-raised);
+    --foreground: var(--text-primary);
+    --card: var(--surface-raised);
+    --card-foreground: var(--text-primary);
+    --popover: var(--surface-raised);
+    --popover-foreground: var(--text-primary);
+    --primary: var(--accent-strong);
+    --primary-foreground: var(--on-accent);
+    --secondary: var(--surface-sunken);
+    --secondary-foreground: var(--text-primary);
+    --muted: var(--surface-sunken);
+    --muted-foreground: var(--text-secondary);
+    --accent-surface: var(--surface-hover);
+    --accent-surface-foreground: var(--text-primary);
+    --destructive: var(--danger-fill);
+    --destructive-foreground: #ffffff;
+    --border: var(--border-subtle);
+    --input: var(--border-subtle);
+    --ring: var(--accent);
+    --radius: var(--border-radius-md);
+    --overlay: rgba(0, 0, 0, 0.5);
+    --modal: var(--bg-main-color);
+    --modal-foreground: var(--text-pink);
+    --dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.35);
+  }
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent-surface);
+  --color-accent-foreground: var(--accent-surface-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-overlay: var(--overlay);
+  --color-modal: var(--modal);
+  --color-modal-foreground: var(--modal-foreground);
+  --radius-sm: var(--border-radius-sm);
+  --radius-md: var(--border-radius-md);
+  --radius-lg: var(--radius);
+  --font-app: var(--font-ui);
+  --font-code: var(--font-mono);
+  --shadow-dialog: var(--dialog-shadow);
+}

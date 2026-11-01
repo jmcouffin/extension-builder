@@ -1,0 +1,483 @@
+/*
+ * Legacy 8-bit: the builder's original palette and type, from commit 2a7e8dd
+ * (the last one before the Revit redesign in 283e834) - neon magenta on deep
+ * purple, glowing yellow type, pixel type.
+ *
+ * A theme restyles; it does not re-lay-out. Everything here is paint: tokens,
+ * colours, the font, radii, glows. Heavier frames are drawn with outlines and
+ * inset shadows rather than wider borders, so no box changes size and the page
+ * keeps the same layout as every other theme. The only element whose
+ * visibility changes is the soundtrack control, which this theme shows.
+ *
+ * Pixelify Sans (OFL, bundled) stands in for the original Pixelcraft, which was
+ * loaded from a font CDN under an unclear licence. The browser only downloads
+ * it once this theme puts it on screen.
+ */
+
+@import "@fontsource/pixelify-sans/400.css";
+
+@keyframes legacy-glow {
+  0% {
+    text-shadow:
+      0 0 5px var(--legacy-pink),
+      0 0 10px var(--legacy-pink),
+      0 0 15px var(--legacy-pink);
+  }
+  50% {
+    text-shadow:
+      0 0 10px var(--legacy-yellow),
+      0 0 20px var(--legacy-yellow),
+      0 0 30px var(--legacy-yellow);
+  }
+  100% {
+    text-shadow:
+      0 0 5px var(--legacy-pink),
+      0 0 10px var(--legacy-pink),
+      0 0 15px var(--legacy-pink);
+  }
+}
+
+:root[data-theme="legacy-8bit"] {
+  color-scheme: dark;
+
+  --legacy-purple: #320452;
+  --legacy-purple-2: #381153;
+  --legacy-tile: rgb(124, 41, 124);
+  --legacy-pink: rgb(255, 0, 200);
+  --legacy-pink-text: #ff69b4;
+  --legacy-yellow: #ffd000;
+  --legacy-input: #411f1f;
+  --legacy-glow: 0 0 12px rgba(236, 72, 153, 0.6);
+
+  --surface-app: var(--legacy-purple);
+  --surface-ribbon: var(--legacy-purple-2);
+  --surface-raised: var(--legacy-purple-2);
+  --surface-sunken: var(--legacy-input);
+  --surface-hover: rgba(255, 0, 200, 0.18);
+  --border-separator: var(--legacy-pink);
+  --border-subtle: var(--legacy-pink);
+  --text-primary: var(--legacy-pink-text);
+  --text-secondary: #e4c3d9;
+  --text-disabled: #9b6f8e;
+  --accent: var(--legacy-yellow);
+  --accent-strong: var(--legacy-pink);
+  --accent-hover: #d400a6;
+  --on-accent: var(--legacy-yellow);
+  --warn: #e6a700;
+  --danger: #ff6b5b;
+  --danger-fill: #c0392b;
+  --delete-btn-hover: #e74c3c;
+  --title-color: var(--legacy-yellow);
+  --border-radius-sm: 3px;
+  --border-radius-md: 5px;
+  --border-radius-lg: 10px;
+  --shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+  --font-ui: "Pixelify Sans", "Courier New", monospace;
+  --font-mono: "Pixelify Sans", "Courier New", monospace;
+
+  --overlay: rgba(10, 0, 20, 0.7);
+  --modal: var(--legacy-purple);
+  --modal-foreground: var(--legacy-pink-text);
+  --dialog-shadow: 0 0 24px rgba(236, 72, 153, 0.55);
+
+  /* ---- Header ---- */
+  /* A square picture in the default mark's box (the SVG's own proportions),
+     so the swap cannot move the title. */
+  & .logo-mark {
+    content: url("../../assets/themes/legacy-8bit/logo.png");
+    aspect-ratio: 198.1 / 218.4;
+    object-fit: contain;
+    image-rendering: pixelated;
+  }
+
+  & h1,
+  & .logo-text span {
+    color: var(--legacy-yellow);
+    animation: legacy-glow 8s infinite;
+  }
+
+  & .control {
+    border-color: var(--legacy-pink);
+    border-radius: 0;
+    background-color: var(--legacy-purple);
+    color: var(--legacy-pink-text);
+    box-shadow: none;
+    clip-path: none;
+    transform: none;
+  }
+
+  & .control:hover {
+    background-color: var(--legacy-input);
+  }
+
+  & .control-primary {
+    background-color: var(--legacy-pink);
+    color: var(--legacy-yellow);
+  }
+
+  & .download-button {
+    gap: 6px;
+  }
+
+  & .toolbar-action {
+    padding-inline: 9px;
+    border-color: var(--legacy-pink);
+    border-radius: 0;
+    background-color: var(--legacy-pink);
+    color: var(--legacy-yellow);
+    box-shadow: var(--legacy-glow);
+  }
+
+  & .toolbar-action:hover {
+    background-color: var(--legacy-input);
+    color: #d6c6ce;
+  }
+
+  & .toolbar-action-danger {
+    background-color: var(--legacy-purple);
+    color: var(--legacy-pink-text);
+  }
+
+  /* The soundtrack control: shown by this theme only. */
+  & .music-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 10px;
+    color: var(--legacy-yellow);
+  }
+
+  /* Compact on purpose: the control shares the header row with the actions
+     and must not make it wrap. The status and percentage stay readable to
+     assistive tech, and the slider itself shows the level. */
+  & .music-status,
+  & .music-volume-value {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
+
+  & .music-volume {
+    width: 64px;
+  }
+
+  & .music-toggle {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 50%;
+    background-color: var(--legacy-pink);
+    color: var(--legacy-yellow);
+    cursor: pointer;
+  }
+
+  & .music-toggle:hover {
+    background-color: #d38f8f;
+  }
+
+  & .music-toggle svg {
+    width: 11px;
+    height: 11px;
+    fill: currentColor;
+  }
+
+  & .music-volume [data-slot="slider-track"] {
+    background-color: var(--legacy-input);
+  }
+
+  & .music-volume [data-slot="slider-range"] {
+    background-color: var(--legacy-pink);
+  }
+
+  & .music-volume [data-slot="slider-thumb"] {
+    border-color: var(--legacy-yellow);
+    background-color: var(--legacy-pink);
+  }
+
+  /* ---- Extension name ---- */
+  & .extension-name-label {
+    color: var(--legacy-pink);
+  }
+
+  & #extensionName {
+    clip-path: none;
+    border-color: var(--legacy-pink);
+    background-color: var(--legacy-purple);
+    color: var(--legacy-pink-text);
+    box-shadow: var(--legacy-glow);
+    animation: legacy-glow 3s infinite;
+  }
+
+  & #extensionName:focus {
+    background-color: var(--legacy-input);
+  }
+
+  & .hint-warn {
+    color: var(--legacy-yellow);
+  }
+
+  /* ---- Tabs, ribbon, panels ---- */
+  & .tabs-container {
+    border-bottom-color: var(--legacy-pink);
+    background-color: var(--legacy-purple);
+  }
+
+  & .tab {
+    background-color: var(--legacy-purple);
+    box-shadow: inset 0 0 0 1px var(--legacy-pink);
+    border-radius: 5px 5px 0 0;
+  }
+
+  /* The old active tab carried a thick yellow underline. */
+  & .tab.active {
+    background-color: var(--legacy-purple-2);
+    box-shadow:
+      inset 0 0 0 1px var(--legacy-pink),
+      inset 0 -4px 0 var(--legacy-yellow);
+  }
+
+  & .tab input {
+    color: var(--legacy-pink-text);
+    font-weight: bold;
+  }
+
+  & .add-tab-inline,
+  & .add-panel-inline,
+  & .panel-controls .add-button {
+    color: var(--legacy-pink-text);
+    background-color: transparent;
+    border-color: var(--legacy-yellow);
+  }
+
+  & .add-tab-inline:hover,
+  & .add-panel-inline:hover,
+  & .panel-controls .add-button:hover {
+    background-color: var(--legacy-input);
+    color: var(--legacy-yellow);
+  }
+
+  & .ribbon {
+    background-color: var(--legacy-purple-2);
+    border-color: var(--legacy-pink);
+    outline: 3px solid var(--legacy-pink);
+    outline-offset: -1px;
+    box-shadow: var(--legacy-glow);
+  }
+
+  & .panel,
+  & .panel:last-child {
+    border-right-color: var(--legacy-pink);
+    box-shadow: inset 0 0 0 2px rgba(255, 0, 200, 0.55);
+  }
+
+  & .panel-footer {
+    border-top-color: var(--legacy-pink-text);
+  }
+
+  & .panel-name {
+    color: var(--legacy-pink-text);
+  }
+
+  /* ---- Commands: purple tiles with a dashed edge ---- */
+  & .panel-content > .button,
+  & .panel-content > .group,
+  & .stack {
+    background-color: var(--legacy-tile);
+    border: 1px dashed #ccc;
+    border-radius: var(--border-radius-sm);
+  }
+
+  & .stack-items > .button {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(204, 204, 204, 0.5);
+    border-style: dashed;
+  }
+
+  & .button:hover,
+  & .group:hover,
+  & .stack:hover {
+    border-color: var(--legacy-yellow);
+    background-color: #8e3a8e;
+  }
+
+  & .button .button-name,
+  & .group .button-name {
+    color: var(--legacy-pink-text);
+  }
+
+  & .group-caret {
+    border-color: var(--legacy-yellow);
+  }
+
+  & .stack-add-button {
+    color: var(--legacy-pink-text);
+    border-color: var(--legacy-yellow);
+    border-style: solid;
+  }
+
+  & .stack-add-button:hover,
+  & .stack-add-button:focus-visible {
+    background-color: var(--legacy-input);
+    border-color: var(--legacy-yellow);
+    color: var(--legacy-yellow);
+  }
+
+  & .stack-grip {
+    background-image: radial-gradient(var(--legacy-yellow) 1px, transparent 1.2px);
+  }
+
+  & .element-delete-button,
+  & .panel-delete-button,
+  & .tab-delete-button {
+    border-radius: 50%;
+  }
+
+  & .pulldown-content-container {
+    background-color: var(--legacy-purple);
+    border-color: var(--legacy-pink);
+    box-shadow: var(--legacy-glow);
+  }
+
+  & .pulldown-content {
+    border-color: rgba(255, 0, 200, 0.4);
+  }
+
+  & .pulldown-label {
+    color: var(--legacy-yellow);
+  }
+
+  /* ---- Folder preview: the pixel-cut glowing frame ---- */
+  & .surface {
+    border: 4px solid #ec4899;
+    border-radius: 0;
+    clip-path: none;
+    background-color: var(--legacy-purple-2);
+    box-shadow: 15px 0 20px rgba(236, 72, 153, 0.6);
+    color: var(--legacy-pink-text);
+  }
+
+  & .surface-header {
+    border-bottom: 0;
+    letter-spacing: normal;
+  }
+
+  & .preview-disclosure > summary {
+    background-color: var(--legacy-purple-2);
+  }
+
+  & .preview-title {
+    color: var(--legacy-pink-text);
+  }
+
+  & .preview-summary-meta {
+    color: var(--legacy-yellow);
+  }
+
+  & .preview-content {
+    background-color: var(--legacy-purple-2);
+    color: var(--legacy-pink-text);
+  }
+
+  /* ---- Bundle modal ---- */
+  & .modal-content {
+    box-shadow:
+      inset 0 0 0 2px var(--legacy-pink),
+      0 0 24px rgba(236, 72, 153, 0.45);
+  }
+
+  & .modal-title {
+    color: var(--legacy-pink-text);
+  }
+
+  & .close-modal:hover {
+    color: var(--legacy-yellow);
+  }
+
+  & .modal-section-title,
+  & .form-group label,
+  & .advanced-disclosure > summary {
+    color: var(--legacy-pink);
+  }
+
+  & .type-group h4,
+  & .field-help,
+  & .advanced-hint {
+    color: #c9a3bf;
+  }
+
+  & .button-type:hover:not(.selected) {
+    border-color: var(--legacy-yellow);
+  }
+
+  & .button-type.selected {
+    border-color: var(--legacy-pink);
+    background-color: rgba(255, 0, 200, 0.25);
+  }
+
+  & .form-group input,
+  & .form-group textarea,
+  & .form-group select {
+    color: var(--legacy-pink-text);
+    border-color: var(--legacy-pink);
+  }
+
+  & .form-group select option {
+    background-color: var(--legacy-purple);
+  }
+
+  & .advanced-disclosure {
+    border-color: var(--legacy-pink);
+  }
+
+  & ::file-selector-button {
+    background-color: var(--legacy-pink);
+    color: var(--legacy-yellow);
+  }
+
+  & .icon-preview {
+    border-color: var(--legacy-pink);
+  }
+
+  & #createButton {
+    background-color: var(--legacy-pink);
+    border-color: var(--legacy-pink);
+    color: var(--legacy-yellow);
+  }
+
+  & .cancel-button {
+    color: var(--legacy-pink-text);
+    border-color: var(--legacy-pink);
+  }
+
+  /* ---- App dialogs and the theme menu (shadcn, styled from the tokens) ---- */
+  & [data-slot="alert-dialog-content"],
+  & [data-slot="dropdown-menu-content"] {
+    border-color: var(--legacy-pink);
+    border-radius: 0;
+    box-shadow: var(--dialog-shadow);
+  }
+
+  & [data-slot="alert-dialog-title"] {
+    color: var(--legacy-yellow);
+  }
+}
+
+/* Pixel art stays crisp when scaled. */
+:root[data-theme="legacy-8bit"] .button-icon img,
+:root[data-theme="legacy-8bit"] .icon-preview img {
+  image-rendering: pixelated;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="legacy-8bit"] * {
+    /* biome-ignore lint/complexity/noImportantStyles: reduced motion has to beat every glow in the theme */
+    animation: none !important;
+  }
+}
