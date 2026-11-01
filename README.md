@@ -30,9 +30,24 @@ Each runs headless in an isolated profile, from the version pinned in
 
 `main` holds the source. Every push to `main` runs
 `.github/workflows/deploy.yml`, which lints, type-checks, tests and builds, then
-force-pushes the contents of `dist/` as a single commit to the **`build`**
-branch. GitHub Pages serves the `build` branch root, and `public/CNAME` is copied
-into every build, so the custom domain stays attached.
+publishes `dist/` to the root of the **`build`** branch. GitHub Pages serves the
+`build` branch root, and `public/CNAME` is copied into every build, so the
+custom domain stays attached.
+
+**Pull request previews.** A pull request from a branch of this repository is
+built the same way and published to `pr-<number>/` on the same branch, so it is
+served at `https://builder.pyrevitlabs.io/pr-<number>/`; the workflow links it
+in a comment on the pull request and updates that comment on every push.
+Closing the pull request removes the folder
+(`.github/workflows/preview-cleanup.yml`). A pull request from a fork gets no
+preview: its token cannot write to the repository.
+
+All three (site, preview, cleanup) go through `scripts/publish-pages.sh`, which
+assembles the whole site (root plus every preview) and force-pushes it as a
+single commit, so the branch never grows and stale hashed assets never pile up.
+They share one concurrency group, so two runs never write the branch at once.
+The app loads from a sub-path because Vite builds with relative asset paths
+(`base: "./"`), which `e2e/subpath.spec.ts` checks.
 
 Vite fingerprints every asset filename (`index-<hash>.js`), so a fresh
 `index.html` can never be paired with a stale CSS or JS file from the Pages cache
