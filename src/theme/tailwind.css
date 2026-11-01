@@ -6,9 +6,12 @@
  * so shadcn components' classes always win over it, and its `* { padding: 0 }`
  * reset cannot flatten them. Theme files come last of all: a theme is an
  * explicit override of everything below it, including component utilities,
- * so `:root[data-theme="..."]` rules win without specificity games.
+ * so `:root[data-theme="..."]` rules win without specificity games. The
+ * Revit frame (layout, and the default theme's paint) has its own layer just
+ * under the themes: above utilities and the legacy sheet, so it wins over
+ * both, and below every theme, so a theme still repaints it.
  */
-@layer theme, base, legacy, components, utilities, themes;
+@layer theme, base, legacy, components, utilities, frame, themes;
 
 @import "tailwindcss/theme.css" layer(theme);
 @import "tailwindcss/utilities.css" layer(utilities);
@@ -16,6 +19,8 @@
 @import "../styles.css" layer(legacy);
 @import "./tokens.css";
 @import "./surface.css" layer(components);
+@import "./frame.css" layer(frame);
+@import "./themes/revit-dark.css" layer(themes);
 @import "./themes/legacy-8bit.css" layer(themes);
 
 /*

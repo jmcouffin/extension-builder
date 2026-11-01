@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { addGroup, addStack, expect, openApp, test } from "./fixtures";
+import { addGroup, addStack, expect, openApp, openBrowser, test } from "./fixtures";
 
 type Box = { x: number; y: number; width: number; height: number };
 
@@ -39,7 +39,7 @@ test.describe("layout", () => {
     await addStack(page);
     await addGroup(page, "Tools");
     await page.locator("#addTab").click();
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     await expectNoSidewaysScroll(page);
   });
 
@@ -64,7 +64,7 @@ test.describe("layout", () => {
   });
 
   test("the ribbon and the folder preview do not overlap", async ({ page }) => {
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     await expect(page.locator("#folderPreview")).toContainText("My Extension.extension");
     const ribbon = await box(page, ".ribbon-container");
     const preview = await box(page, ".preview-panel");
@@ -97,28 +97,32 @@ test.describe("layout", () => {
     page,
     theme,
   }) => {
-    test.skip(theme !== "builder", "a Revit ribbon rule; the legacy theme never followed it");
+    test.skip(theme === "legacy-8bit", "a Revit ribbon rule; the legacy theme never followed it");
     await addStack(page);
     const solo = await box(page, '.panel-content > [data-name="Button 1"] .button-icon');
     const firstRow = await box(page, ".stack .stack-items > .button .button-icon");
     expect(Math.abs(solo.y - firstRow.y)).toBeLessThanOrEqual(1);
   });
 
-  test("the open folder preview is wide enough to read every line", async ({ page }) => {
+  test("the Project Browser lists every folder and scrolls inside its palette", async ({
+    page,
+  }) => {
     await addStack(page);
     await addGroup(page, "Tools");
-    const closed = await box(page, ".preview-panel");
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     await expect(page.locator("#previewSummaryMeta")).toContainText("folders");
-
     const fits = (sel: string) =>
       page.locator(sel).evaluate((el) => el.scrollWidth <= el.clientWidth + 1);
-    expect(await fits("#folderPreview"), "tree lines are cut off").toBe(true);
     expect(await fits("#previewSummaryMeta"), "the folder/file count is cut off").toBe(true);
 
-    const open = await box(page, ".preview-panel");
-    expect(open.width).toBeGreaterThanOrEqual(closed.width - 1);
+    // Every row carries its full name, so a deep one cut by the palette's
+    // edge is still readable, and the palette scrolls sideways, not the page.
+    for (const row of await page.locator("#folderPreview .tree-row").all()) {
+      await expect(row).toHaveAttribute("title", /\S/);
+    }
+    await expect(page.locator("#folderPreview")).toHaveCSS("overflow-x", "auto");
     const ribbon = await box(page, ".ribbon-container");
+    const open = await box(page, ".preview-panel");
     expect(overlaps(ribbon, open)).toBe(false);
     await expectNoSidewaysScroll(page);
   });
@@ -126,7 +130,7 @@ test.describe("layout", () => {
   test("the folder preview scrolls inside its own panel", async ({ page }, info) => {
     await addStack(page);
     await addGroup(page, "Tools");
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     const preview = await box(page, ".preview-content");
     const viewport = page.viewportSize();
     if (!viewport) throw new Error("no viewport");
@@ -135,7 +139,7 @@ test.describe("layout", () => {
   });
 
   test("a long folder tree fits the window and scrolls inside the panel", async ({ page }) => {
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     for (let i = 0; i < 8; i++) await addStack(page);
     const viewport = page.viewportSize();
     if (!viewport) throw new Error("no viewport");

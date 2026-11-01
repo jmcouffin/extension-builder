@@ -20,6 +20,8 @@ export interface FolderNode {
   name: string;
   postfix?: string;
   contentFile?: string;
+  /** The layout element a bundle folder was built from, for the Project Browser. */
+  elementId?: string;
   children: TreeNode[];
 }
 
@@ -299,6 +301,7 @@ export function buildBundle(
     type: "folder",
     name: sanitizeFileName(element.name) + typeDef.postfix,
     postfix: typeDef.postfix,
+    elementId,
     children: [],
   };
 

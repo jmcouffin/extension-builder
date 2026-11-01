@@ -75,6 +75,33 @@
   --font-ui: "Pixelify Sans", "Courier New", monospace;
   --font-mono: "Pixelify Sans", "Courier New", monospace;
 
+  /* The Revit frame, in neon. */
+  --frame-bg: var(--legacy-purple);
+  --frame-title: #2a0345;
+  --frame-line: rgba(255, 0, 200, 0.55);
+  --field-line: var(--legacy-pink);
+  --ribbon-bg: var(--legacy-purple-2);
+  --panel-title-bg: #2a0345;
+  --panel-title-text: var(--legacy-pink-text);
+  --palette-bg: var(--legacy-purple-2);
+  --palette-head: #2a0345;
+  --group-bg: #4a1561;
+  --row-line: rgba(255, 0, 200, 0.3);
+  --field-bg: var(--legacy-input);
+  --canvas-bg: #240238;
+  --canvas-grid: #4a0f73;
+  --hover-bg: rgba(255, 0, 200, 0.18);
+  --press-bg: rgba(255, 0, 200, 0.3);
+  --select: var(--legacy-yellow);
+  --select-edge: var(--legacy-pink);
+  --select-bg: rgba(255, 208, 0, 0.18);
+  --ctx-bg: #5a0a5a;
+  --ctx-text: var(--legacy-yellow);
+  --ctx-line: var(--legacy-pink);
+  --link: var(--legacy-yellow);
+  --ok: #8fe09c;
+  --control-radius: 0;
+
   --overlay: rgba(10, 0, 20, 0.7);
   --modal: var(--legacy-purple);
   --modal-foreground: var(--legacy-pink-text);
@@ -353,9 +380,11 @@
     color: var(--legacy-yellow);
   }
 
-  /* ---- Folder preview: the pixel-cut glowing frame ---- */
+  /* ---- The ribbon's glowing frame ----
+     No border: a theme paints, it never resizes a box. The ribbon's own
+     outline draws the frame. */
   & .surface {
-    border: 4px solid #ec4899;
+    border: none;
     border-radius: 0;
     clip-path: none;
     background-color: var(--legacy-purple-2);
@@ -368,7 +397,7 @@
     letter-spacing: normal;
   }
 
-  & .preview-disclosure > summary {
+  & .preview-toggle {
     background-color: var(--legacy-purple-2);
   }
 
