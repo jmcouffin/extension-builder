@@ -63,6 +63,17 @@ test.describe("layout", () => {
     }
   });
 
+  test("on a phone, Properties comes before the drawing area and the Project Browser", async ({
+    page,
+  }) => {
+    test.skip((page.viewportSize()?.width ?? 0) > 700, "the palettes stack only on a phone");
+    const properties = await box(page, "#propertiesPalette");
+    const drawing = await box(page, ".drawing-area");
+    const browser = await box(page, ".preview-panel");
+    expect(properties.y + properties.height).toBeLessThanOrEqual(drawing.y + 1);
+    expect(properties.y + properties.height).toBeLessThanOrEqual(browser.y + 1);
+  });
+
   test("the ribbon and the folder preview do not overlap", async ({ page }) => {
     await openBrowser(page);
     await expect(page.locator("#folderPreview")).toContainText("My Extension.extension");

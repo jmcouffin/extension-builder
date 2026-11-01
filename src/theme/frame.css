@@ -2201,8 +2201,9 @@ select.prop-input {
 
 /* ===== NARROW SCREENS =====
    A phone cannot dock palettes beside a canvas, so the frame stacks: title
-   bar (wrapping), options bar, ribbon, drawing area, Properties, Project
-   Browser, status bar, and the page scrolls. */
+   bar (wrapping), options bar, ribbon, Properties, Project Browser, drawing
+   area, status bar, and the page scrolls. Properties comes first because it
+   is where a bundle is edited; its script Edit button scrolls to the editor. */
 @media (max-width: 1100px) {
   .app-title,
   .title-bar .logo-text span,
@@ -2264,7 +2265,6 @@ select.prop-input {
   }
 
   .drawing-area {
-    order: -1;
     flex: 0 0 auto;
   }
 

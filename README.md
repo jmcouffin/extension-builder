@@ -102,7 +102,8 @@ Download button.
 The Project Browser can be folded to its title bar; whether it is open is a
 view preference (`pyrevit-extension-builder:prefs:v1`), kept apart from the
 draft. Its tree scrolls inside the palette, never the page. On phones the frame
-stacks: ribbon, drawing area, Properties, Project Browser.
+stacks: ribbon, Properties, Project Browser, drawing area; Properties comes first
+because it is where a bundle is edited.
 
 ## The ribbon
 

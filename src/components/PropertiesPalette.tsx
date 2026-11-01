@@ -294,7 +294,15 @@ function ScriptProp({ edited }: { edited: boolean }) {
         <button
           type="button"
           className="prop-edit"
-          onClick={() => useStore.getState().setDrawingView("script")}
+          onClick={() => {
+            useStore.getState().setDrawingView("script");
+            // On a phone the drawing area sits below the palettes.
+            requestAnimationFrame(() => {
+              const editor = document.querySelector<HTMLTextAreaElement>(".code-editor");
+              editor?.scrollIntoView({ block: "nearest" });
+              editor?.focus({ preventScroll: true });
+            });
+          }}
         >
           <CodeIcon aria-hidden="true" />
           Edit
