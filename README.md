@@ -73,7 +73,7 @@ you will later find it:
 | Title bar and Quick Access Toolbar | logo, Load, Save, Undo, Redo, Reset, Download, the window title, the theme switch |
 | Options Bar | the extension name |
 | Ribbon, panels, panel title bars | the toolbar you are building |
-| Green **Modify \| &lt;type&gt;** tab | appears when a button is selected: Move Left/Right, Delete |
+| Green **Modify \| &lt;type&gt;** tab | appears when a bundle is selected (click it to open): Duplicate, Move to, Delete; Move Left/Right; Wrap in Stack, Wrap in Pulldown, Ungroup |
 | Properties palette | the selected bundle, and the only editor: Type Selector, every parameter of its type in Revit's groups (Identity Data, Data, Constraints, Engine, Graphics, Other, Folder), Properties help and Apply |
 | Project Browser | the folder tree the ZIP will contain; a bundle row selects that bundle |
 | Drawing area and view tabs | the selected button on a light and a dark ribbon, its `bundle.yaml` and `script.py` |
@@ -94,6 +94,21 @@ group) and everything else in Properties. A double-click on an item puts the
 cursor in its Name. The script is edited in the drawing area's script.py tab
 (the starter follows the title and author until you edit it; clearing an edit
 brings it back), and a combo box's members in place in Properties.
+
+**The Modify tab** holds what Properties and drag-and-drop don't do:
+
+| Panel | Command | What it does |
+| --- | --- | --- |
+| Modify | Duplicate | copies the bundle, with its parameters, icons, script and children, right after itself as "&lt;name&gt; copy", and selects the copy; refused in a full stack |
+| | Move to | lists every panel, stack and group of the extension, tab by tab; picking one sends the bundle there and opens that tab. Where its name is taken it takes the first free one ("Button 1 1"), and the menu says so; a place pyRevit would not load (a stack in a pulldown, a fourth row in a stack) is greyed with the reason |
+| | Delete | asks, then deletes the bundle and what it holds |
+| Arrange | Move Left / Right | one slot along its panel, stack or group; for touch screens, where dragging is awkward |
+| Group | Wrap in Stack | puts a bundle that sits in a panel in a new stack, with a second command, as pyRevit skips a one-row stack |
+| | Wrap in Pulldown | puts a command in a new pulldown in its place, in a panel or a stack |
+| | Ungroup | puts a stack's or group's commands in its place and removes it; a command whose name is taken there gets the first free one |
+
+A command that can't run on the selection is greyed, with the reason as its
+tooltip. Each one is a single undo step.
 
 The one colour that is not Revit's is the pyRevit logo's yellow, and it only
 marks what you are building: the selection ring, drop markers, focus and the
@@ -355,6 +370,10 @@ console error, a failed request or a native dialog. Across all sizes it checks:
   pulldown;
 - **ribbon**: tabs, panels, rename, delete guards, stack confirm, draft restore
   and RESET;
+- **modify**: Duplicate copies and selects; Move to sends a bundle to another
+  tab, renamed there, in one undo, and greys a place pyRevit would not load
+  with the reason; Wrap in Stack adds the second row; Wrap in Pulldown then
+  Ungroup puts the button back;
 - **drag and drop**: reorder in a panel and in a stack, into and out of a stack,
   into a pulldown and back out of its open list, across panels, illegal and
   over-full drops refused with a reason, click and double-click still working;
