@@ -111,6 +111,16 @@ test.describe("Revit frame", () => {
     await expect(preview).toContainText("Button 1");
   });
 
+  test("the preview follows a rename of the selected button's panel", async ({ page }) => {
+    await select(page, "Button 1");
+    const name = page.locator(".panel-name").first();
+    await name.fill("Doors");
+    await name.press("Enter");
+    await expect(
+      page.getByTestId("ribbon-preview").locator(".preview-ribbon-title").first(),
+    ).toHaveText("Doors");
+  });
+
   test("a dark theme paints each button's dark icon", async ({ page, theme }) => {
     test.skip(!["revit-dark", "pyrevit"].includes(theme), "only a dark ribbon swaps icons");
     const icon = item(page, "Button 1").locator(".button-icon");

@@ -58,7 +58,7 @@ you will later find it:
 | Title bar and Quick Access Toolbar | logo, Load, Save, Undo, Redo, Reset, Download, the window title, the theme switch |
 | Options Bar | the extension name |
 | Ribbon, panels, panel title bars | the toolbar you are building |
-| Green **Modify \| <type>** tab | appears when a button is selected: Edit Type, Move Left/Right, Delete |
+| Green **Modify \| &lt;type&gt;** tab | appears when a button is selected: Edit Type, Move Left/Right, Delete |
 | Properties palette | the selected bundle: Type Selector, Edit Type, parameter groups (Identity Data, Constraints, Data, Graphics, Folder), Properties help and Apply |
 | Project Browser | the folder tree the ZIP will contain; a bundle row selects that bundle |
 | Drawing area and view tabs | the selected button on a light and a dark ribbon, its `bundle.yaml` and `script.py` |

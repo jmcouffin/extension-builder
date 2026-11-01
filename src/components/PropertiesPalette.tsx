@@ -1,5 +1,13 @@
 import { ChevronDownIcon, ChevronsDownIcon, ChevronsUpIcon, SquarePenIcon } from "lucide-react";
-import { type ReactNode, useEffect, useId, useRef, useState } from "react";
+import {
+  createContext,
+  type ReactNode,
+  useContext,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
 import {
   FIELDS,
   type FieldKey,
@@ -19,8 +27,11 @@ import { openEditor } from "./RibbonItems";
 
 const IMAGE_TYPES = "image/png,image/jpeg,image/gif,image/bmp,image/svg+xml";
 
-/** The palette's "unsaved edit" flag: Revit greys Apply out until a value changes. */
-const DirtyContext = { set: (_dirty: boolean) => {} };
+/**
+ * The palette's "a value is being edited" flag: Revit greys Apply out until a
+ * value changes. Rows report into it; the footer's Apply reads it.
+ */
+const DirtyContext = createContext<(dirty: boolean) => void>(() => {});
 
 function payloadOf(element: Element): ElementPayload {
   const { children: _c, panelId: _p, parentId: _q, ...rest } = element;
@@ -81,10 +92,11 @@ function TextProp({
   onCommit: (next: string) => void;
 }) {
   const id = useId();
+  const setDirty = useContext(DirtyContext);
   const [draft, setDraft] = useState(value);
   useEffect(() => setDraft(value), [value]);
   const commit = () => {
-    DirtyContext.set(false);
+    setDirty(false);
     if (draft !== value) onCommit(draft);
   };
   return (
@@ -97,7 +109,7 @@ function TextProp({
         placeholder={placeholder}
         onChange={(e) => {
           setDraft(e.target.value);
-          DirtyContext.set(true);
+          setDirty(true);
         }}
         onBlur={commit}
         onKeyDown={(e) => {
@@ -107,7 +119,7 @@ function TextProp({
           } else if (e.key === "Escape") {
             e.preventDefault();
             setDraft(value);
-            DirtyContext.set(false);
+            setDirty(false);
           }
         }}
       />
@@ -573,7 +585,6 @@ export function PropertiesPalette() {
   const selectedId = useStore((s) => s.selectedId);
   const element = useStore((s) => (s.selectedId ? s.elements[s.selectedId] : undefined));
   const [dirty, setDirty] = useState(false);
-  DirtyContext.set = setDirty;
   const root = useRef<HTMLElement>(null);
 
   return (
@@ -590,11 +601,13 @@ export function PropertiesPalette() {
     >
       <div className="palette-title">Properties</div>
       <div className="palette-body">
-        {element && selectedId ? (
-          <ElementProperties key={selectedId} elementId={selectedId} element={element} />
-        ) : (
-          <ExtensionProperties />
-        )}
+        <DirtyContext.Provider value={setDirty}>
+          {element && selectedId ? (
+            <ElementProperties key={selectedId} elementId={selectedId} element={element} />
+          ) : (
+            <ExtensionProperties />
+          )}
+        </DirtyContext.Provider>
       </div>
       <div className="palette-footer">
         <a

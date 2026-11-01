@@ -46,11 +46,13 @@ function Slice({
   );
 }
 
-function panelNameOf(elementId: string): string {
-  const s = useStore.getState();
-  let element = s.elements[elementId];
-  while (element?.parentId) element = s.elements[element.parentId];
-  return (element?.panelId && s.panels[element.panelId]?.name) || "";
+/** The name of the panel a bundle sits in, at any depth; reactive, so a rename shows. */
+function usePanelName(elementId: string): string {
+  return useStore((s) => {
+    let element = s.elements[elementId];
+    while (element?.parentId) element = s.elements[element.parentId];
+    return (element?.panelId && s.panels[element.panelId]?.name) || "";
+  });
 }
 
 function Preview({ elementId, element }: { elementId: string; element: Element }) {
@@ -58,7 +60,7 @@ function Preview({ elementId, element }: { elementId: string; element: Element }
   const light = element.iconData || defaults.light || FALLBACK_ICON;
   const dark = element.iconDarkData || element.iconData || defaults.dark || light;
   const label = element.title || element.name;
-  const panel = panelNameOf(elementId);
+  const panel = usePanelName(elementId);
   return (
     <div className="preview-grid" data-testid="ribbon-preview">
       <Slice tone="light" size="large" icon={light} label={label} panel={panel} />
