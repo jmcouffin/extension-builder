@@ -154,7 +154,7 @@ export function validate(layout: LayoutParts): string[] {
     const missing = typeDef.required.filter((key) => !element[key]);
     if (missing.length) {
       problems.push(
-        `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Put them in the Advanced section.`,
+        `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Set them in Properties or in Edit Type.`,
       );
     }
   }

@@ -1,12 +1,36 @@
 import { useContainerDrop } from "../dnd/hooks";
+import { TYPES } from "../domain/bundleTypes";
 import { showAlert } from "../state/dialogs";
 import { useStore } from "../state/store";
+import { ContextPanels } from "./ContextPanels";
 import { CommitInput } from "./inputs";
 import { DeleteButton, RibbonElement } from "./RibbonItems";
+
+/** Revit's green "Modify | <type>" tab, there while something is selected. */
+function ContextTab() {
+  const element = useStore((s) => (s.selectedId ? s.elements[s.selectedId] : undefined));
+  const active = useStore((s) => s.ribbonMode === "modify");
+  if (!element) return null;
+  return (
+    <button
+      type="button"
+      className={active ? "context-tab active" : "context-tab"}
+      id="contextTab"
+      aria-pressed={active}
+      onClick={(e) => {
+        e.stopPropagation();
+        useStore.getState().setRibbonMode(active ? "tab" : "modify");
+      }}
+    >
+      Modify | {TYPES[element.type].label}
+    </button>
+  );
+}
 
 function TabStrip() {
   const tabs = useStore((s) => s.tabs);
   const activeTabId = useStore((s) => s.activeTabId);
+  const modify = useStore((s) => s.ribbonMode === "modify" && !!s.selectedId);
   const { activateTab, renameTab, deleteTab, addTab } = useStore.getState();
 
   return (
@@ -16,7 +40,7 @@ function TabStrip() {
           // biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: the tab's input is the focusable part
           <div
             key={tabId}
-            className={tabId === activeTabId ? "tab active" : "tab"}
+            className={tabId === activeTabId && !modify ? "tab active" : "tab"}
             data-tab-id={tabId}
             style={{ position: "relative" }}
             onClick={() => activateTab(tabId)}
@@ -36,6 +60,7 @@ function TabStrip() {
             />
           </div>
         ))}
+        <ContextTab />
       </div>
       <button
         type="button"
@@ -88,14 +113,8 @@ function RibbonPanel({ panelId }: { panelId: string }) {
             place={{ container: target, axis: "x", layer: 0 }}
           />
         ))}
-      </div>
-      <div className="panel-footer">
-        <CommitInput
-          className="panel-name"
-          value={panel.name}
-          title="Panel name - becomes the folder in your extension"
-          onCommit={(next) => renamePanel(panelId, next)}
-        />
+        {/* What the panel can take, as a column of small buttons at its end,
+            where the next bundle will land. */}
         <div className="panel-controls">
           {actions.map((a) => (
             <button
@@ -109,6 +128,14 @@ function RibbonPanel({ panelId }: { panelId: string }) {
             </button>
           ))}
         </div>
+      </div>
+      <div className="panel-footer">
+        <CommitInput
+          className="panel-name"
+          value={panel.name}
+          title="Panel name - becomes the folder in your extension"
+          onCommit={(next) => renamePanel(panelId, next)}
+        />
         <button
           type="button"
           className="add-button add-panel-inline control"
@@ -136,10 +163,23 @@ const NO_PANELS: string[] = [];
 
 export function Ribbon() {
   const panels = useStore((s) => s.tabs[s.activeTabId]?.panels ?? NO_PANELS);
+  const modify = useStore((s) => s.ribbonMode === "modify" && !!s.selectedId);
   return (
     <div className="ribbon-container surface">
       <TabStrip />
-      <div className="ribbon" id="ribbonContainer">
+      {/* biome-ignore lint/a11y/useKeyWithClickEvents lint/a11y/noStaticElementInteractions: a click on empty ribbon clears the selection, as in Revit; Escape in the Properties palette does the same from the keyboard */}
+      <div
+        className={modify ? "ribbon ribbon-modify" : "ribbon"}
+        id="ribbonContainer"
+        onClick={(e) => {
+          const hit = e.target as HTMLElement;
+          if (hit.closest("[data-button-id], button, input, .context-panel")) return;
+          useStore.getState().select(null);
+        }}
+      >
+        {/* The Modify tab's panels come first, as in Revit; the tab's own panels
+            stay beside them, so a move or a rename is seen as it happens. */}
+        {modify && <ContextPanels />}
         {panels.map((panelId) => (
           <RibbonPanel key={panelId} panelId={panelId} />
         ))}

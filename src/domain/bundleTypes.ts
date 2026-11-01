@@ -118,6 +118,8 @@ export interface TypeDef {
   toggle?: boolean;
   forcedContext?: string;
   required?: FieldKey[];
+  /** Values a new bundle of this type starts with, so a required key is never left blank. */
+  defaults?: Partial<Record<FieldKey, string>>;
   contentFile?: string;
   advanced?: boolean;
   help?: string;
@@ -192,7 +194,10 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: ["icon.png"],
     darkIcons: ["icon.dark.png"],
+    // URLButton logs "does not specify target url" and the button opens
+    // nothing without it (pyrevitlib/pyrevit/extensions/components.py).
     required: ["hyperlink"],
+    defaults: { hyperlink: "https://pyrevitlabs.io" },
     fields: ["hyperlink", "context"],
   },
   content: {
@@ -217,10 +222,12 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: ["icon.png"],
     darkIcons: ["icon.dark.png"],
+    // LinkButton is built with needs_commandclass=True, and LinkButtonBuilder
+    // returns no button without both (components.py, LinkButtonBuilder.cs).
     required: ["assembly", "command_class"],
     advanced: true,
     fields: ["assembly", "command_class", "availability_class"],
-    help: "Binds to a .NET class. For links, use URL Button.",
+    help: "Binds to a .NET class. For a web link, use URL Button.",
   },
   invokebutton: {
     postfix: ".invokebutton",
@@ -231,9 +238,12 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: ["icon.png"],
     darkIcons: ["icon.dark.png"],
-    required: ["assembly", "command_class"],
+    // Only the assembly is needed: with no command_class pyRevit invokes the
+    // assembly itself (CommandTypeGenerator.BuildCommandArguments).
+    required: ["assembly"],
     advanced: true,
     fields: ["assembly", "command_class", "availability_class"],
+    help: "Runs a .NET assembly; the command class is optional.",
   },
   stack: {
     postfix: ".stack",
@@ -353,6 +363,22 @@ export const KNOWN_POSTFIXES = [
   ".nobutton",
   ".combobox",
 ] as const;
+
+/**
+ * Fill a type's defaults into the fields that are still empty. Values the
+ * user typed are never replaced.
+ */
+export function withDefaults<T extends Partial<Record<FieldKey, string | undefined>>>(
+  type: TypeId,
+  values: T,
+): T {
+  const defaults = TYPES[type].defaults ?? {};
+  const out = { ...values };
+  for (const [key, value] of Object.entries(defaults) as [FieldKey, string][]) {
+    if (!out[key]) (out as Record<FieldKey, string>)[key] = value;
+  }
+  return out;
+}
 
 export function isTypeId(id: unknown): id is TypeId {
   return typeof id === "string" && Object.hasOwn(TYPES, id);

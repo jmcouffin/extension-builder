@@ -112,3 +112,48 @@ describe("reordering", () => {
     expect(names()).toEqual(["A", "C", "NEW STACK"]);
   });
 });
+
+describe("selection", () => {
+  it("selects a bundle, shows the Modify tab, and clears on delete", () => {
+    const store = useStore.getState();
+    store.select("element1");
+    expect(useStore.getState().selectedId).toBe("element1");
+    useStore.getState().setRibbonMode("modify");
+    expect(useStore.getState().ribbonMode).toBe("modify");
+    useStore.getState().deleteElement("element1");
+    expect(useStore.getState().selectedId).toBeNull();
+    expect(useStore.getState().ribbonMode).toBe("tab");
+  });
+
+  it("ignores an unknown id, and the Modify tab needs a selection", () => {
+    useStore.getState().select("nope");
+    expect(useStore.getState().selectedId).toBeNull();
+    useStore.getState().setRibbonMode("modify");
+    expect(useStore.getState().ribbonMode).toBe("tab");
+  });
+
+  it("drops a selection that is not on the tab switched to", () => {
+    useStore.getState().select("element1");
+    useStore.getState().addTab();
+    useStore.getState().activateTab("tab2");
+    expect(useStore.getState().selectedId).toBeNull();
+  });
+
+  it("is not part of undo history", () => {
+    useStore.temporal.getState().clear();
+    useStore.getState().select("element1");
+    expect(useStore.temporal.getState().pastStates).toHaveLength(0);
+  });
+
+  it("nudges a bundle one slot either way, and stops at the ends", () => {
+    useStore.getState().addStack("panel1");
+    const order = () => useStore.getState().panels.panel1?.elements ?? [];
+    const [first, second] = order();
+    useStore.getState().nudgeElement(first ?? "", 1);
+    expect(order()).toEqual([second, first]);
+    useStore.getState().nudgeElement(first ?? "", 1);
+    expect(order()).toEqual([second, first]);
+    useStore.getState().nudgeElement(first ?? "", -1);
+    expect(order()).toEqual([first, second]);
+  });
+});

@@ -1,6 +1,8 @@
+import { DownloadIcon, FolderOpenIcon, RotateCcwIcon, SaveIcon } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import logoUrl from "../assets/logo.svg";
+import { sanitizeFileName } from "../domain/templates";
 import { validate } from "../domain/tree";
 import { buildZip, downloadBlob } from "../domain/zip";
 import { loadDefaultIcons } from "../state/defaultIcons";
@@ -74,7 +76,7 @@ export function Header() {
   };
 
   return (
-    <header>
+    <header className="title-bar">
       <div className="logo">
         <img className="logo-mark" src={logoUrl} alt="pyRevit Logo" width="198" height="218" />
         <div className="logo-text">
@@ -82,36 +84,71 @@ export function Header() {
           <span className="glowing-text-title">extension builder</span>
         </div>
       </div>
-      <div className="download-button">
-        <MusicControl />
-        <ThemeSwitcher />
-        <HistoryControls />
-        <Button variant="toolbar" size="toolbar" id="loadConfig" onClick={loadLayout}>
+      {/* Revit's Quick Access Toolbar: icon buttons, each named and tooltipped. */}
+      <div className="download-button qat" role="toolbar" aria-label="Quick access">
+        <Button
+          variant="toolbar"
+          size="toolbar"
+          id="loadConfig"
+          title="Load a saved layout"
+          onClick={loadLayout}
+        >
+          <FolderOpenIcon aria-hidden="true" />
           <span className="toolbar-action-label">Load layout</span>
         </Button>
-        <Button variant="toolbar" size="toolbar" id="saveConfig" onClick={saveLayout}>
+        <Button
+          variant="toolbar"
+          size="toolbar"
+          id="saveConfig"
+          title="Save this layout in the browser"
+          onClick={saveLayout}
+        >
+          <SaveIcon aria-hidden="true" />
           <span className="toolbar-action-label">Save layout</span>
         </Button>
+        <span className="qat-separator" aria-hidden="true" />
+        <HistoryControls />
+        <span className="qat-separator" aria-hidden="true" />
         <Button
           variant="toolbar-danger"
           size="toolbar"
           id="resetToolbar"
+          title="Discard the whole toolbar"
           onClick={() => void resetLayout()}
         >
+          <RotateCcwIcon aria-hidden="true" />
           <span className="toolbar-action-label">Reset</span>
         </Button>
         <Button
           variant="toolbar-primary"
           size="toolbar"
           id="downloadZip"
+          title="Download the extension as a ZIP"
           disabled={zipping}
           onClick={() => void download()}
         >
+          <DownloadIcon aria-hidden="true" />
           <span className="toolbar-action-label">
             {zipping ? "Creating ZIP file..." : "Download"}
           </span>
         </Button>
       </div>
+      <AppTitle />
+      <div className="title-bar-end">
+        <MusicControl />
+        <ThemeSwitcher />
+      </div>
     </header>
+  );
+}
+
+/** The centred window title, as Revit shows the project and the view. */
+function AppTitle() {
+  const name = useStore((s) => s.extensionName);
+  const tab = useStore((s) => s.tabs[s.activeTabId]?.name ?? "");
+  return (
+    <div className="app-title" aria-hidden="true">
+      pyRevit Extension Builder - {sanitizeFileName(name.trim() || "Untitled")}.extension - {tab}
+    </div>
   );
 }

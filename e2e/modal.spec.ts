@@ -79,9 +79,14 @@ test.describe("bundle modal", () => {
     await expect(page.locator("#buttonModal")).toBeVisible();
   });
 
-  test("a URL button without a hyperlink opens Advanced and explains", async ({ page }) => {
+  test("a URL button starts with pyrevitlabs.io, and refuses an empty one", async ({ page }) => {
     await page.getByRole("button", { name: "BUTTON", exact: true }).click();
     await page.locator(".button-type", { hasText: "URL Button" }).click();
+    await page.locator("#advancedDisclosure > summary").click();
+    await expect(page.locator("#adv_hyperlink")).toHaveValue("https://pyrevitlabs.io");
+    await expect(page.locator('label[for="adv_hyperlink"]')).toContainText("(required)");
+
+    await page.locator("#adv_hyperlink").fill("");
     await page.locator("#createButton").click();
     await expect(appDialog(page)).toContainText("Hyperlink is required for a URL Button");
     await acceptDialog(page);
@@ -89,6 +94,17 @@ test.describe("bundle modal", () => {
     await page.locator("#adv_hyperlink").fill("https://pyrevitlabs.io");
     await page.locator("#createButton").click();
     await expect(item(page, "Button 2")).toHaveClass(/urlbutton/);
+  });
+
+  test("an Invoke Button needs only its assembly", async ({ page }) => {
+    await page.getByRole("button", { name: "BUTTON", exact: true }).click();
+    await page.locator(".button-type", { hasText: "Invoke Button" }).click();
+    await page.locator("#advancedDisclosure > summary").click();
+    await expect(page.locator('label[for="adv_command_class"]')).not.toContainText("required");
+    await page.locator("#adv_assembly").fill("MyCommands");
+    await page.locator("#createButton").click();
+    await expect(page.locator("#buttonModal")).toHaveCount(0);
+    await expect(item(page, "Button 2")).toHaveClass(/invokebutton/);
   });
 
   test("a duplicate name is refused with a dialog", async ({ page }) => {

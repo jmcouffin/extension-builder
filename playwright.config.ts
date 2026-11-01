@@ -22,7 +22,7 @@ export const VIEWPORTS = [
  * "<viewport>-<theme>", with the theme saved in localStorage before the first
  * page load, exactly as a returning visitor would have it.
  */
-export const THEMES = ["builder", "legacy-8bit"] as const;
+export const THEMES = ["builder", "revit-dark", "pyrevit", "legacy-8bit"] as const;
 
 function seededTheme(theme: string) {
   return {
@@ -48,6 +48,10 @@ export default defineConfig({
     baseURL: `http://localhost:${PORT}`,
     trace: "retain-on-failure",
     screenshot: "only-on-failure",
+    // Theme switches run behind a pixel transition; with reduced motion they
+    // are instant, which is what a test wants. theme.spec.ts turns it back on
+    // to check the transition itself.
+    reducedMotion: "reduce",
   },
   projects: THEMES.flatMap((theme) =>
     VIEWPORTS.map(({ name, width, height }) => ({

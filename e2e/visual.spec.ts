@@ -1,5 +1,14 @@
 import type { Page } from "@playwright/test";
-import { addCommand, addGroup, addStack, expect, item, openApp, test } from "./fixtures";
+import {
+  addCommand,
+  addGroup,
+  addStack,
+  expect,
+  item,
+  openApp,
+  openBrowser,
+  test,
+} from "./fixtures";
 
 /**
  * Pixel baselines of each theme. The `builder` baselines were captured from
@@ -32,7 +41,7 @@ test.describe("@visual", () => {
     await addStack(page);
     await addGroup(page, "Tools");
     await addCommand(page, "Second");
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     await page.mouse.move(0, 0);
     await shot(page, "populated");
   });

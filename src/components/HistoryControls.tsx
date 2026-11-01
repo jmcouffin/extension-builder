@@ -1,3 +1,4 @@
+import { Redo2Icon, Undo2Icon } from "lucide-react";
 import { useEffect } from "react";
 import { useStore as useZustand } from "zustand";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ export function HistoryControls() {
         aria-label="Undo"
         onClick={undo}
       >
-        <span className="toolbar-action-label">↶</span>
+        <Undo2Icon aria-hidden="true" />
       </Button>
       <Button
         variant="toolbar"
@@ -48,7 +49,7 @@ export function HistoryControls() {
         aria-label="Redo"
         onClick={redo}
       >
-        <span className="toolbar-action-label">↷</span>
+        <Redo2Icon aria-hidden="true" />
       </Button>
     </>
   );

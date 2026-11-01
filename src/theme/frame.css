@@ -1,0 +1,2168 @@
+/*
+ * THE REVIT FRAME
+ *
+ * The builder is laid out as Revit's own window, and this sheet is both that
+ * layout (shared by every theme) and the Revit Light paint (the default
+ * theme). Other themes repaint it through the tokens below, in their own
+ * files; they never move a box.
+ *
+ *   title bar     logo, Quick Access Toolbar, window title, theme switch
+ *   options bar   the extension name
+ *   ribbon        tabs, the green "Modify | <type>" tab, panels
+ *   palettes      Properties over the Project Browser, docked left
+ *   drawing area  view tabs: a ribbon preview, bundle.yaml, script.py
+ *   status bar    what a click does, and whether the extension is sound
+ *
+ * It sits in its own cascade layer above Tailwind's utilities and the legacy
+ * sheet, and below the theme files (see tailwind.css), so it wins over both
+ * without specificity games and a theme still wins over it.
+ *
+ * The one colour that is not Revit's is the pyRevit logo's yellow, and it only
+ * ever marks what you are building: the selection ring, drop markers, focus,
+ * the Download button. Every text pairing is WCAG AA.
+ */
+
+:root {
+  color-scheme: light;
+
+  /* Revit Light */
+  --frame-bg: #eef0f2;
+  --frame-title: #f7f8f9;
+  --frame-line: #cbd1d8; /* separators: decorative */
+  --field-line: #8a929d; /* field and control edges: 3:1 on white */
+  --ribbon-bg: #ffffff;
+  --panel-title-bg: #f1f2f4;
+  --panel-title-text: #4b5260;
+  --palette-bg: #ffffff;
+  --palette-head: #e6e9ed;
+  --group-bg: #eef1f4;
+  --row-line: #e3e6ea;
+  --field-bg: #ffffff;
+  --canvas-bg: #ffffff;
+  --canvas-grid: #dde3ea;
+  --hover-bg: #e8edf3;
+  --press-bg: #dbe2ea;
+  --select: #f1c40f; /* the logo's yellow */
+  --select-edge: #2c3e50; /* the logo's slate */
+  --select-bg: #fdf1c4;
+  --ctx-bg: #e3f2e5;
+  --ctx-text: #1f6e2c;
+  --ctx-line: #2e9a42;
+  --link: #1f62a8;
+  --ok: #1f6e2c;
+
+  /* The shared token contract, in Revit Light. */
+  --surface-app: var(--frame-bg);
+  --surface-ribbon: var(--ribbon-bg);
+  --surface-raised: #f1f2f4;
+  --surface-sunken: var(--field-bg);
+  --surface-hover: var(--hover-bg);
+  --border-separator: var(--frame-line);
+  --border-subtle: var(--field-line);
+  --text-primary: #1f2329;
+  --text-secondary: #4f5763;
+  --text-disabled: #6b7380;
+  --accent: #1f62a8;
+  --accent-strong: #1f62a8;
+  --accent-hover: #174b80;
+  --on-accent: #ffffff;
+  --warn: #8a5a00;
+  --danger: #a3261b;
+  --danger-fill: #b3311f;
+  --delete-btn-hover: #9a2617;
+  --title-color: var(--text-primary);
+  --border-radius-sm: 2px;
+  --border-radius-md: 4px;
+  --border-radius-lg: 8px;
+  --control-radius: 4px;
+  --modal: var(--palette-bg);
+  --modal-foreground: var(--text-primary);
+  --dialog-shadow: 0 12px 32px rgba(15, 23, 42, 0.22), 0 2px 6px rgba(15, 23, 42, 0.12);
+  --font-ui:
+    "Segoe UI", Selawik, -apple-system, BlinkMacSystemFont, "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Cascadia Mono", Consolas, "SF Mono", Menlo, monospace;
+}
+
+/* ===== PAGE ===== */
+html,
+body {
+  height: 100%;
+}
+
+body {
+  font-size: 12px;
+  line-height: 1.35;
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+}
+
+#root {
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  height: 100dvh;
+  min-height: 560px;
+}
+
+:focus-visible {
+  outline-color: var(--select-edge);
+}
+
+kbd {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
+  border: 1px solid var(--field-line);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  background-color: var(--palette-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  line-height: 1;
+}
+
+/* ===== TITLE BAR + QUICK ACCESS TOOLBAR ===== */
+#root > header.title-bar {
+  flex: 0 0 auto;
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  height: 36px;
+  margin: 0;
+  padding: 0 8px;
+  background-color: var(--frame-title);
+  border-bottom: 1px solid var(--frame-line);
+}
+
+.title-bar .logo {
+  flex: 0 0 auto;
+  gap: 6px;
+}
+
+.title-bar .logo-mark {
+  height: 22px;
+  width: auto;
+}
+
+.title-bar .logo-text {
+  flex-direction: row;
+  align-items: baseline;
+  gap: 5px;
+}
+
+.title-bar h1 {
+  font-size: 13px;
+  line-height: 1;
+  font-weight: 700;
+  color: var(--title-color);
+}
+
+.title-bar .logo-text span {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1;
+  color: var(--text-secondary);
+}
+
+.title-bar .qat {
+  flex: 0 0 auto;
+  flex-wrap: nowrap;
+  gap: 1px;
+  margin: 0 0 0 10px;
+}
+
+.title-bar .toolbar-action {
+  height: 26px;
+  min-width: 26px;
+  padding: 0 5px;
+  gap: 5px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background-color: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  transform: none;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.title-bar .toolbar-action:hover:not(:disabled) {
+  background-color: var(--hover-bg);
+  border-color: var(--frame-line);
+}
+
+.title-bar .toolbar-action:active:not(:disabled) {
+  background-color: var(--press-bg);
+}
+
+.title-bar .toolbar-action svg {
+  width: 16px;
+  height: 16px;
+}
+
+/* Icon-only, as in Revit's QAT: the label stays for screen readers and the
+   button's title is the tooltip. */
+.title-bar .toolbar-action .toolbar-action-label {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.title-bar .toolbar-action-danger {
+  color: var(--danger);
+}
+
+/* The one action that produces the deliverable keeps its word, in the logo's
+   yellow. */
+.title-bar #downloadZip {
+  margin-left: 4px;
+  padding: 0 10px 0 8px;
+  background-color: var(--select);
+  border-color: var(--select);
+  color: #1f2329;
+  font-weight: 600;
+}
+
+.title-bar #downloadZip:hover:not(:disabled) {
+  background-color: #ffd633;
+  border-color: var(--select-edge);
+}
+
+.title-bar #downloadZip .toolbar-action-label {
+  position: static;
+  width: auto;
+  height: auto;
+  overflow: visible;
+  clip-path: none;
+}
+
+.qat-separator {
+  width: 1px;
+  height: 16px;
+  margin: 0 4px;
+  background-color: var(--frame-line);
+}
+
+.app-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: center;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.title-bar-end {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* ===== THEME SWITCH ===== */
+.theme-switch {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.theme-hint {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.theme-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 26px;
+  padding: 0 6px 0 4px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background-color: var(--palette-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.theme-chip:hover {
+  background-color: var(--hover-bg);
+}
+
+.theme-chip[data-state="open"] {
+  border-color: var(--select-edge);
+}
+
+.theme-chip-caret {
+  width: 14px;
+  height: 14px;
+  color: var(--text-secondary);
+}
+
+.theme-thumb {
+  display: inline-flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  border: 1px solid;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.theme-thumb-chip {
+  width: 26px;
+  height: 18px;
+}
+
+.theme-thumb-card {
+  width: 84px;
+  height: 54px;
+  border-radius: 4px;
+}
+
+.theme-thumb-title {
+  flex: 0 0 18%;
+  border-bottom: 1px solid;
+}
+
+.theme-thumb-ribbon {
+  flex: 0 0 34%;
+  display: flex;
+  align-items: center;
+  gap: 8%;
+  padding-left: 8%;
+  border-bottom: 1px solid;
+}
+
+.theme-thumb .theme-thumb-ribbon > span {
+  height: 50%;
+  aspect-ratio: 1;
+  border: 1px solid;
+}
+
+.theme-thumb-body {
+  flex: 1 1 auto;
+  display: flex;
+}
+
+.theme-thumb .theme-thumb-body > span {
+  width: 30%;
+  border-right: 1px solid;
+}
+
+.theme-menu {
+  width: 340px;
+  padding: 6px;
+  border-radius: 10px;
+}
+
+.theme-menu-label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.theme-menu-key {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-weight: 400;
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.theme-menu-key kbd {
+  min-width: 16px;
+  height: 16px;
+  font-size: 10px;
+}
+
+.theme-option {
+  gap: 12px;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.theme-option-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.theme-option-name {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.theme-option-desc {
+  font-size: 12px;
+  line-height: 16px;
+  color: var(--text-secondary);
+}
+
+.theme-option-check {
+  color: var(--accent-strong);
+}
+
+/* ===== THEME TRANSITION =====
+   A wave of pixels in the logo's colours covers the switch. Each block snaps
+   in, holds and snaps out in four steps, like the old 8-bit sprites. */
+.theme-transition {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.theme-transition-block {
+  position: absolute;
+  opacity: 0;
+  animation: theme-pixel var(--wipe-block-ms, 720ms) both;
+}
+
+@keyframes theme-pixel {
+  0% {
+    opacity: 0;
+    transform: scale(0.25);
+    animation-timing-function: steps(3, end);
+  }
+  35% {
+    opacity: 1;
+    transform: scale(1.02);
+  }
+  65% {
+    opacity: 1;
+    transform: scale(1.02);
+    animation-timing-function: steps(3, end);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(0.25);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-transition {
+    display: none;
+  }
+}
+
+/* ===== OPTIONS BAR ===== */
+.extension-name {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  max-width: none;
+  height: 32px;
+  margin: 0;
+  padding: 0 10px;
+  background-color: var(--frame-bg);
+  border-bottom: 1px solid var(--frame-line);
+}
+
+.extension-name-label {
+  display: inline;
+  flex: 0 0 auto;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.extension-name-row {
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: 8px;
+}
+
+#extensionName {
+  flex: 0 1 280px;
+  width: 280px;
+  min-width: 120px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--field-line);
+  border-radius: 0;
+  background-color: var(--field-bg);
+  color: var(--text-primary);
+  font-size: 12px;
+  box-shadow: none;
+  clip-path: none;
+  animation: none;
+  text-shadow: none;
+}
+
+#extensionName:focus {
+  outline: 2px solid var(--select);
+  outline-offset: 0;
+}
+
+.extension-name-hint {
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+/* ===== WORKSPACE ===== */
+main {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.workspace {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  flex: 1 1 auto;
+  min-height: 0;
+  margin: 0;
+}
+
+/* ===== RIBBON ===== */
+.ribbon-container,
+.ribbon-container.surface {
+  flex: 0 0 auto;
+  width: 100%;
+  border: none;
+  border-radius: 0;
+  clip-path: none;
+  box-shadow: none;
+  background-color: transparent;
+}
+
+.tabs-container {
+  height: 30px;
+  padding: 0 6px;
+  align-items: flex-end;
+  background-color: var(--frame-bg);
+  border-bottom: 1px solid var(--frame-line);
+}
+
+.tabs {
+  gap: 1px;
+  align-items: flex-end;
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 2px 2px 0 0;
+  background-color: transparent;
+}
+
+.tab:hover:not(.active) {
+  background-color: var(--hover-bg);
+}
+
+.tab.active {
+  height: 27px;
+  margin-bottom: -1px;
+  padding-bottom: 1px;
+  background-color: var(--ribbon-bg);
+  border-color: var(--frame-line);
+}
+
+.tab input,
+.tab:not(.active) input {
+  min-width: 48px;
+  padding: 0 2px;
+  font-size: 12px;
+  letter-spacing: 0;
+  color: var(--text-primary);
+}
+
+.tab input:focus {
+  background-color: var(--field-bg);
+  outline: 2px solid var(--select);
+}
+
+.tab-delete-button {
+  top: 2px;
+  right: 1px;
+  width: 13px;
+  height: 13px;
+}
+
+/* Revit's contextual tab: green, and only while something is selected. */
+.context-tab {
+  flex: 0 0 auto;
+  height: 26px;
+  margin-left: 8px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-top: 3px solid var(--ctx-line);
+  border-bottom: none;
+  border-radius: 2px 2px 0 0;
+  background-color: var(--ctx-bg);
+  color: var(--ctx-text);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.context-tab.active {
+  height: 27px;
+  margin-bottom: -1px;
+  background-color: var(--ribbon-bg);
+  border-left-color: var(--frame-line);
+  border-right-color: var(--frame-line);
+}
+
+.add-tab-inline,
+#addTab {
+  width: 22px;
+  height: 22px;
+  min-width: 22px;
+  margin-bottom: 3px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  box-shadow: none;
+  clip-path: none;
+}
+
+.add-tab-inline:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--frame-line);
+  color: var(--text-primary);
+}
+
+.ribbon {
+  flex: 0 0 auto;
+  height: 96px;
+  min-height: 0;
+  border: none;
+  border-bottom: 1px solid var(--frame-line);
+  border-radius: 0;
+  background-color: var(--ribbon-bg);
+  align-items: stretch;
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* --- Panel: items over a title bar, a hairline between panels --- */
+.panel {
+  flex: 0 0 auto;
+  padding: 0;
+  min-width: 72px;
+  border-right: 1px solid var(--frame-line);
+}
+
+.panel:last-child {
+  border-right: 1px solid var(--frame-line);
+}
+
+.panel-content {
+  flex: 1 1 auto;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  gap: 1px;
+  height: 76px;
+  min-height: 0;
+  padding: 3px 4px 0;
+}
+
+.panel-footer {
+  position: relative;
+  flex: 0 0 auto;
+  justify-content: center;
+  height: 19px;
+  margin: 0;
+  padding: 0 18px;
+  border-top: 1px solid var(--frame-line);
+  background-color: var(--panel-title-bg);
+}
+
+.panel-name {
+  flex: 1 1 auto;
+  width: 100%;
+  min-width: 40px;
+  padding: 0 2px;
+  border-radius: 0;
+  font-size: 11px;
+  letter-spacing: 0;
+  text-transform: none;
+  text-align: center;
+  color: var(--panel-title-text);
+  background-color: transparent;
+}
+
+.panel-name:hover {
+  background-color: var(--hover-bg);
+}
+
+.panel-name:focus {
+  outline: 2px solid var(--select);
+  outline-offset: -1px;
+  background-color: var(--field-bg);
+}
+
+/* What the panel can take: a column of small buttons at the panel's end,
+   where the next bundle lands, set off by a dashed rule. Quiet at rest, so
+   the ribbon still reads as it will in Revit. */
+.panel-controls {
+  display: flex;
+  flex-direction: column;
+  align-self: stretch;
+  gap: 1px;
+  flex: 0 0 auto;
+  margin: 0 0 3px 4px;
+  padding-left: 4px;
+  border-left: 1px dashed var(--frame-line);
+}
+
+.panel-controls .add-button {
+  justify-content: flex-start;
+  gap: 5px;
+  height: 22px;
+  padding: 0 6px 0 4px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background-color: transparent;
+  color: var(--text-secondary);
+  font-size: 10px;
+  letter-spacing: 0.4px;
+  box-shadow: none;
+  clip-path: none;
+  transform: none;
+}
+
+/* The plus, drawn: generated text would end up in the button's name. */
+.panel-controls .add-button::before {
+  content: "";
+  width: 9px;
+  height: 9px;
+  flex: 0 0 auto;
+  background:
+    linear-gradient(currentColor, currentColor) center / 9px 1.5px no-repeat,
+    linear-gradient(currentColor, currentColor) center / 1.5px 9px no-repeat;
+}
+
+.panel-controls .add-button:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--frame-line);
+  color: var(--text-primary);
+}
+
+/* The panel's corner control, where Revit puts the dialog launcher: here it
+   adds a panel after this one. */
+.add-panel-inline {
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  margin: 0;
+  border: 1px solid transparent;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--panel-title-text);
+  box-shadow: none;
+  clip-path: none;
+}
+
+.add-panel-inline::before {
+  width: 8px;
+  height: 1.5px;
+}
+
+.add-panel-inline::after {
+  width: 1.5px;
+  height: 8px;
+}
+
+.add-panel-inline:hover {
+  border-color: var(--field-line);
+  background-color: var(--hover-bg);
+}
+
+.panel-delete-button {
+  top: 2px;
+  right: 2px;
+  width: 14px;
+  height: 14px;
+}
+
+/* --- Large button: 32px icon over a two-line label --- */
+.button,
+.group {
+  --icon-size: 32px;
+  --label-size: 12px;
+  --item-width: auto;
+
+  width: auto;
+  min-width: 46px;
+  max-width: 76px;
+  padding: 4px 3px 2px;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background-color: transparent;
+}
+
+.button:hover,
+.group:hover {
+  background-color: var(--hover-bg);
+  border-color: var(--frame-line);
+}
+
+.button .button-name,
+.group .group-header .button-name {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 13px;
+  color: var(--text-primary);
+}
+
+.button .button-name input {
+  font-size: 12px;
+  border: 1px solid var(--select-edge);
+  background-color: var(--field-bg);
+}
+
+.group .group-header {
+  gap: 2px;
+  padding-bottom: 8px;
+}
+
+.group-caret {
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-primary);
+  border-bottom: none;
+  transform: translateX(-50%);
+}
+
+/* --- Stack: three 16px rows, the first in line with a large icon --- */
+.stack {
+  padding: 0 2px;
+  gap: 0;
+  border: 1px dashed transparent;
+  border-radius: 2px;
+}
+
+.stack:hover {
+  border-color: var(--field-line);
+}
+
+.stack-items {
+  gap: 0;
+}
+
+.stack-items > .button {
+  --icon-size: 16px;
+  --label-size: 12px;
+
+  min-width: 0;
+  max-width: none;
+  height: 22px;
+  padding: 0 6px 0 3px;
+}
+
+.stack-items > .button .button-name {
+  line-height: 14px;
+}
+
+.stack-add-button {
+  height: 20px;
+  min-height: 0;
+  margin-top: 1px;
+  border-color: var(--frame-line);
+  border-radius: 2px;
+  color: var(--text-secondary);
+}
+
+.stack-add-button:hover,
+.stack-add-button:focus-visible {
+  color: #1f2329;
+  background-color: var(--select);
+  border-color: var(--select-edge);
+}
+
+/* --- Selection, drops, badges: the builder's own marks, in the logo's colours --- */
+.button.is-selected,
+.group.is-selected,
+.stack.is-selected {
+  border-color: transparent;
+  box-shadow:
+    0 0 0 2px var(--select),
+    0 0 0 3px var(--select-edge);
+}
+
+.drop-before::before,
+.drop-after::before {
+  background-color: var(--select);
+  box-shadow: 0 0 0 1px var(--select-edge);
+}
+
+.smartbutton::after,
+.toggle::after,
+.splitbutton::after,
+.splitpushbutton::after,
+.urlbutton::after,
+.panelbutton::after,
+.linkbutton::after,
+.invokebutton::after,
+.combobox::after,
+.nobutton::after,
+.content::after {
+  background-color: var(--select-edge);
+  border-radius: 2px;
+}
+
+.element-delete-button {
+  width: 13px;
+  height: 13px;
+  top: 0;
+  right: 0;
+}
+
+/* --- The Modify tab's panels --- */
+.context-panel {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  border-right: 1px solid var(--frame-line);
+  background-color: var(--ctx-bg);
+}
+
+/* The last Modify panel is set off from the tab's own panels. */
+.context-panel:last-of-type {
+  border-right: 3px double var(--ctx-line);
+}
+
+.context-panel-body {
+  display: flex;
+  align-items: flex-start;
+  gap: 2px;
+  height: 76px;
+  padding: 3px 4px 0;
+}
+
+.context-panel-title {
+  height: 19px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 14px;
+  border-top: 1px solid var(--frame-line);
+  background-color: var(--panel-title-bg);
+  color: var(--panel-title-text);
+  font-size: 11px;
+}
+
+.ctx-large,
+.ctx-small {
+  display: flex;
+  align-items: center;
+  border: 1px solid transparent;
+  border-radius: 2px;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.ctx-large {
+  flex-direction: column;
+  gap: 2px;
+  min-width: 52px;
+  max-width: 76px;
+  padding: 4px 4px 2px;
+  line-height: 13px;
+  text-align: center;
+}
+
+.context-panel .ctx-large svg {
+  width: 32px;
+  height: 32px;
+  stroke-width: 1.4;
+}
+
+.context-panel .ctx-danger svg {
+  color: var(--danger);
+}
+
+.ctx-stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.ctx-small {
+  gap: 5px;
+  height: 22px;
+  padding: 0 6px 0 3px;
+  white-space: nowrap;
+}
+
+.context-panel .ctx-small svg {
+  width: 16px;
+  height: 16px;
+}
+
+.ctx-large:hover:not(:disabled),
+.ctx-small:hover:not(:disabled) {
+  background-color: var(--hover-bg);
+  border-color: var(--frame-line);
+}
+
+.ctx-small:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+/* ===== BELOW THE RIBBON ===== */
+.frame-body {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.side-palettes {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 0 0 300px;
+  width: 300px;
+  min-height: 0;
+  background-color: var(--frame-bg);
+  border-right: 1px solid var(--frame-line);
+}
+
+.palette {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  background-color: var(--palette-bg);
+  color: var(--text-primary);
+}
+
+.palette-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 0 0 auto;
+  height: 24px;
+  padding: 0 8px;
+  background-color: var(--palette-head);
+  border-bottom: 1px solid var(--frame-line);
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+/* --- Properties ---
+   Revit's palette, top to bottom: the Type Selector (the big box with the
+   family in bold over the type), the filter list with Edit Type beside it,
+   the parameter grid in collapsible groups with the chevrons on the right,
+   and "Properties help" with Apply at the foot. */
+.properties-palette {
+  flex: 1 1 0;
+  min-height: 220px;
+  border-bottom: 1px solid var(--frame-line);
+}
+
+.palette-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.type-selector {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 52px;
+  margin: 6px 6px 4px;
+  padding: 0 8px;
+  border: 1px solid var(--field-line);
+  background-color: var(--field-bg);
+}
+
+.type-selector:hover,
+.type-selector:focus-within {
+  border-color: var(--select-edge);
+}
+
+.type-selector:focus-within {
+  outline: 2px solid var(--select);
+}
+
+.type-selector-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.type-selector-text {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 16px;
+}
+
+.type-selector-text strong {
+  font-weight: 700;
+}
+
+.type-selector-text > * {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.type-selector-caret {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--text-primary);
+}
+
+.type-selector-native {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.type-filter-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 6px;
+}
+
+.type-filter {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 22px;
+  padding: 0 4px 0 6px;
+  border: 1px solid var(--field-line);
+  background-color: var(--field-bg);
+  white-space: nowrap;
+}
+
+.type-filter-row .type-filter svg {
+  width: 12px;
+  height: 12px;
+}
+
+.edit-type {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  height: 22px;
+  padding: 0 8px;
+  border: 1px solid var(--field-line);
+  border-radius: 2px;
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.type-filter-row .edit-type svg {
+  width: 14px;
+  height: 14px;
+}
+
+.edit-type:hover:not(:disabled) {
+  background-color: var(--hover-bg);
+}
+
+.edit-type:disabled {
+  color: var(--text-disabled);
+  cursor: default;
+}
+
+.prop-grid {
+  border-top: 1px solid var(--frame-line);
+}
+
+.prop-group-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  height: 22px;
+  padding: 0 4px 0 6px;
+  border: none;
+  border-bottom: 1px solid var(--row-line);
+  background-color: var(--group-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prop-group .prop-group-head svg {
+  width: 14px;
+  height: 14px;
+  color: var(--text-secondary);
+}
+
+.prop-row {
+  display: grid;
+  grid-template-columns: 44% 56%;
+  min-height: 22px;
+  border-bottom: 1px solid var(--row-line);
+}
+
+.prop-name {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  padding: 0 6px;
+  border-right: 1px solid var(--row-line);
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prop-value {
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  background-color: var(--field-bg);
+}
+
+.prop-input {
+  width: 100%;
+  min-width: 0;
+  height: 21px;
+  padding: 0 6px;
+  border: none;
+  border-radius: 0;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.prop-input::placeholder {
+  color: var(--text-disabled);
+}
+
+.prop-input:focus {
+  outline: 2px solid var(--select);
+  outline-offset: -2px;
+}
+
+select.prop-input {
+  cursor: pointer;
+}
+
+/* Read-only values are greyed, as in Revit. */
+.prop-readonly {
+  display: flex;
+  align-items: center;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0 6px;
+  color: var(--text-disabled);
+  background-color: var(--palette-bg);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prop-icon {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  min-width: 0;
+  padding-left: 6px;
+}
+
+.prop-icon img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+  flex: 0 0 auto;
+}
+
+.prop-icon-name {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.prop-icon .prop-dialog-value {
+  padding: 0;
+  background: transparent;
+}
+
+.prop-browse {
+  flex: 0 0 auto;
+  width: 26px;
+  height: 21px;
+  border: none;
+  border-left: 1px solid var(--row-line);
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.prop-browse:hover {
+  background-color: var(--hover-bg);
+}
+
+.palette-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  height: 32px;
+  padding: 0 6px;
+  border-top: 1px solid var(--frame-line);
+}
+
+.palette-help {
+  color: var(--link);
+}
+
+.palette-apply {
+  height: 22px;
+  padding: 0 16px;
+  border: 1px solid var(--field-line);
+  border-radius: 2px;
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.palette-apply:hover:not(:disabled) {
+  background-color: var(--hover-bg);
+}
+
+.palette-apply:disabled {
+  color: var(--text-disabled);
+  border-color: var(--frame-line);
+  cursor: default;
+}
+
+/* --- Project Browser --- */
+.preview-panel,
+.preview-panel.palette {
+  overflow: hidden;
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  max-width: none;
+  max-height: none;
+  min-height: 120px;
+  border: none;
+  clip-path: none;
+  box-shadow: none;
+}
+
+/* Folded, the browser is just its title bar and Properties takes the room. */
+.preview-panel[data-open="false"] {
+  flex: 0 0 auto;
+  min-height: 0;
+}
+
+.preview-toggle {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--frame-line);
+  font-family: var(--font-ui);
+  text-align: left;
+  cursor: pointer;
+}
+
+.preview-toggle:hover {
+  background-color: var(--hover-bg);
+}
+
+/* The fold chevron, drawn so it can point the way the palette is. */
+.preview-toggle::after {
+  content: "";
+  flex: 0 0 auto;
+  width: 0;
+  height: 0;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid var(--text-secondary);
+  transition: transform 0.15s;
+}
+
+.preview-toggle[aria-expanded="false"]::after {
+  transform: rotate(-90deg);
+}
+
+.preview-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preview-panel .preview-content {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
+  padding: 2px 0;
+  overflow: auto;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  line-height: 20px;
+  white-space: nowrap;
+  color: var(--text-primary);
+  background-color: var(--palette-bg);
+}
+
+.tree-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  width: max-content;
+  min-width: 100%;
+  height: 20px;
+  padding-right: 8px;
+}
+
+.tree-row:hover {
+  background-color: var(--hover-bg);
+}
+
+.tree-row.is-selected {
+  background-color: var(--select-bg);
+}
+
+.tree-twist {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  padding: 0;
+  border: 1px solid var(--text-secondary);
+  background-color: var(--field-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.tree-twist-none {
+  flex: 0 0 11px;
+}
+
+.tree-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.tree-name {
+  white-space: nowrap;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.tree-link {
+  padding: 0 2px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.tree-link:hover {
+  text-decoration: underline;
+}
+
+#previewSummaryMeta {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 8px;
+  border-top: 1px solid var(--frame-line);
+  background-color: var(--palette-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* --- Drawing area --- */
+.drawing-area {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  background-color: var(--frame-bg);
+}
+
+.view-tabs {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+  flex: 0 0 auto;
+  height: 28px;
+  padding: 0 6px;
+  border-bottom: 1px solid var(--frame-line);
+  overflow-x: auto;
+}
+
+.view-tab {
+  flex: 0 0 auto;
+  height: 24px;
+  margin-bottom: -1px;
+  padding: 0 12px;
+  border: 1px solid transparent;
+  border-bottom: none;
+  border-radius: 2px 2px 0 0;
+  background-color: transparent;
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.view-tab:hover {
+  background-color: var(--hover-bg);
+}
+
+.view-tab.active {
+  background-color: var(--canvas-bg);
+  border-color: var(--frame-line);
+}
+
+.view-canvas {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding: 28px;
+  background-color: var(--canvas-bg);
+  background-image: radial-gradient(var(--canvas-grid) 1px, transparent 1.2px);
+  background-size: 16px 16px;
+}
+
+.view-empty {
+  max-width: 420px;
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 220px));
+  gap: 24px 28px;
+}
+
+.preview-card {
+  margin: 0;
+}
+
+/* The preview is always Revit's real light and dark ribbons, whatever the
+   builder's own theme: it shows what pyRevit will draw. */
+.preview-ribbon {
+  border: 1px solid;
+  font-family: "Segoe UI", Selawik, -apple-system, sans-serif;
+  font-size: 12px;
+}
+
+.preview-light {
+  background-color: #ffffff;
+  border-color: #cbd1d8;
+  color: #1f2329;
+}
+
+.preview-dark {
+  background-color: #3a414b;
+  border-color: #566070;
+  color: #e9ecf0;
+}
+
+.preview-ribbon-body {
+  display: flex;
+  align-items: center;
+  height: 76px;
+  padding: 0 14px;
+}
+
+.preview-large {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  max-width: 76px;
+  line-height: 13px;
+  text-align: center;
+}
+
+.preview-large img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.preview-small {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+}
+
+.preview-small img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.preview-ribbon-title {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 19px;
+  border-top: 1px solid;
+  font-size: 11px;
+}
+
+.preview-light .preview-ribbon-title {
+  background-color: #f1f2f4;
+  border-color: #d9dde2;
+  color: #4b5260;
+}
+
+.preview-dark .preview-ribbon-title {
+  background-color: #323941;
+  border-color: #4d5561;
+  color: #c0c7d0;
+}
+
+.preview-card figcaption {
+  margin-top: 6px;
+  color: var(--text-secondary);
+}
+
+.code-sheet {
+  max-width: 720px;
+  padding: 14px 16px;
+  border: 1px solid var(--frame-line);
+  background-color: var(--palette-bg);
+}
+
+.code-path {
+  margin-bottom: 8px;
+  color: var(--text-secondary);
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.code-sheet pre {
+  margin: 0;
+  overflow: auto;
+  color: var(--text-primary);
+  font-family: var(--font-mono);
+  font-size: 13px;
+  line-height: 20px;
+  white-space: pre;
+}
+
+/* ===== STATUS BAR ===== */
+.status-bar {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 24px;
+  padding: 0 10px;
+  border-top: 1px solid var(--frame-line);
+  background-color: var(--frame-bg);
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.status-hint {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.status-problems {
+  flex: 0 0 auto;
+  color: var(--ok);
+  white-space: nowrap;
+}
+
+.status-problems.has-problems {
+  color: var(--warn);
+  font-weight: 600;
+}
+
+/* ===== DIALOGS =====
+   Edit Type, the app's alerts and confirms, and Saved Layouts, styled like
+   Revit's current dialogs: rounded corners, sentence-case labels over 28px
+   fields, and one filled primary button at the bottom right. Everything comes
+   from the theme's tokens, so the same rules hold in light and dark. */
+.control,
+.field {
+  clip-path: none;
+  border-radius: var(--control-radius);
+  box-shadow: none;
+}
+
+[data-slot="dialog-content"],
+[data-slot="alert-dialog-content"] {
+  border: 1px solid var(--frame-line);
+  border-radius: 10px;
+  background-color: var(--modal);
+  color: var(--modal-foreground);
+  box-shadow: var(--dialog-shadow);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.modal-content {
+  padding: 18px 20px 16px;
+}
+
+.modal-title {
+  margin-bottom: 10px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--text-primary);
+}
+
+.close-modal {
+  top: 12px;
+  right: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 20px;
+  line-height: 1;
+}
+
+.close-modal:hover {
+  background-color: var(--hover-bg);
+  color: var(--text-primary);
+}
+
+.modal-section-title,
+.modal-content .form-group label,
+.advanced-disclosure > summary {
+  margin-bottom: 4px;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-primary);
+}
+
+.type-group h4 {
+  margin-bottom: 4px;
+  font-family: var(--font-ui);
+  font-size: 11px;
+  font-weight: 400;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--text-secondary);
+}
+
+#buttonTypeGrid {
+  gap: 10px 18px;
+}
+
+.button-types {
+  gap: 6px;
+}
+
+.button-type {
+  min-width: 104px;
+  padding: 6px 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background-color: var(--field-bg);
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  text-align: left;
+  cursor: pointer;
+}
+
+.button-type:hover:not(.selected) {
+  background-color: var(--hover-bg);
+}
+
+.button-type.selected {
+  border-color: var(--select-edge);
+  background-color: var(--select-bg);
+  box-shadow: 0 0 0 2px var(--select);
+  color: var(--text-primary);
+}
+
+.button-type .type-name {
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.button-type .type-postfix {
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: var(--text-secondary);
+}
+
+.modal-content input[type="text"],
+.modal-content input[type="url"],
+.modal-content select,
+.modal-content textarea {
+  width: 100%;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  font-family: var(--font-ui);
+  font-size: 12px;
+  letter-spacing: 0;
+}
+
+.modal-content textarea {
+  padding: 6px 8px;
+  line-height: 1.45;
+}
+
+.modal-content #buttonCode {
+  font-family: var(--font-mono);
+}
+
+.modal-content input::placeholder,
+.modal-content textarea::placeholder {
+  color: var(--text-disabled);
+}
+
+.modal-content input:focus,
+.modal-content select:focus,
+.modal-content textarea:focus {
+  border-color: var(--select-edge);
+  outline: 2px solid var(--select);
+  outline-offset: 0;
+}
+
+.modal-content select:disabled {
+  color: var(--text-disabled);
+  background-color: var(--palette-bg);
+}
+
+.icon-upload {
+  gap: 8px;
+  align-items: center;
+}
+
+.modal-content input[type="file"] {
+  padding: 4px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+  color: var(--text-secondary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+}
+
+.modal-content input[type="file"]::file-selector-button {
+  margin-right: 8px;
+  padding: 4px 10px;
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--frame-bg);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: 12px;
+  font-weight: 400;
+  cursor: pointer;
+}
+
+.modal-content input[type="file"]::file-selector-button:hover {
+  background-color: var(--hover-bg);
+}
+
+/* Room for "No file chosen" beside the picker, rather than "No...sen". */
+#buttonIconGroup {
+  grid-column: span 2;
+}
+
+.icon-upload input[type="file"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: auto;
+}
+
+.icon-preview {
+  border: 1px solid var(--field-line);
+  border-radius: 4px;
+  background-color: var(--field-bg);
+}
+
+.field-help {
+  font-family: var(--font-ui);
+  font-size: 11px;
+  color: var(--text-secondary);
+}
+
+.advanced-disclosure {
+  padding: 8px 10px;
+  border: 1px solid var(--frame-line);
+  border-radius: 6px;
+  background-color: transparent;
+}
+
+.advanced-disclosure > summary {
+  margin: 0;
+  cursor: pointer;
+}
+
+.advanced-hint {
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+.type-note {
+  border-radius: 6px;
+}
+
+.modal-actions,
+[data-slot="alert-dialog-footer"] {
+  gap: 8px;
+  margin-top: 16px;
+  justify-content: flex-end;
+}
+
+/* The dialog buttons: one filled primary, outlined secondaries. */
+.modal-actions button,
+[data-slot="alert-dialog-content"] .control {
+  min-width: 84px;
+  height: 30px;
+  padding: 0 16px;
+  border: 1px solid var(--field-line);
+  border-radius: 6px;
+  background-color: transparent;
+  color: var(--text-primary);
+  box-shadow: none;
+  clip-path: none;
+  font-family: var(--font-ui);
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  cursor: pointer;
+}
+
+.modal-actions button:hover,
+[data-slot="alert-dialog-content"] .control:hover {
+  background-color: var(--hover-bg);
+}
+
+.modal-actions #createButton,
+[data-slot="alert-dialog-content"] .control-primary {
+  border-color: var(--accent-strong);
+  background-color: var(--accent-strong);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+.modal-actions #createButton:hover,
+[data-slot="alert-dialog-content"] .control-primary:hover {
+  border-color: var(--accent-hover);
+  background-color: var(--accent-hover);
+}
+
+[data-slot="alert-dialog-content"] .control-primary[data-variant="dialog-danger"] {
+  border-color: var(--danger-fill);
+  background-color: var(--danger-fill);
+  color: #ffffff;
+}
+
+[data-slot="alert-dialog-content"] .control-primary[data-variant="dialog-danger"]:hover {
+  border-color: var(--delete-btn-hover);
+  background-color: var(--delete-btn-hover);
+}
+
+.modal-actions button:focus-visible,
+[data-slot="alert-dialog-content"] .control:focus-visible {
+  outline: 2px solid var(--select);
+  outline-offset: 2px;
+}
+
+/* ===== NARROW SCREENS =====
+   A phone cannot dock palettes beside a canvas, so the frame stacks: title
+   bar (wrapping), options bar, ribbon, drawing area, Properties, Project
+   Browser, status bar, and the page scrolls. */
+@media (max-width: 1100px) {
+  .app-title,
+  .title-bar .logo-text span,
+  .theme-hint-text {
+    display: none;
+  }
+
+  .title-bar-end {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 700px) {
+  #root {
+    height: auto;
+    min-height: 100dvh;
+  }
+
+  #root > header.title-bar {
+    flex-wrap: wrap;
+    height: auto;
+    row-gap: 4px;
+    padding: 5px 8px;
+  }
+
+  .title-bar .logo-text span,
+  .theme-hint-text {
+    display: none;
+  }
+
+  .title-bar .qat {
+    order: 3;
+    flex: 1 1 100%;
+    margin: 0;
+  }
+
+  .title-bar .download-button .toolbar-action {
+    flex: 0 0 auto;
+  }
+
+  .title-bar #downloadZip {
+    margin-left: auto;
+  }
+
+  .extension-name {
+    height: auto;
+    min-height: 32px;
+    padding: 4px 8px;
+  }
+
+  .frame-body {
+    flex-direction: column;
+  }
+
+  .side-palettes {
+    flex: 0 0 auto;
+    width: 100%;
+    border-right: none;
+  }
+
+  .drawing-area {
+    order: -1;
+    flex: 0 0 auto;
+  }
+
+  .view-canvas {
+    padding: 16px;
+  }
+
+  .preview-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+
+  .properties-palette,
+  .preview-panel,
+  .preview-panel.palette {
+    flex: 0 0 auto;
+    max-height: none;
+  }
+
+  .preview-panel .preview-content {
+    max-height: 45vh;
+  }
+
+  .tabs {
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+}

@@ -25,9 +25,15 @@ export interface OpenGroup {
 
 export type ElementPayload = Omit<Element, "children" | "panelId" | "parentId">;
 
+/** What the ribbon shows: the active tab, or the "Modify | <type>" context tab. */
+export type RibbonMode = "tab" | "modify";
+
 interface Ui {
   modal: ModalRequest | null;
   openGroup: OpenGroup | null;
+  /** The bundle the Properties palette edits, as in Revit's selection. */
+  selectedId: string | null;
+  ribbonMode: RibbonMode;
 }
 
 interface Actions {
@@ -51,6 +57,10 @@ interface Actions {
   closeModal(): void;
   openGroupEditor(group: OpenGroup): void;
   closeGroupEditor(): void;
+  select(elementId: string | null): void;
+  setRibbonMode(mode: RibbonMode): void;
+  /** Move a bundle one slot earlier (-1) or later (+1) in its container. */
+  nudgeElement(elementId: string, step: -1 | 1): void;
 }
 
 export type Store = Layout & Ui & Actions;
@@ -117,6 +127,19 @@ function attach(s: Layout, elementId: string, target: DropTarget, index?: number
   }
 }
 
+function containerOf(element: Element): DropTarget | null {
+  if (element.panelId) return { kind: "panel", panelId: element.panelId };
+  if (element.parentId) return { kind: "element", elementId: element.parentId };
+  return null;
+}
+
+/** Whether a bundle sits, at any depth, in a panel of the given tab. */
+function isOnTab(s: Layout, elementId: string, tabId: string): boolean {
+  let element = s.elements[elementId];
+  while (element?.parentId) element = s.elements[element.parentId];
+  return !!element?.panelId && s.panels[element.panelId]?.tabId === tabId;
+}
+
 function addPanelTo(s: Layout, tabId: string, name: string) {
   const panelId = `panel${s.nextIds.panel++}`;
   const buttonId = `element${s.nextIds.element++}`;
@@ -156,6 +179,8 @@ export const useStore = create<Store>()(
       ...initialLayout(),
       modal: null,
       openGroup: null,
+      selectedId: null,
+      ribbonMode: "tab",
 
       setExtensionName: (name) =>
         set((s) => {
@@ -167,6 +192,8 @@ export const useStore = create<Store>()(
           if (!s.tabs[tabId]) return;
           s.activeTabId = tabId;
           s.openGroup = null;
+          s.ribbonMode = "tab";
+          if (s.selectedId && !isOnTab(s, s.selectedId, tabId)) s.selectedId = null;
         }),
 
       addTab: () =>
@@ -299,6 +326,10 @@ export const useStore = create<Store>()(
         set((s) => {
           removeElementRecursive(s, elementId);
           s.openGroup = null;
+          if (s.selectedId && !s.elements[s.selectedId]) {
+            s.selectedId = null;
+            s.ribbonMode = "tab";
+          }
         }),
 
       createElement: (payload, target) => {
@@ -365,6 +396,8 @@ export const useStore = create<Store>()(
           Object.assign(s, layout);
           s.openGroup = null;
           s.modal = null;
+          s.selectedId = null;
+          s.ribbonMode = "tab";
         }),
 
       reset: () =>
@@ -372,6 +405,8 @@ export const useStore = create<Store>()(
           Object.assign(s, initialLayout());
           s.openGroup = null;
           s.modal = null;
+          s.selectedId = null;
+          s.ribbonMode = "tab";
         }),
 
       openModal: (request) =>
@@ -393,6 +428,33 @@ export const useStore = create<Store>()(
         set((s) => {
           s.openGroup = null;
         }),
+
+      select: (elementId) =>
+        set((s) => {
+          const next = elementId && s.elements[elementId] ? elementId : null;
+          if (next === s.selectedId) return;
+          s.selectedId = next;
+          if (!next) s.ribbonMode = "tab";
+        }),
+
+      setRibbonMode: (mode) =>
+        set((s) => {
+          s.ribbonMode = mode === "modify" && s.selectedId ? "modify" : "tab";
+        }),
+
+      nudgeElement: (elementId, step) => {
+        const layout = get();
+        const element = layout.elements[elementId];
+        if (!element) return;
+        const target = containerOf(element);
+        if (!target) return;
+        const from = siblingsOf(layout, target).indexOf(elementId);
+        if (from === -1) return;
+        const to = from + step;
+        if (to < 0 || to >= siblingsOf(layout, target).length) return;
+        // moveElement takes a slot in the container as it is now.
+        get().moveElement(elementId, target, step > 0 ? to + 1 : to);
+      },
     })),
     {
       limit: HISTORY_LIMIT,

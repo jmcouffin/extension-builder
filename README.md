@@ -63,21 +63,37 @@ which is the explicit file you keep.
 The draft is written from a single store subscription
 (`src/state/persistence.ts`), so no action can forget to persist.
 
-## The folder preview
+## The Revit frame
 
-The generated tree sits in a collapsible panel **beside** the ribbon, not below
-it. Closed, it takes ~20% of the width (at least 260px). Open, it widens to fit
-its longest line, so file names and the folder/file count are readable without
-scrolling sideways — up to half the workspace, so the ribbon always keeps at
-least as much; a deeper tree than that scrolls inside the panel. The two columns
-are `align-items: flex-start` so expanding a deep tree does not stretch the
-toolbar. On phones the preview sits under the ribbon at full width. It is a native `<details>`, so it toggles and is keyboard accessible
-without any JavaScript, and it starts collapsed — the ribbon is what you work in
-and the tree is a reference. Whether it is open is remembered separately from the
-draft (`pyrevit-extension-builder:prefs:v1`), because it is a view preference
-rather than part of the extension. The summary shows the folder and file counts,
-so the state is visible without expanding it. The tree scrolls inside its own
-panel rather than growing the page.
+The builder is laid out as Revit's own window, so what you build sits where
+you will later find it:
+
+| Revit | Here |
+| --- | --- |
+| Title bar and Quick Access Toolbar | logo, Load, Save, Undo, Redo, Reset, Download, the window title, the theme switch |
+| Options Bar | the extension name |
+| Ribbon, panels, panel title bars | the toolbar you are building |
+| Green **Modify \| &lt;type&gt;** tab | appears when a button is selected: Edit Type, Move Left/Right, Delete |
+| Properties palette | the selected bundle: Type Selector, Edit Type, parameter groups (Identity Data, Constraints, Data, Graphics, Folder), Properties help and Apply |
+| Project Browser | the folder tree the ZIP will contain; a bundle row selects that bundle |
+| Drawing area and view tabs | the selected button on a light and a dark ribbon, its `bundle.yaml` and `script.py` |
+| Status bar | what a click does, and whether the extension is ready to download |
+
+A click on a ribbon item (or keyboard focus) selects it, as in Revit; a click
+on empty ribbon clears the selection, and Properties then shows the extension
+itself. Selection is not part of undo history. Properties applies a value when
+you leave the cell or press Enter, Escape puts it back, and Apply is enabled
+while a value is being edited. Edit Type (and a double-click on an item) opens
+the full dialog, for icons, the script and the Advanced fields.
+
+The one colour that is not Revit's is the pyRevit logo's yellow, and it only
+marks what you are building: the selection ring, drop markers, focus and the
+Download button.
+
+The Project Browser can be folded to its title bar; whether it is open is a
+view preference (`pyrevit-extension-builder:prefs:v1`), kept apart from the
+draft. Its tree scrolls inside the palette, never the page. On phones the frame
+stacks: ribbon, drawing area, Properties, Project Browser.
 
 ## The ribbon
 
@@ -156,16 +172,21 @@ in which a native dialog appears.
 
 ## Themes
 
-The palette button at the left of the header switches the whole page between
-themes instantly, with no reload and without touching the ribbon you are
-building. The choice is saved per browser; `?theme=<id>` in the URL overrides
-it, which is how a link can open the builder in a given theme. A tiny inline
-script in `index.html` applies the saved theme before first paint, so a reload
-never flashes the default.
+**T** cycles through the themes and **Shift+T** goes back (never while you are
+typing in a field); the hint sits in the title bar, beside a menu that shows
+each theme as a small window. A switch runs behind a short wave of pixels in
+the pyRevit logo's yellows and slates; with the system set to reduce motion it
+is instant. Nothing reloads and the ribbon you are building is untouched. The
+choice is saved per browser; `?theme=<id>` in the URL overrides it, which is
+how a link can open the builder in a given theme. A tiny inline script in
+`index.html` applies the saved theme before first paint, so a reload never
+flashes the default.
 
 | id | Theme | Source |
 | --- | --- | --- |
-| `builder` | Builder (default) | the current Revit-inspired grey ribbon |
+| `builder` | Revit Light (default) | Revit's light interface, `src/theme/frame.css` |
+| `revit-dark` | Revit Dark | Revit 2024+ dark interface; the ribbon shows each button's dark icon, as pyRevit does |
+| `pyrevit` | pyRevit | the logo's palette: its slates for the chrome, its yellows for the active tab, panel titles and selection |
 | `legacy-8bit` | Legacy 8-bit | the original design, ported from commit `2a7e8dd` (the last before the Revit redesign in `283e834`) |
 
 **A theme is CSS and nothing else.** Switching sets `data-theme` on `<html>`;
@@ -180,9 +201,10 @@ the same in every theme, and a test checks it.
 
 ### How a theme is built
 
-The cascade has five layers, lowest first (`src/theme/tailwind.css`):
+The cascade has seven layers, lowest first (`src/theme/tailwind.css`):
 Tailwind's theme variables, a base layer, the app's stylesheet (`legacy`),
-component utilities, and themes last. Tailwind's preflight is deliberately not
+components, utilities, the Revit frame (`frame`: the shared layout and the
+Revit Light paint), and themes last. Tailwind's preflight is deliberately not
 imported: the app's stylesheet was written against browser defaults, and
 preflight would silently restyle it. shadcn parts carry `data-slot`, and only
 those get the few resets they need.
@@ -310,11 +332,14 @@ console error, a failed request or a native dialog. Across all sizes it checks:
   no `__init__.py` / `entrypoint.py` / `.pyrevit`; broken extensions are refused
   with a list; save and load of a layout file round-trips.
 
-Every one of those runs twice: once per theme (`builder` keeps the bare project
+Every one of those runs four times: once per theme (`builder` keeps the bare project
 names, other themes run as `<size>-<theme>`), with the theme seeded into
-`localStorage` before the first page load. `theme.spec.ts` adds instant
-switching, persistence, `?theme=`, the token contract, the identical download
-and the soundtrack behaviour.
+`localStorage` before the first page load, and with reduced motion so a
+switch is instant. `theme.spec.ts` adds switching, persistence, `?theme=`, the
+token contract, the identical download, the soundtrack, the T / Shift+T
+shortcut and the pixel transition (in the logo's colours, and absent with
+reduced motion). `frame.spec.ts` covers selection, the Properties palette, the
+Type Selector, the Modify tab, the Project Browser and the ribbon preview.
 
 `pnpm test:visual` compares full-page screenshots of six states (default,
 populated, modal, modal with Advanced, dialog, group editor) at every size in

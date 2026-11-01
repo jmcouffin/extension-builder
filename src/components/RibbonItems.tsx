@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { type RibbonItemPlace, useContainerDrop, useRibbonItemDnd } from "../dnd/hooks";
 import { TYPES } from "../domain/bundleTypes";
 import type { Element } from "../domain/model";
@@ -14,9 +15,14 @@ function cx(...parts: (string | false | null | undefined)[]) {
 
 function Icon({ element }: { element: Element }) {
   const defaults = useIcons();
+  const light = element.iconData || defaults.light || FALLBACK_ICON;
+  // What pyRevit shows on a dark ribbon: the dark icon, else the light one.
+  // A dark theme paints it (see revit-dark.css); the markup is the same in
+  // every theme.
+  const dark = element.iconDarkData || (element.iconData ? null : defaults.dark) || light;
   return (
-    <div className="button-icon">
-      <img src={element.iconData || defaults.light || FALLBACK_ICON} alt="Icon" />
+    <div className="button-icon" style={{ "--icon-dark": `url("${dark}")` } as CSSProperties}>
+      <img src={light} alt="Icon" />
     </div>
   );
 }
@@ -44,6 +50,22 @@ export function DeleteButton({
   );
 }
 
+/** Delete a bundle, asking first when it would take commands with it. */
+export async function deleteAsking(elementId: string) {
+  const element = useStore.getState().elements[elementId];
+  if (!element) return;
+  const def = TYPES[element.type];
+  const count = element.children?.length ?? 0;
+  if (def.container && count) {
+    const ok = await showConfirm(
+      `This ${def.label.toLowerCase()} contains ${count} command(s). Delete them too?`,
+      { title: `Delete "${element.name}"?`, confirmLabel: "Delete", danger: true },
+    );
+    if (!ok) return;
+  }
+  useStore.getState().deleteElement(elementId);
+}
+
 function ElementDelete({ elementId, element }: { elementId: string; element: Element }) {
   const def = TYPES[element.type];
   const title = `Remove this ${def.label.toLowerCase()}${element.name ? ` "${element.name}"` : ""}`;
@@ -51,22 +73,22 @@ function ElementDelete({ elementId, element }: { elementId: string; element: Ele
     <DeleteButton
       className="element-delete-button"
       title={title}
-      onDelete={async () => {
-        const count = element.children?.length ?? 0;
-        if (def.container && count) {
-          const ok = await showConfirm(
-            `This ${def.label.toLowerCase()} contains ${count} command(s). Delete them too?`,
-            { title: `Delete "${element.name}"?`, confirmLabel: "Delete", danger: true },
-          );
-          if (!ok) return;
-        }
-        useStore.getState().deleteElement(elementId);
-      }}
+      onDelete={() => void deleteAsking(elementId)}
     />
   );
 }
 
-function openEditor(elementId: string) {
+/** Revit's selection: a click or keyboard focus picks the bundle the Properties palette edits. */
+function useSelection(elementId: string) {
+  const selected = useStore((s) => s.selectedId === elementId);
+  const select = (e: { stopPropagation(): void }) => {
+    e.stopPropagation();
+    useStore.getState().select(elementId);
+  };
+  return { selected, select };
+}
+
+export function openEditor(elementId: string) {
   useStore.getState().openModal({ mode: "edit", elementId });
 }
 
@@ -92,16 +114,20 @@ export function RibbonElement({ elementId, place }: { elementId: string; place: 
 function CommandItem({ elementId, element, place }: ItemProps) {
   const def = TYPES[element.type];
   const dnd = useRibbonItemDnd(elementId, place);
+  const { selected, select } = useSelection(elementId);
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: role and tabIndex come from dnd-kit's attributes in dnd.props
+    // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: role and tabIndex come from dnd-kit's attributes in dnd.props; focus selects too
     <div
       ref={dnd.ref}
       {...dnd.props}
-      className={cx("button", def.postfix.slice(1), dnd.className)}
+      className={cx("button", def.postfix.slice(1), selected && "is-selected", dnd.className)}
       data-type={element.type}
       data-button-id={elementId}
       data-name={element.name}
+      aria-current={selected || undefined}
       title={`${def.label} - ${def.postfix}`}
+      onClick={select}
+      onFocus={select}
       onDoubleClick={(e) => {
         e.stopPropagation();
         openEditor(elementId);
@@ -119,6 +145,7 @@ function GroupItem({ elementId, element, place }: ItemProps) {
   const into: DropTarget = { kind: "element", elementId };
   const dnd = useRibbonItemDnd(elementId, place, into);
   const count = element.children?.length ?? 0;
+  const { selected, select } = useSelection(elementId);
 
   const open = (anchor: HTMLElement) => {
     const rect = anchor.getBoundingClientRect();
@@ -134,12 +161,17 @@ function GroupItem({ elementId, element, place }: ItemProps) {
     <div
       ref={dnd.ref}
       {...dnd.props}
-      className={cx("group", def.postfix.slice(1), dnd.className)}
+      className={cx("group", def.postfix.slice(1), selected && "is-selected", dnd.className)}
       data-type={element.type}
       data-button-id={elementId}
       data-name={element.name}
+      aria-current={selected || undefined}
       title={`${def.label} - ${def.postfix} "${element.name}" with ${count} command(s). Click the icon to open them.`}
-      onClick={(e) => open(e.currentTarget)}
+      onFocus={select}
+      onClick={(e) => {
+        select(e);
+        open(e.currentTarget);
+      }}
       onDoubleClick={(e) => {
         e.stopPropagation();
         openEditor(elementId);
@@ -160,24 +192,28 @@ function StackItem({ elementId, element, place }: ItemProps) {
   const children = element.children ?? [];
   const into: DropTarget = { kind: "element", elementId };
   const dnd = useRibbonItemDnd(elementId, place, into, { handle: true });
+  const { selected, select } = useSelection(elementId);
   const remaining = (def.maxChildren ?? 3) - children.length;
   const childPlace: RibbonItemPlace = { container: into, axis: "y", layer: place.layer };
   const add = () =>
     useStore.getState().openModal({ mode: "create", kind: "command", target: into });
 
   return (
-    // biome-ignore lint/a11y/noStaticElementInteractions: role and tabIndex come from dnd-kit's attributes in dnd.props
+    // biome-ignore lint/a11y/noStaticElementInteractions lint/a11y/useKeyWithClickEvents: role and tabIndex come from dnd-kit's attributes in dnd.props; the grip selects the stack on keyboard focus
     <div
       ref={dnd.ref}
       {...dnd.props}
       className={cx(
         "stack",
         children.length < (def.minChildren ?? 2) && "stack-invalid",
+        selected && "is-selected",
         dnd.className,
       )}
       data-type="stack"
       data-button-id={elementId}
       data-name={element.name}
+      aria-current={selected || undefined}
+      onClick={select}
       title={`Stack - ${def.postfix} "${element.name}" with ${children.length} command(s). Double-click to edit.`}
       onDoubleClick={(e) => {
         e.stopPropagation();
@@ -188,6 +224,7 @@ function StackItem({ elementId, element, place }: ItemProps) {
         type="button"
         {...dnd.handleProps}
         className="stack-grip"
+        onFocus={select}
         title={`Drag to move stack "${element.name}"`}
         aria-label={`Move stack ${element.name}`}
       />

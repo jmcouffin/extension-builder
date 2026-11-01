@@ -126,3 +126,16 @@ export async function draft(page: Page) {
     JSON.parse(localStorage.getItem("pyrevit-extension-builder:draft:v2") ?? "null"),
   );
 }
+
+/** Open the Project Browser palette, if it has been folded away. */
+export async function openBrowser(page: Page) {
+  const toggle = page.locator("#previewToggle");
+  if ((await toggle.getAttribute("aria-expanded")) !== "true") await toggle.click();
+  await expect(toggle).toHaveAttribute("aria-expanded", "true");
+}
+
+/** Select a ribbon item, the way a person does: a click on its icon. */
+export async function select(page: Page, name: string) {
+  await item(page, name).locator(".button-icon").first().click();
+  await expect(item(page, name)).toHaveClass(/is-selected/);
+}

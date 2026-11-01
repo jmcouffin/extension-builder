@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import type { Page } from "@playwright/test";
 import JSZip from "jszip";
-import { addStack, expect, openApp, test } from "./fixtures";
+import { addStack, expect, openApp, openBrowser, test } from "./fixtures";
 
 // Every token a theme must provide. The shadcn tokens are derived from these
 // in src/theme/tokens.css, so a theme that sets these is complete.
@@ -138,7 +138,7 @@ test.describe("themes", () => {
 
   test("every theme renders exactly the same markup", async ({ page }) => {
     await addStack(page);
-    await page.locator("#previewDisclosure summary").click();
+    await openBrowser(page);
     const markup = () =>
       page.evaluate(() => {
         const root = document.getElementById("root")?.cloneNode(true) as HTMLElement;
@@ -274,5 +274,84 @@ test.describe("soundtrack", () => {
     await expect(page.getByTestId("music-control")).toBeHidden();
     await pickTheme(page, "legacy-8bit");
     await expect(page.getByTestId("music-control")).toContainText("Music Off");
+  });
+});
+
+test.describe("theme switcher", () => {
+  test.beforeEach(async ({ page }) => openApp(page));
+
+  test("shows the shortcut, then a menu of every theme with a thumbnail", async ({
+    page,
+    theme,
+  }) => {
+    await expect(page.locator(".theme-hint kbd")).toHaveText("T");
+    await page.locator("#themeSwitcher").click();
+    const options = page.locator("[data-theme-option]");
+    await expect(options).toHaveCount(4);
+    await expect(options.locator(".theme-thumb")).toHaveCount(4);
+    await expect(page.locator(`[data-theme-option="${theme}"] .theme-option-check`)).toHaveCount(1);
+    await page.keyboard.press("Escape");
+  });
+
+  test("T cycles through the themes and Shift+T goes back", async ({ page, theme }) => {
+    const order = ["builder", "revit-dark", "pyrevit", "legacy-8bit"];
+    const at = order.indexOf(theme);
+    const next = order[(at + 1) % order.length];
+    await page.locator("body").press("t");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", next ?? "");
+    await page.locator("body").press("Shift+T");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+  });
+
+  test("T in a text field is just a letter", async ({ page, theme }) => {
+    await page.locator("#extensionName").fill("");
+    await page.locator("#extensionName").press("t");
+    await expect(page.locator("#extensionName")).toHaveValue("t");
+    await expect(page.locator("html")).toHaveAttribute("data-theme", theme);
+  });
+});
+
+test.describe("theme transition", () => {
+  test.use({ reducedMotion: "no-preference" });
+  test.beforeEach(async ({ page }) => openApp(page));
+
+  test("a wave of pixels in the logo's colours covers the switch", async ({ page, theme }) => {
+    // Record the wave's colours the moment it is drawn: it only lives for
+    // under a second, and a busy machine must not make that a race.
+    await page.evaluate(() => {
+      const seen = new Set<string>();
+      (window as unknown as { __wave: Set<string> }).__wave = seen;
+      new MutationObserver(() => {
+        for (const el of document.querySelectorAll(".theme-transition-block")) {
+          seen.add(getComputedStyle(el).backgroundColor);
+        }
+      }).observe(document.body, { childList: true, subtree: true });
+    });
+    await page.locator("body").press("t");
+    const colors = () =>
+      page.evaluate(() => [...(window as unknown as { __wave: Set<string> }).__wave]);
+    await expect.poll(async () => (await colors()).length).toBeGreaterThan(1);
+    const logo = [
+      "rgb(255, 214, 51)",
+      "rgb(44, 62, 80)",
+      "rgb(255, 207, 16)",
+      "rgb(52, 73, 94)",
+      "rgb(241, 196, 15)",
+      "rgb(11, 16, 20)",
+    ];
+    for (const c of await colors()) expect(logo, `${c} is not a logo colour`).toContain(c);
+    // The theme changes behind the wave, then the wave goes.
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", theme);
+    await expect(page.getByTestId("theme-transition")).toHaveCount(0);
+  });
+
+  test("with reduced motion the switch is instant and nothing animates", async ({
+    page,
+    theme,
+  }) => {
+    await page.emulateMedia({ reducedMotion: "reduce" });
+    await page.locator("body").press("t");
+    await expect(page.locator("html")).not.toHaveAttribute("data-theme", theme);
+    await expect(page.getByTestId("theme-transition")).toHaveCount(0);
   });
 });

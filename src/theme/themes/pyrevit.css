@@ -1,0 +1,84 @@
+/*
+ * pyRevit: the logo's own palette on the Revit frame. Its three slates
+ * (#2C3E50, #34495E, #0B1014) are the chrome, its three yellows (#FFD633,
+ * #FFCF10, #F1C40F) are the light: active tab, panel titles, selection,
+ * links. Paint only, nothing that moves a box. Every text pairing is AA.
+ */
+:root[data-theme="pyrevit"] {
+  color-scheme: dark;
+
+  --logo-slate: #2c3e50;
+  --logo-slate-2: #34495e;
+  --logo-ink: #0b1014;
+  --logo-yellow: #ffd633;
+  --logo-yellow-2: #ffcf10;
+  --logo-yellow-3: #f1c40f;
+
+  --frame-bg: #22313f;
+  --frame-title: var(--logo-ink);
+  --frame-line: #3d536a;
+  --field-line: #7f93a8;
+  --ribbon-bg: var(--logo-slate);
+  --panel-title-bg: #243444;
+  --panel-title-text: var(--logo-yellow);
+  --palette-bg: #2a3b4d;
+  --palette-head: #1b2733;
+  --group-bg: var(--logo-slate-2);
+  --row-line: #3d536a;
+  --field-bg: #1f2d3a;
+  --canvas-bg: #16212b;
+  --canvas-grid: #283a4b;
+  --hover-bg: #3b5268;
+  --press-bg: #456079;
+  --select: var(--logo-yellow);
+  --select-edge: var(--logo-ink);
+  --select-bg: rgba(255, 214, 51, 0.2);
+  --ctx-bg: #4a3f12;
+  --ctx-text: var(--logo-yellow);
+  --ctx-line: var(--logo-yellow-3);
+  --link: var(--logo-yellow);
+  --ok: #9be7a8;
+
+  --surface-app: var(--frame-bg);
+  --surface-ribbon: var(--ribbon-bg);
+  --surface-raised: var(--palette-bg);
+  --surface-sunken: var(--field-bg);
+  --surface-hover: var(--hover-bg);
+  --border-separator: var(--frame-line);
+  --border-subtle: var(--field-line);
+  --text-primary: #f4f6f8;
+  --text-secondary: #c5d0da;
+  --text-disabled: #a3b3c3;
+  --accent: var(--logo-yellow);
+  --accent-strong: var(--logo-yellow-3);
+  --accent-hover: var(--logo-yellow-2);
+  --on-accent: var(--logo-ink);
+  --warn: var(--logo-yellow-2);
+  --danger: #ff8a7a;
+  --danger-fill: #c0392b;
+  --delete-btn-hover: #d64532;
+  --title-color: var(--logo-yellow);
+
+  --overlay: rgba(11, 16, 20, 0.7);
+  --modal: var(--palette-bg);
+  --modal-foreground: var(--text-primary);
+  --dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+
+  /* The active tab wears the logo's yellow along its top edge. */
+  & .tab.active {
+    box-shadow: inset 0 2px 0 var(--logo-yellow);
+  }
+
+  & .tree-icon {
+    filter: brightness(0.95);
+  }
+}
+
+/* A dark ribbon: pyRevit draws each button's dark icon, so the builder does. */
+:root[data-theme="pyrevit"] .ribbon .button-icon {
+  background: var(--icon-dark) center / contain no-repeat;
+}
+
+:root[data-theme="pyrevit"] .ribbon .button-icon img {
+  opacity: 0;
+}

@@ -17,6 +17,7 @@ import {
   TYPES,
   type TypeDef,
   type TypeId,
+  withDefaults,
 } from "../domain/bundleTypes";
 import {
   containerKeyOf,
@@ -187,7 +188,7 @@ function AdvancedField({
     >
       <label htmlFor={id}>
         {def.label}
-        {def.optional ? " (optional)" : ""}
+        {typeDef.required?.includes(fieldKey) ? " (required)" : ""}
       </label>
       {input}
       {def.help && <div className="field-help">{def.help}</div>}
@@ -225,7 +226,7 @@ function ModalBody({ request }: { request: ModalRequest }) {
   const [fields, setFields] = useState<FieldValues>(() => {
     const values = emptyFields();
     if (existing) for (const k of FIELD_KEYS) values[k] = existing[k] ?? "";
-    return values;
+    return firstType ? withDefaults(firstType, values) : values;
   });
   const [preview, setPreview] = useState<string>(existing?.iconData || FALLBACK_ICON);
   const [advancedOpen, setAdvancedOpen] = useState(false);
@@ -358,7 +359,10 @@ function ModalBody({ request }: { request: ModalRequest }) {
           containerKey={setup.containerKey}
           wantContainers={setup.wantContainers}
           selected={type}
-          onSelect={setType}
+          onSelect={(id) => {
+            setType(id);
+            setFields((f) => withDefaults(id, f));
+          }}
         />
         {typeDef && !pickerHasType && (
           <div className="type-note" id="typeNote">

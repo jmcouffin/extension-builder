@@ -1,0 +1,73 @@
+/*
+ * Revit Dark: Revit's dark interface (Revit 2024 and later) on the same frame.
+ * Paint only: tokens, nothing that moves a box. The selection keeps the
+ * pyRevit logo's yellow, with its darkest slate as the edge so the ring reads
+ * on a dark ribbon.
+ */
+:root[data-theme="revit-dark"] {
+  color-scheme: dark;
+
+  --frame-bg: #2a2f36;
+  --frame-title: #252a31;
+  --frame-line: #4d5561;
+  --field-line: #7d8796;
+  --ribbon-bg: #3a414b;
+  --panel-title-bg: #323941;
+  --panel-title-text: #c0c7d0;
+  --palette-bg: #323840;
+  --palette-head: #2b3038;
+  --group-bg: #2c3239;
+  --row-line: #3f4650;
+  --field-bg: #262b31;
+  --canvas-bg: #1e2329;
+  --canvas-grid: #2f3640;
+  --hover-bg: #47505c;
+  --press-bg: #535d6a;
+  --select: #f1c40f;
+  --select-edge: #0b1014;
+  --select-bg: #4a4224;
+  --ctx-bg: #2b4632;
+  --ctx-text: #8fe09c;
+  --ctx-line: #5cc46e;
+  --link: #8ec0ff;
+  --ok: #8fe09c;
+
+  --surface-app: var(--frame-bg);
+  --surface-ribbon: var(--ribbon-bg);
+  --surface-raised: #323840;
+  --surface-sunken: var(--field-bg);
+  --surface-hover: var(--hover-bg);
+  --border-separator: var(--frame-line);
+  --border-subtle: var(--field-line);
+  --text-primary: #e9ecf0;
+  --text-secondary: #b6bec8;
+  --text-disabled: #97a0ad;
+  --accent: #8ec0ff;
+  --accent-strong: #2f6db0;
+  --accent-hover: #3a7bc8;
+  --on-accent: #ffffff;
+  --warn: #f2c94c;
+  --danger: #ff8a7a;
+  --danger-fill: #c0392b;
+  --delete-btn-hover: #d64532;
+  --title-color: var(--text-primary);
+
+  --overlay: rgba(0, 0, 0, 0.6);
+  --dialog-shadow: 0 8px 28px rgba(0, 0, 0, 0.6);
+
+  /* The tree's icons are drawn for a light ground. */
+  & .tree-icon {
+    filter: brightness(0.92);
+  }
+}
+
+/* On a dark ribbon pyRevit draws each button's dark icon (icon.dark.png), so
+   the builder does too. The light picture stays in the markup and keeps the
+   box; the dark one is painted over it. */
+:root[data-theme="revit-dark"] .ribbon .button-icon {
+  background: var(--icon-dark) center / contain no-repeat;
+}
+
+:root[data-theme="revit-dark"] .ribbon .button-icon img {
+  opacity: 0;
+}
