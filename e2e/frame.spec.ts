@@ -76,7 +76,7 @@ test.describe("Revit frame", () => {
     await addStack(page);
     await select(page, "Button 1");
     await page.locator("#contextTab").click();
-    await expect(page.locator(".context-panel")).toHaveCount(2);
+    await expect(page.locator(".context-panel")).toHaveCount(3);
     // The tab's own panels stay in view, so the move is seen.
     await expect(page.locator("#ribbonContainer .panel")).toHaveCount(1);
     await expect(page.getByRole("button", { name: "Move Left" })).toBeDisabled();

@@ -56,7 +56,12 @@ export function isSameContainer(element: Element, target: DropTarget): boolean {
  * null when the move is legal. A move within the container the bundle is
  * already in is a reorder, and is always legal.
  */
-export function moveRejection(layout: Parts, elementId: string, target: DropTarget): string | null {
+export function moveRejection(
+  layout: Parts,
+  elementId: string,
+  target: DropTarget,
+  { allowNameClash = false }: { allowNameClash?: boolean } = {},
+): string | null {
   const element = layout.elements[elementId];
   if (!element) return "That bundle no longer exists.";
   const targetId = targetIdOf(target);
@@ -80,7 +85,7 @@ export function moveRejection(layout: Parts, elementId: string, target: DropTarg
     }
   }
 
-  if (hasSiblingNamed(layout, target, element.name, elementId)) {
+  if (!allowNameClash && hasSiblingNamed(layout, target, element.name, elementId)) {
     return `A command called "${element.name}" already exists in that container.`;
   }
 

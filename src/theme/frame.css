@@ -1046,9 +1046,73 @@ main {
   border-color: var(--frame-line);
 }
 
-.ctx-small:disabled {
+.ctx-small:disabled,
+.ctx-large:disabled {
   color: var(--text-disabled);
   cursor: default;
+}
+
+.ctx-large:disabled svg {
+  opacity: 0.45;
+}
+
+.context-panel .ctx-large .ctx-caret {
+  display: inline;
+  width: 10px;
+  height: 10px;
+  vertical-align: middle;
+}
+
+/* The Move to menu: tabs as headings, panels, then their stacks and groups
+   indented under them, each with its kind on the right. */
+.move-menu {
+  min-width: 240px;
+  max-width: min(360px, calc(100vw - 32px));
+  max-height: min(420px, 70vh);
+  padding: 4px;
+  border-radius: 8px;
+}
+
+.move-menu-tab {
+  padding: 6px 10px 2px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+
+.move-menu-item {
+  justify-content: space-between;
+  gap: 12px;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.move-menu-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.move-menu-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.move-menu-reason {
+  font-size: 11px;
+  line-height: 14px;
+  white-space: normal;
+}
+
+.move-menu-kind {
+  flex: 0 0 auto;
+  font-size: 11px;
+  color: var(--text-secondary);
 }
 
 /* ===== BELOW THE RIBBON ===== */

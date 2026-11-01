@@ -4,6 +4,16 @@ import { immer } from "zustand/middleware/immer";
 import { rejectionReason, TYPES } from "../domain/bundleTypes";
 import { type Element, initialLayout, type Layout } from "../domain/model";
 import {
+  duplicateName,
+  duplicateRejection,
+  nameIn,
+  stackPartnerName,
+  tabOf,
+  ungroupRejection,
+  type Wrapper,
+  wrapRejection,
+} from "../domain/modify";
+import {
   containerKeyOf,
   type DropTarget,
   hasSiblingNamed,
@@ -69,6 +79,17 @@ interface Actions {
   setRibbonMode(mode: RibbonMode): void;
   /** Move a bundle one slot earlier (-1) or later (+1) in its container. */
   nudgeElement(elementId: string, step: -1 | 1): void;
+  /** Copy a bundle, with its children, right after itself; selects the copy. */
+  duplicateElement(elementId: string): string | null;
+  /**
+   * Send a bundle to the end of another panel, stack or group, on any tab,
+   * renaming it there if its name is taken.
+   */
+  moveElementTo(elementId: string, target: DropTarget): string | null;
+  /** Put a bundle in a new stack (with a second command) or pulldown, in its place. */
+  wrapElement(elementId: string, wrapper: Wrapper): string | null;
+  /** Put a stack's or group's commands in its place, and remove it. */
+  ungroupElement(elementId: string): string | null;
 }
 
 export type Store = Layout & Ui & Actions;
@@ -133,6 +154,22 @@ function attach(s: Layout, elementId: string, target: DropTarget, index?: number
     insertAt(container.children, elementId, index);
     element.parentId = target.elementId;
   }
+}
+
+/** Copy a bundle and its children under new ids; the copy is not attached. */
+function cloneElement(s: Layout, elementId: string, parentId?: string): string {
+  const {
+    children,
+    panelId: _panel,
+    parentId: _parent,
+    ...fields
+  } = s.elements[elementId] as Element;
+  const copyId = `element${s.nextIds.element++}`;
+  const copy: Element = { ...fields };
+  if (parentId) copy.parentId = parentId;
+  s.elements[copyId] = copy;
+  if (children) copy.children = children.map((childId) => cloneElement(s, childId, copyId));
+  return copyId;
 }
 
 function containerOf(element: Element): DropTarget | null {
@@ -498,6 +535,111 @@ export const useStore = create<Store>()(
         if (to < 0 || to >= siblingsOf(layout, target).length) return;
         // moveElement takes a slot in the container as it is now.
         get().moveElement(elementId, target, step > 0 ? to + 1 : to);
+      },
+
+      duplicateElement: (elementId) => {
+        const layout = get();
+        const reason = duplicateRejection(layout, elementId);
+        if (reason) return reason;
+        const name = duplicateName(layout, elementId);
+        set((s) => {
+          const element = s.elements[elementId];
+          const target = element && containerOf(element);
+          if (!target) return;
+          const copyId = cloneElement(s, elementId);
+          const copy = s.elements[copyId];
+          if (copy) copy.name = name;
+          attach(s, copyId, target, siblingsOf(s, target).indexOf(elementId) + 1);
+          s.selectedId = copyId;
+        });
+        return null;
+      },
+
+      moveElementTo: (elementId, target) => {
+        const layout = get();
+        const reason = moveRejection(layout, elementId, target, { allowNameClash: true });
+        if (reason) return reason;
+        const tabId = tabOf(layout, target);
+        const name = nameIn(layout, elementId, target);
+        // One change, so one undo step: the move, and the tab it lands on.
+        set((s) => {
+          detach(s, elementId);
+          attach(s, elementId, target);
+          const element = s.elements[elementId];
+          if (element) element.name = name;
+          if (tabId) s.activeTabId = tabId;
+          s.openGroup = null;
+          s.selectedId = elementId;
+        });
+        return null;
+      },
+
+      wrapElement: (elementId, wrapper) => {
+        const layout = get();
+        const reason = wrapRejection(layout, elementId, wrapper);
+        if (reason) return reason;
+        set((s) => {
+          const element = s.elements[elementId];
+          const target = element && containerOf(element);
+          if (!element || !target) return;
+          const index = siblingsOf(s, target).indexOf(elementId);
+          const wrapperId = `element${s.nextIds.element++}`;
+          const taken = siblingsOf(s, target).map((id) => s.elements[id]?.name ?? "");
+          detach(s, elementId);
+          const children = [elementId];
+          element.parentId = wrapperId;
+          if (wrapper === "stack") {
+            // pyRevit skips a one-command stack, so the stack gets a second one.
+            const partnerId = `element${s.nextIds.element++}`;
+            s.elements[partnerId] = newPushButton(stackPartnerName(element.name), {
+              parentId: wrapperId,
+            });
+            children.push(partnerId);
+          }
+          s.elements[wrapperId] = {
+            type: wrapper,
+            name: wrapper === "stack" ? uniqueName("NEW STACK", taken) : nextDefaultGroupName(s),
+            title: "",
+            tooltip: "",
+            iconData: null,
+            iconDarkData: null,
+            iconOnData: null,
+            children,
+          };
+          attach(s, wrapperId, target, index);
+          s.openGroup = null;
+          s.selectedId = wrapperId;
+        });
+        return null;
+      },
+
+      ungroupElement: (elementId) => {
+        const layout = get();
+        const reason = ungroupRejection(layout, elementId);
+        if (reason) return reason;
+        set((s) => {
+          const group = s.elements[elementId];
+          const target = group && containerOf(group);
+          if (!group || !target) return;
+          let index = siblingsOf(s, target).indexOf(elementId);
+          const children = (group.children ?? []).slice();
+          group.children = [];
+          detach(s, elementId);
+          delete s.elements[elementId];
+          for (const childId of children) {
+            const child = s.elements[childId];
+            if (!child) continue;
+            delete child.parentId;
+            // Two bundles with one name would be one folder.
+            const taken = siblingsOf(s, target).map((id) => s.elements[id]?.name ?? "");
+            child.name = uniqueName(child.name, taken);
+            attach(s, childId, target, index++);
+          }
+          s.openGroup = null;
+          s.selectedId = children[0] ?? null;
+          if (!s.selectedId) s.ribbonMode = "tab";
+        });
+        return null;
       },
     })),
     {

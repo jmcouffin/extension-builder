@@ -173,6 +173,9 @@ export function Ribbon() {
         id="ribbonContainer"
         onClick={(e) => {
           const hit = e.target as HTMLElement;
+          // React bubbles clicks from portaled menus here too, and from a menu
+          // item a command just removed: only a click in the ribbon itself counts.
+          if (!e.currentTarget.contains(hit)) return;
           if (hit.closest("[data-button-id], button, input, .context-panel")) return;
           useStore.getState().select(null);
         }}
