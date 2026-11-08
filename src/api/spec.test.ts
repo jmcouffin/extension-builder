@@ -39,10 +39,18 @@ describe("extension spec", () => {
     expect(specFromLayout(back.layout)).toEqual(spec);
   });
 
-  it("fills required parameters left out, and warns about samples", () => {
-    const url = read(one({ type: "urlbutton", name: "Docs" }));
-    expect(Object.values(url.layout.elements)[0]?.hyperlink).toBe("https://pyrevitlabs.io");
-    const link = layoutFromSpec(one({ type: "linkbutton", name: "Lookup" }));
+  it("requires what pyRevit requires, and warns about sample values", () => {
+    expect(layoutFromSpec(one({ type: "urlbutton", name: "Docs" })).errors).toEqual([
+      { path: "tabs[0].panels[0].items[0].hyperlink", message: "is required for a URL Button" },
+    ]);
+    const link = read(
+      one({
+        type: "linkbutton",
+        name: "L",
+        assembly: "MyAddin",
+        command_class: "MyAddin.MyCommand",
+      }),
+    );
     expect(link.problems).toEqual([]);
     expect(link.warnings.length).toBe(2);
   });

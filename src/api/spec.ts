@@ -13,7 +13,6 @@ import {
   rejectionReason,
   TYPES,
   type TypeId,
-  withDefaults,
 } from "../domain/bundleTypes";
 import type { Element, Layout } from "../domain/model";
 import { sanitizeFileName } from "../domain/templates";
@@ -287,8 +286,12 @@ export function layoutFromSpec(input: unknown): SpecResult {
       else if (stored !== undefined) element[key as FieldKey] = stored;
     }
 
-    // Required keys left out get the same start values as in the builder.
-    Object.assign(element, withDefaults(type, element));
+    // Required keys are not filled in for you here (the builder's start
+    // values, like a pyrevitlabs.io hyperlink, would be a silent surprise).
+    for (const key of def.required ?? []) {
+      if (!element[key] && raw[key] === undefined)
+        err(`${path}.${key}`, `is required for a ${def.label}`);
+    }
     if (def.forcedContext) element.context = def.forcedContext;
 
     const id = `element${layout.nextIds.element++}`;
