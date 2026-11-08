@@ -1,0 +1,148 @@
+import { EXAMPLE_SPEC } from "../src/api/spec";
+import { expect, item, openApp, test } from "./fixtures";
+
+/** What the fake modelContext records: the tools as the page registered them. */
+interface Recorded {
+  name: string;
+  description: string;
+  inputSchema: Record<string, unknown>;
+  annotations?: { readOnlyHint?: boolean };
+  execute(
+    input: unknown,
+  ): Promise<{ content: { type: string; text: string }[]; isError?: boolean }>;
+}
+type Recorder = { __webmcpTools: Recorded[] };
+
+/** Run a registered tool the way an agent would, and parse its JSON result. */
+async function run(page: import("@playwright/test").Page, name: string, input: unknown = {}) {
+  return page.evaluate(
+    async ([name, input]) => {
+      const tool = (window as unknown as Recorder).__webmcpTools.find((t) => t.name === name);
+      if (!tool) throw new Error(`no tool ${name}`);
+      const result = await tool.execute(input);
+      return { isError: !!result.isError, ...JSON.parse(result.content[0]?.text ?? "{}") };
+    },
+    [name, input] as const,
+  );
+}
+
+test.describe("WebMCP", () => {
+  test.beforeEach(async ({ page }) => {
+    // A browser with WebMCP, as the current draft has it: document.modelContext.registerTool.
+    await page.addInitScript(() => {
+      const tools: Recorded[] = [];
+      (window as unknown as Recorder).__webmcpTools = tools;
+      Object.defineProperty(document, "modelContext", {
+        configurable: true,
+        value: {
+          registerTool: async (tool: Recorded) => {
+            tools.push(tool);
+          },
+        },
+      });
+    });
+    await openApp(page);
+  });
+
+  test("registers the five tools with their schemas", async ({ page }) => {
+    const tools = await page.evaluate(() =>
+      (window as unknown as Recorder).__webmcpTools.map((t) => ({
+        name: t.name,
+        readOnly: t.annotations?.readOnlyHint,
+        type: t.inputSchema.type,
+        hasSpec: "spec" in ((t.inputSchema.properties as object | undefined) ?? {}),
+        hasDefs: "$defs" in t.inputSchema,
+        described: t.description.length > 100,
+      })),
+    );
+    expect(tools).toEqual([
+      {
+        name: "get_extension_schema",
+        readOnly: true,
+        type: "object",
+        hasSpec: false,
+        hasDefs: false,
+        described: true,
+      },
+      {
+        name: "get_extension",
+        readOnly: true,
+        type: "object",
+        hasSpec: false,
+        hasDefs: false,
+        described: true,
+      },
+      {
+        name: "validate_extension",
+        readOnly: true,
+        type: "object",
+        hasSpec: true,
+        hasDefs: true,
+        described: true,
+      },
+      {
+        name: "set_extension",
+        readOnly: false,
+        type: "object",
+        hasSpec: true,
+        hasDefs: true,
+        described: true,
+      },
+      {
+        name: "download_extension",
+        readOnly: false,
+        type: "object",
+        hasSpec: false,
+        hasDefs: false,
+        described: true,
+      },
+    ]);
+  });
+
+  test("an agent builds an extension and downloads it", async ({ page }) => {
+    const set = await run(page, "set_extension", { spec: EXAMPLE_SPEC });
+    expect(set).toMatchObject({ isError: false, ok: true, problems: [] });
+
+    await expect(page.locator(".tab.active .tab-name")).toHaveValue("Acme");
+    await expect(page.locator(".panel-name")).toHaveValue("Sheets");
+    const ribbon = page.locator("#ribbonContainer");
+    for (const name of ["Renumber", "Docs", "Auto Save", "Export"]) {
+      await expect(item(ribbon, name)).toBeVisible();
+    }
+
+    const read = await run(page, "get_extension");
+    expect(read.spec).toEqual(EXAMPLE_SPEC);
+
+    const downloadPromise = page.waitForEvent("download");
+    const done = await run(page, "download_extension");
+    const download = await downloadPromise;
+    expect(done).toMatchObject({ ok: true, file_name: "Acme Tools.extension.zip" });
+    expect(download.suggestedFilename()).toBe("Acme Tools.extension.zip");
+  });
+
+  test("a malformed spec is refused and the ribbon is left alone", async ({ page }) => {
+    const refused = await run(page, "set_extension", {
+      spec: {
+        name: "X",
+        tabs: [{ name: "T", panels: [{ name: "P", items: [{ type: "button" }] }] }],
+      },
+    });
+    expect(refused).toMatchObject({ isError: true, ok: false });
+    expect(refused.errors.length).toBeGreaterThan(0);
+    await expect(page.locator("#ribbonContainer .panel")).toHaveCount(1);
+    await expect(page.locator(".tab.active .tab-name")).not.toHaveValue("T");
+  });
+});
+
+test.describe("window.pyrevitBuilder", () => {
+  test("drives the builder by script, without WebMCP", async ({ page }) => {
+    await openApp(page);
+    expect(await page.evaluate(() => "modelContext" in document)).toBe(false);
+    const result = await page.evaluate(() => window.pyrevitBuilder?.call("get_extension", {}));
+    expect(result).toMatchObject({ ok: true, problems: [] });
+    expect(result?.spec).toMatchObject({ version: 1, tabs: [expect.anything()] });
+
+    await page.evaluate((spec) => window.pyrevitBuilder?.setExtension(spec), EXAMPLE_SPEC);
+    await expect(item(page.locator("#ribbonContainer"), "Renumber")).toBeVisible();
+  });
+});
