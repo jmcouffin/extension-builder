@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { TYPES } from "../domain/bundleTypes";
-import { sampleValues, validate } from "../domain/tree";
+import { brokenButtons, sampleValues, validate } from "../domain/tree";
 import { useStore } from "../state/store";
 
 /** Revit's status bar: what a click will do, and whether the extension is sound. */
@@ -12,6 +12,10 @@ export function StatusBar() {
   const selected = useStore((s) => (s.selectedId ? s.elements[s.selectedId] : undefined));
   const problems = useMemo(
     () => validate({ extensionName, tabs, panels, elements }).length,
+    [extensionName, tabs, panels, elements],
+  );
+  const broken = useMemo(
+    () => brokenButtons({ extensionName, tabs, panels, elements }),
     [extensionName, tabs, panels, elements],
   );
   const samples = useMemo(
@@ -26,6 +30,11 @@ export function StatusBar() {
   return (
     <footer className="status-bar" id="statusBar">
       <span className="status-hint">{hint}</span>
+      {broken.length > 0 && (
+        <span className="status-samples status-broken" title={broken.join("\n")}>
+          {broken.length === 1 ? "1 button won't work" : `${broken.length} buttons won't work`}
+        </span>
+      )}
       {samples.length > 0 && (
         <span className="status-samples" title={samples.join("\n")}>
           {samples.length} sample value{samples.length === 1 ? "" : "s"} to replace

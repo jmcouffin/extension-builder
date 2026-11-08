@@ -86,15 +86,12 @@ test.describe("export", () => {
   });
 
   test("refuses to export a broken extension, and lists why", async ({ page }) => {
-    await addCommand(page, "Docs");
-    await setType(page, "urlbutton");
-    const hyperlink = page.locator('#propertiesPalette [data-field="hyperlink"]');
-    await hyperlink.fill("");
-    await hyperlink.press("Enter");
+    await page.locator("#extensionName").fill("");
+    await page.locator("#extensionName").press("Enter");
 
     await page.locator("#downloadZip").click();
     await expect(appDialog(page)).toContainText("This extension will not work as built");
-    await expect(appDialog(page).locator(".dialog-details li")).toContainText([/Hyperlink/]);
+    await expect(appDialog(page).locator(".dialog-details li")).toContainText([/has no name/]);
     await acceptDialog(page);
   });
 

@@ -94,13 +94,13 @@ describe("agent tools", () => {
       { path: "tabs[0].panels[0].items[0].hyperlink", message: "must be a string" },
     ]);
 
-    // A required parameter left out reads, but blocks download.
+    // A required parameter left out reads and downloads, with why it breaks.
     const missing = await callTool("validate_extension", {
       spec: one({ type: "urlbutton", name: "D" }),
     });
-    expect(missing.ok).toBe(false);
-    expect(missing.errors).toEqual([]);
-    expect(missing.problems).toEqual([expect.stringMatching(/missing: Hyperlink/)]);
+    expect(missing.ok).toBe(true);
+    expect(missing.problems).toEqual([]);
+    expect(missing.warnings).toEqual([expect.stringMatching(/has no Hyperlink: pyRevit logs/)]);
 
     const lone = await callTool("validate_extension", { spec: LONE_STACK });
     expect(lone.ok).toBe(false);
@@ -148,6 +148,17 @@ describe("agent tools", () => {
     expect(result).toMatchObject({ ok: true, file_name: "Acme Tools.extension.zip" });
     expect(downloadBlob).toHaveBeenCalledOnce();
     expect(vi.mocked(downloadBlob).mock.calls[0]?.[1]).toBe("Acme Tools.extension.zip");
+  });
+
+  it("download_extension downloads a button with an empty hyperlink, and says why it breaks", async () => {
+    await callTool("set_extension", { spec: one({ type: "urlbutton", name: "Docs" }) });
+    const result = await callTool("download_extension");
+    expect(result.ok).toBe(true);
+    expect(downloadBlob).toHaveBeenCalledOnce();
+    expect(result.message).toMatch(
+      /One button won't work as built: URL Button "Docs" has no Hyperlink/,
+    );
+    expect(result.broken).toEqual([expect.stringMatching(/pyRevit logs an error/)]);
   });
 
   it("download_extension refuses while there are problems", async () => {

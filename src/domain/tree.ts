@@ -142,9 +142,32 @@ export function downloadNotes(layout: LayoutParts): string[] {
   return notes;
 }
 
-/** Everything worth a look that doesn't block download: samples, then notes. */
+/**
+ * Bundles with a required bundle.yaml key left empty, and what pyRevit does
+ * with each. They don't block download: the extension still loads, and the
+ * person (or agent) is told which buttons won't work and why.
+ */
+export function brokenButtons(layout: LayoutParts): string[] {
+  const out: string[] = [];
+  for (const element of Object.values(layout.elements)) {
+    const typeDef = getType(element.type);
+    if (!typeDef?.required) continue;
+    const missing = typeDef.required.filter((key) => !element[key]?.trim());
+    if (!missing.length) continue;
+    const labels = missing.map((k) => FIELDS[k].label).join(" and ");
+    out.push(
+      `${typeDef.label} "${element.name}" has no ${labels}: ${typeDef.missingEffect ?? "it won't work."} Set ${missing.length > 1 ? "them" : "it"} in Properties.`,
+    );
+  }
+  return out;
+}
+
+/**
+ * Everything worth a look that doesn't block download: buttons that won't
+ * work, sample values, then files to add after unzipping.
+ */
 export function downloadWarnings(layout: LayoutParts): string[] {
-  return [...sampleValues(layout), ...downloadNotes(layout)];
+  return [...brokenButtons(layout), ...sampleValues(layout), ...downloadNotes(layout)];
 }
 
 /** Defaults that are placeholders to replace, as opposed to real values like a URL. */
@@ -192,19 +215,6 @@ export function validate(layout: LayoutParts): string[] {
   walk(buildFolderStructure(layout, rejected), "");
 
   for (const r of rejected) problems.push(`Element "${r.element.name}" was skipped: ${r.reason}`);
-
-  // Required bundle.yaml keys. Without them pyRevit logs an error and the
-  // command never binds to anything.
-  for (const element of Object.values(layout.elements)) {
-    const typeDef = getType(element.type);
-    if (!typeDef?.required) continue;
-    const missing = typeDef.required.filter((key) => !element[key]);
-    if (missing.length) {
-      problems.push(
-        `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Set them in Properties.`,
-      );
-    }
-  }
 
   for (const element of Object.values(layout.elements)) {
     const min = Number(element.min_revit_version);

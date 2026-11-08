@@ -8,7 +8,7 @@
 // the JSON, and writes it back. A write is one undo step in the builder, so
 // the user can always take it back.
 
-import { downloadWarnings, validate } from "../domain/tree";
+import { brokenButtons, downloadWarnings, validate } from "../domain/tree";
 import { buildZip, downloadBlob } from "../domain/zip";
 import { loadDefaultIcons } from "../state/defaultIcons";
 import { layoutOf, useStore } from "../state/store";
@@ -105,7 +105,7 @@ const getExtensionSchema: AgentTool = {
 const getExtension: AgentTool = {
   name: "get_extension",
   title: "Get the extension",
-  description: `${ABOUT} Call this first. Returns the extension open in the builder as a spec (nested JSON: name, tabs, panels, items), plus "problems" (pyRevit would skip or break something; download is refused until they are fixed) and "warnings" (sample values to replace, files to add after unzipping). Custom icons are left out unless include_icons is true, and set_extension replaces every icon with what the spec holds: if the user uploaded icons, call this with include_icons: true before editing and writing the spec back, or their icons are lost. ${WORKFLOW}`,
+  description: `${ABOUT} Call this first. Returns the extension open in the builder as a spec (nested JSON: name, tabs, panels, items), plus "problems" (pyRevit would skip or break something; download is refused until they are fixed) and "warnings" (buttons that won't work because a required parameter is empty, and why; sample values to replace; files to add after unzipping). Custom icons are left out unless include_icons is true, and set_extension replaces every icon with what the spec holds: if the user uploaded icons, call this with include_icons: true before editing and writing the spec back, or their icons are lost. ${WORKFLOW}`,
   inputSchema: {
     type: "object",
     properties: {
@@ -148,7 +148,7 @@ const getExtension: AgentTool = {
 const validateExtension: AgentTool = {
   name: "validate_extension",
   title: "Validate an extension spec",
-  description: `Checks an extension spec without changing anything in the builder. Returns "errors" (the spec is malformed, with the JSON path of each: set_extension would refuse it), "problems" (it would load, but pyRevit would skip or break part of it, so download would be refused) and "warnings" (sample values worth replacing, files to add after unzipping). ok is true when there are no errors and no problems. ${WORKFLOW}`,
+  description: `Checks an extension spec without changing anything in the builder. Returns "errors" (the spec is malformed, with the JSON path of each: set_extension would refuse it), "problems" (it would load, but pyRevit would skip or break part of it, so download would be refused) and "warnings" (buttons that won't work because a required parameter is empty, and why; sample values worth replacing; files to add after unzipping). ok is true when there are no errors and no problems. ${WORKFLOW}`,
   inputSchema: specInput("The extension spec to check."),
   readOnly: true,
   async execute(input) {
@@ -202,7 +202,7 @@ const setExtension: AgentTool = {
 const downloadExtension: AgentTool = {
   name: "download_extension",
   title: "Download the extension ZIP",
-  description: `Builds the extension open in the builder into a ZIP and downloads it in the user's browser, as the page's Download button does. The user unzips it into a folder pyRevit loads extensions from. Refused, with the problems, if pyRevit would skip or break part of the extension; fix them with set_extension first. Returns the file name. ${WORKFLOW}`,
+  description: `Builds the extension open in the builder into a ZIP and downloads it in the user's browser, as the page's Download button does. The user unzips it into a folder pyRevit loads extensions from. Refused, with the problems, if pyRevit would skip or break part of the extension; fix them with set_extension first. A button with a required parameter left empty (a URL Button's hyperlink, say) doesn't stop the download: the reply says which buttons won't work and why ("broken"), to tell the user. Returns the file name. ${WORKFLOW}`,
   inputSchema: { type: "object", properties: {}, additionalProperties: false },
   readOnly: false,
   async execute() {
@@ -217,11 +217,16 @@ const downloadExtension: AgentTool = {
     }
     const { blob, name } = await buildZip(layout, await loadDefaultIcons());
     downloadBlob(blob, name);
+    const broken = brokenButtons(layout);
     const warnings = downloadWarnings(layout);
+    const why = broken.length
+      ? ` ${broken.length === 1 ? "One button won't" : `${broken.length} buttons won't`} work as built: ${broken.join(" ")}`
+      : "";
     return {
       ok: true,
-      message: `Downloaded ${name}.${warnings.length ? ` ${plural(warnings.length, "warning")} to pass on to the user.` : ""}`,
+      message: `Downloaded ${name}.${why}${warnings.length > broken.length ? ` See warnings for the rest to tell the user.` : ""}`,
       file_name: name,
+      broken,
       warnings,
     };
   },

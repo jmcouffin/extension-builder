@@ -44,8 +44,12 @@ an agent running in the user's browser. Everything lives in `src/api/`.
 The three published files are generated at build time from the type table (a
 Vite plugin in `vite.config.ts`, served by the dev server too), so they always
 match what the builder accepts. Unlike the builder's UI, a spec gets no start
-values: a required parameter left out is an error, so an assistant never ships
-a placeholder hyperlink by accident.
+values, so an assistant never ships a placeholder hyperlink by accident.
+
+A required parameter left empty (a URL Button's hyperlink, a Link Button's
+assembly) doesn't block the download, in the UI or for an agent: the extension
+downloads, and the reply says which buttons won't work and what pyRevit will do
+with them. The status bar counts them meanwhile, and Properties marks the row.
 
 ## Deploying
 
@@ -385,7 +389,7 @@ console error, a failed request or a native dialog. Across all sizes it checks:
 - **properties**: creating never opens a dialog and selects what it made;
   every bundle type shows every parameter of the type table with required
   ones starred and filled and groups open; required values start working or
-  as counted samples; an emptied required value blocks the download; yes/no,
+  as counted samples; an emptied required value still downloads, saying which button won't work and why; yes/no,
   version, engine, author and highlight reach `bundle.yaml` and the ZIP; the
   script is edited in the drawing area; members in place; a stack becomes a
   pulldown;

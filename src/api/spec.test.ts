@@ -39,11 +39,12 @@ describe("extension spec", () => {
     expect(specFromLayout(back.layout)).toEqual(spec);
   });
 
-  it("leaves out nothing it fills in: a missing required parameter blocks download", () => {
+  it("fills in nothing: a missing required parameter downloads, with why it breaks", () => {
     const url = read(one({ type: "urlbutton", name: "Docs" }));
     expect(url.errors).toEqual([]);
-    expect(url.problems).toEqual([
-      expect.stringMatching(/URL Button "Docs" is missing: Hyperlink/),
+    expect(url.problems).toEqual([]);
+    expect(url.warnings).toEqual([
+      expect.stringMatching(/URL Button "Docs" has no Hyperlink: pyRevit logs an error/),
     ]);
     const link = read(
       one({
@@ -145,8 +146,8 @@ describe("extension spec", () => {
     expect(layoutFromSpec(specFromLayout(layout)).errors).toEqual([]);
     // A required parameter cleared in Properties.
     button.type = "urlbutton";
-    expect(read(specFromLayout(layout)).problems).toEqual([
-      expect.stringMatching(/missing: Hyperlink/),
+    expect(read(specFromLayout(layout)).warnings).toEqual([
+      expect.stringMatching(/has no Hyperlink/),
     ]);
   });
 

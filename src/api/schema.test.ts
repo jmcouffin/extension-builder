@@ -18,7 +18,6 @@ describe("the published JSON Schema", () => {
   it.each([
     ["an unknown type", { type: "button", name: "B" }],
     ["a parameter of another type", { type: "pushbutton", name: "B", hyperlink: "https://x" }],
-    ["a URL button without its hyperlink", { type: "urlbutton", name: "B" }],
     ["a string for a yes/no", { type: "pushbutton", name: "B", beta: "yes" }],
     [
       "a stack in a pulldown",
@@ -65,5 +64,13 @@ describe("the published JSON Schema", () => {
   ])("both refuse %s", (_label, bundle) => {
     expect(validate(one(bundle))).toBe(false);
     expect(layoutFromSpec(one(bundle)).errors.length).toBeGreaterThan(0);
+  });
+
+  it("requires what pyRevit needs, while the builder downloads it and says why it breaks", () => {
+    const spec = one({ type: "urlbutton", name: "B" });
+    expect(validate(spec)).toBe(false);
+    const result = layoutFromSpec(spec);
+    expect(result.problems).toEqual([]);
+    expect(result.warnings[0]).toMatch(/URL Button "B" has no Hyperlink: pyRevit logs an error/);
   });
 });
