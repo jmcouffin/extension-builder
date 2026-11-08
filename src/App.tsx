@@ -1,4 +1,5 @@
 import { useEffect } from "react";
+import { openSpecFromLocation } from "./api/openSpec";
 import { DialogHost } from "./components/DialogHost";
 import { DrawingArea } from "./components/DrawingArea";
 import { ExtensionName } from "./components/ExtensionName";
@@ -30,6 +31,16 @@ function useCloseGroupEditorOnOutsideClick() {
   }, []);
 }
 
+/** Open the extension an import link carries, on load and when the link changes. */
+function useImportLink() {
+  useEffect(() => {
+    void openSpecFromLocation();
+    const onHashChange = () => void openSpecFromLocation();
+    window.addEventListener("hashchange", onHashChange);
+    return () => window.removeEventListener("hashchange", onHashChange);
+  }, []);
+}
+
 /**
  * The builder is laid out as Revit's own window: title bar with the quick
  * access toolbar, options bar, ribbon, then the Properties palette and Project
@@ -40,6 +51,7 @@ export function App() {
   const icons = useDefaultIcons();
   useCloseGroupEditorOnOutsideClick();
   useThemeShortcut();
+  useImportLink();
 
   return (
     <IconsContext.Provider value={icons}>

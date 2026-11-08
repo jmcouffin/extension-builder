@@ -26,6 +26,27 @@ MCP client) so an agent can drive the app at a fixed size: `playwright-desktop`
 Each runs headless in an isolated profile, from the version pinned in
 `package.json`.
 
+## For language models
+
+The builder has an API for AI assistants, with no server: a JSON format, files
+that describe it, a link that opens a description in the builder, and tools for
+an agent running in the user's browser. Everything lives in `src/api/`.
+
+| Piece | Where | What it is |
+| --- | --- | --- |
+| The extension spec | `src/api/spec.ts` | Nested JSON: `name` → `tabs` → `panels` → `items`, each bundle a `type`, a `name` and its parameters by their keys in the type table. `layoutFromSpec` reads one (never throws; says what is wrong at a JSON path such as `tabs[0].panels[1].items[2].hyperlink`), and `specFromLayout` writes one. |
+| `/llms.txt` | `src/api/llms.ts` | How a model uses the builder, the format, an example, every type and parameter ([llmstxt.org](https://llmstxt.org)). |
+| `/api/extension.schema.json` | `src/api/schema.ts` | The spec's JSON Schema (draft 2020-12), one `$defs` entry per bundle type. |
+| `/api/example.json` | `src/api/spec.ts` | `EXAMPLE_SPEC`, the example llms.txt shows. |
+| Import link | `src/api/importLink.ts` | `/#spec=<URL-encoded JSON>` (or base64url) opens the spec in the builder; `/?spec_url=<https URL>` fetches a hosted one. The spec is then taken out of the URL. Work in progress is replaced only after a confirm, as one undo step. Load also accepts a spec file. |
+| WebMCP tools | `src/api/agentTools.ts`, `webmcp.ts` | `get_extension_schema`, `get_extension`, `validate_extension`, `set_extension`, `download_extension`, registered on `document.modelContext` (or `navigator.modelContext`) when the browser has WebMCP, and always on `window.pyrevitBuilder` for agents that script the page. |
+
+The three published files are generated at build time from the type table (a
+Vite plugin in `vite.config.ts`, served by the dev server too), so they always
+match what the builder accepts. Unlike the builder's UI, a spec gets no start
+values: a required parameter left out is an error, so an assistant never ships
+a placeholder hyperlink by accident.
+
 ## Deploying
 
 `main` holds the source. Every push to `main` runs
@@ -377,6 +398,15 @@ console error, a failed request or a native dialog. Across all sizes it checks:
 - **drag and drop**: reorder in a panel and in a stack, into and out of a stack,
   into a pulldown and back out of its open list, across panels, illegal and
   over-full drops refused with a reason, click and double-click still working;
+- **import**: a `#spec=` link opens its extension and leaves the URL; a broken
+  spec is refused with the JSON path of each error; work in progress is
+  replaced only after a confirm, and Undo brings it back; Load opens a spec
+  file; `/llms.txt`, the schema and the example are served, and the link in
+  llms.txt opens as it is;
+- **webmcp**: the five tools register on a fake `document.modelContext` with
+  their schemas; `set_extension` builds the example in the ribbon,
+  `get_extension` reads it back unchanged, `download_extension` downloads it, a
+  broken spec is refused, and `window.pyrevitBuilder` works without WebMCP;
 - **export**: the ZIP holds only folder suffixes pyRevit knows, real PNG icons,
   no `__init__.py` / `entrypoint.py` / `.pyrevit`; broken extensions are refused
   with a list; save and load of a layout file round-trips.

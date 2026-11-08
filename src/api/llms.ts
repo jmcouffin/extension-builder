@@ -1,0 +1,105 @@
+// /llms.txt: how a language model uses the builder, generated from the type
+// table at build time so it always lists what the builder really accepts.
+// Format: https://llmstxt.org (an H1, a quote, then plain Markdown sections).
+
+import { FIELDS, type FieldKey, ORDER, TYPES } from "../domain/bundleTypes";
+import { EXAMPLE_SPEC, SCHEMA_PATH, SPEC_VERSION, specKeysOf } from "./spec";
+
+export const SITE = "https://builder.pyrevitlabs.io";
+
+function valuesOf(key: FieldKey): string {
+  const def = FIELDS[key];
+  if (def.input === "bool") return "true/false";
+  if (def.input === "year") {
+    const years = (def.options ?? []).map((o) => o.value).filter(Boolean);
+    return `a year, ${years[0]}-${years.at(-1)}`;
+  }
+  if (def.input === "select") {
+    return (def.options ?? []).map((o) => (o.value ? `"${o.value}"` : '""')).join(", ");
+  }
+  if (key === "members") return 'a YAML list, or [{"id": "...", "text": "..."}]';
+  if (def.input === "url") return "a URL";
+  return "text";
+}
+
+function typesTable(): string {
+  const rows = ORDER.map((id) => {
+    const def = TYPES[id];
+    const required = new Set(def.required ?? []);
+    const keys = specKeysOf(id)
+      .filter((k) => k !== "items")
+      .map((k) => (required.has(k as FieldKey) ? `**${k}**` : k));
+    const holds = def.container ? def.accepts.join(", ") : "";
+    return `| \`${id}\` | ${def.postfix} | ${def.label}: ${def.help ?? ""} | ${holds} | ${keys.join(", ")} |`;
+  });
+  return [
+    "| type | folder | what it is | items it holds | parameters (**required**) |",
+    "| --- | --- | --- | --- | --- |",
+    ...rows,
+  ].join("\n");
+}
+
+function parameterList(): string {
+  return (Object.keys(FIELDS) as FieldKey[])
+    .map((key) => {
+      const def = FIELDS[key];
+      const yaml =
+        def.yamlKey && def.yamlKey !== key
+          ? ` (bundle.yaml: ${def.engine ? "engine." : ""}${def.yamlKey})`
+          : "";
+      return `- \`${key}\`${yaml}: ${def.help} Values: ${valuesOf(key)}.`;
+    })
+    .join("\n");
+}
+
+export function llmsTxt(site = SITE): string {
+  const link = `${site}/#spec=${encodeURIComponent(JSON.stringify({ name: "Hello", tabs: [{ name: "Hello", panels: [{ name: "Tools", items: [{ type: "pushbutton", name: "Say Hi", script: 'print("Hi")' }] }] }] }))}`;
+  return `# pyRevit Extension Builder
+
+> Design a pyRevit extension (Revit ribbon tabs, panels and buttons with their Python scripts) and download it as a ZIP ready to drop in pyRevit's extensions folder. Static site, no account, no server: everything happens in the browser.
+
+pyRevit is the open-source Revit add-in framework (https://pyrevitlabs.io). An extension is a folder: \`<name>.extension/<tab>.tab/<panel>.panel/<button>.<type>/\`, each button folder holding a \`bundle.yaml\` of parameters, a \`script.py\` and icons. This builder writes those folders for you from a JSON description: the **extension spec**.
+
+## How a language model uses it
+
+1. **Write a spec** (format below; JSON Schema: ${site}/${SCHEMA_PATH}).
+2. **Hand it to the user**, in one of three ways:
+   - **An import link** (best for small and medium specs): \`${site}/#spec=\` followed by the spec's JSON, URL-encoded (JavaScript's \`encodeURIComponent\`). Opening it loads the extension in the builder, where the user checks it and clicks Download. Example: ${link}
+   - **A link to a hosted file**: \`${site}/?spec_url=<https URL of the JSON>\` (the host must allow cross-origin reads, as GitHub raw files and gists do).
+   - **A file**: give the JSON as \`<name>.json\`; the user opens it with the builder's Load button.
+3. **Or act in the page yourself**, when you run in the user's browser:
+   - with WebMCP, the page registers tools on \`document.modelContext\`: \`get_extension_schema\`, \`get_extension\`, \`validate_extension\`, \`set_extension\` (one undo step) and \`download_extension\`;
+   - by script, the same tools are on \`window.pyrevitBuilder\`: \`await pyrevitBuilder.call("set_extension", { spec })\`, or \`getExtension()\`, \`setExtension(spec)\`, \`validate(spec)\`, \`download()\`, \`schema\`.
+   Edit by reading the extension, changing the JSON, and writing it back.
+
+The builder refuses a spec it can't turn into folders pyRevit loads, and says where: \`tabs[0].panels[1].items[2].hyperlink is required for a URL Button\`. Fix what it says and try again.
+
+## The extension spec (version ${SPEC_VERSION})
+
+\`\`\`json
+${JSON.stringify(EXAMPLE_SPEC, null, 2)}
+\`\`\`
+
+- \`name\`, then \`tabs\` → \`panels\` → \`items\`, each list in ribbon order.
+- Every bundle has a \`type\` and a \`name\` (its folder name: unique among its siblings, ignoring case). \`title\` is the text under the icon (\`\\n\` breaks the line; default: the name); \`tooltip\` shows on hover.
+- \`script\` is the Python of \`script.py\` (pyRevit runs IronPython by default; \`from pyrevit import revit, DB, forms, script\`). Leave it out for a starter script.
+- \`icon\`, \`icon_dark\`, \`icon_on\` are PNG data URLs (\`data:image/png;base64,...\`, ideally 96x96). Leave them out for the pyRevit icon.
+- A stack holds 2 or 3 bundles; pyRevit drops a stack with one. A pulldown or split button holds commands, not stacks or other groups.
+- Only the parameters listed for a type are accepted. Yes/no parameters are \`true\`/\`false\`; versions are numbers.
+
+## Bundle types
+
+${typesTable()}
+
+## Parameters
+
+${parameterList()}
+
+## Links
+
+- JSON Schema of the spec: ${site}/${SCHEMA_PATH}
+- The example above as a file: ${site}/api/example.json
+- Source and docs: https://github.com/jmcouffin/extension-builder
+- pyRevit: https://github.com/pyrevitlabs/pyRevit
+`;
+}

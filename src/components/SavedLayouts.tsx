@@ -1,5 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { openSpecResult } from "../api/openSpec";
+import { layoutFromSpec, looksLikeSpec } from "../api/spec";
 import { parseLayout } from "../domain/layoutFile";
 import { sanitizeFileName } from "../domain/templates";
 import { downloadBlob } from "../domain/zip";
@@ -24,7 +26,20 @@ function importFile() {
     const file = input.files?.[0];
     if (!file) return;
     try {
-      useStore.getState().loadLayout(parseLayout(await file.text()));
+      const text = await file.text();
+      // A spec (what a language model writes, see /llms.txt) or a saved layout.
+      let parsed: unknown = null;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        // parseLayout says it's not JSON.
+      }
+      if (looksLikeSpec(parsed)) {
+        useSaves.getState().closeManager();
+        await openSpecResult(layoutFromSpec(parsed), `in ${file.name}`);
+        return;
+      }
+      useStore.getState().loadLayout(parseLayout(text));
       useSaves.getState().closeManager();
     } catch (error) {
       void showAlert((error as Error).message, { title: "Could not load that layout" });
