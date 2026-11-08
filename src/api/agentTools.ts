@@ -8,7 +8,7 @@
 // the JSON, and writes it back. A write is one undo step in the builder, so
 // the user can always take it back.
 
-import { sampleValues, validate } from "../domain/tree";
+import { downloadWarnings, validate } from "../domain/tree";
 import { buildZip, downloadBlob } from "../domain/zip";
 import { loadDefaultIcons } from "../state/defaultIcons";
 import { layoutOf, useStore } from "../state/store";
@@ -38,6 +38,12 @@ export interface AgentTool {
   inputSchema: JsonSchema;
   /** True when the tool only reads: it changes nothing in the builder. */
   readOnly: boolean;
+  /**
+   * True when the result carries text the user or a link put in the
+   * extension (names, tooltips, scripts), which an agent must not take as
+   * instructions: an import link can come from anyone.
+   */
+  untrustedContent?: boolean;
   execute(input: Record<string, unknown>): Promise<ToolResult>;
 }
 
@@ -99,7 +105,7 @@ const getExtensionSchema: AgentTool = {
 const getExtension: AgentTool = {
   name: "get_extension",
   title: "Get the extension",
-  description: `${ABOUT} Call this first. Returns the extension open in the builder as a spec (nested JSON: name, tabs, panels, items), plus "problems" (pyRevit would skip or break something; download is refused until they are fixed) and "warnings" (sample values to replace). Custom icons are left out unless include_icons is true, and set_extension replaces every icon with what the spec holds: if the user uploaded icons, call this with include_icons: true before editing and writing the spec back, or their icons are lost. ${WORKFLOW}`,
+  description: `${ABOUT} Call this first. Returns the extension open in the builder as a spec (nested JSON: name, tabs, panels, items), plus "problems" (pyRevit would skip or break something; download is refused until they are fixed) and "warnings" (sample values to replace, files to add after unzipping). Custom icons are left out unless include_icons is true, and set_extension replaces every icon with what the spec holds: if the user uploaded icons, call this with include_icons: true before editing and writing the spec back, or their icons are lost. ${WORKFLOW}`,
   inputSchema: {
     type: "object",
     properties: {
@@ -113,12 +119,13 @@ const getExtension: AgentTool = {
     additionalProperties: false,
   },
   readOnly: true,
+  untrustedContent: true,
   async execute(input) {
     const icons = input.include_icons === true;
     const layout = currentLayout();
     const omitted = icons ? 0 : customIconCount();
     const problems = validate(layout);
-    const warnings = sampleValues(layout);
+    const warnings = downloadWarnings(layout);
     const notes = [
       `The extension "${layout.extensionName}".`,
       problems.length
@@ -141,7 +148,7 @@ const getExtension: AgentTool = {
 const validateExtension: AgentTool = {
   name: "validate_extension",
   title: "Validate an extension spec",
-  description: `Checks an extension spec without changing anything in the builder. Returns "errors" (the spec is malformed, with the JSON path of each: set_extension would refuse it), "problems" (it would load, but pyRevit would skip or break part of it, so download would be refused) and "warnings" (sample values worth replacing). ok is true when there are no errors and no problems. ${WORKFLOW}`,
+  description: `Checks an extension spec without changing anything in the builder. Returns "errors" (the spec is malformed, with the JSON path of each: set_extension would refuse it), "problems" (it would load, but pyRevit would skip or break part of it, so download would be refused) and "warnings" (sample values worth replacing, files to add after unzipping). ok is true when there are no errors and no problems. ${WORKFLOW}`,
   inputSchema: specInput("The extension spec to check."),
   readOnly: true,
   async execute(input) {
@@ -210,10 +217,10 @@ const downloadExtension: AgentTool = {
     }
     const { blob, name } = await buildZip(layout, await loadDefaultIcons());
     downloadBlob(blob, name);
-    const warnings = sampleValues(layout);
+    const warnings = downloadWarnings(layout);
     return {
       ok: true,
-      message: `Downloaded ${name}.${warnings.length ? ` ${plural(warnings.length, "warning")}: sample values are still in place.` : ""}`,
+      message: `Downloaded ${name}.${warnings.length ? ` ${plural(warnings.length, "warning")} to pass on to the user.` : ""}`,
       file_name: name,
       warnings,
     };

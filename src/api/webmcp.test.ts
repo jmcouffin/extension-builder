@@ -36,7 +36,8 @@ describe("WebMCP registration", () => {
       "set_extension",
       "download_extension",
     ]);
-    expect(tools[1]?.annotations).toEqual({ readOnlyHint: true });
+    // get_extension returns what a link may have put there.
+    expect(tools[1]?.annotations).toEqual({ readOnlyHint: true, untrustedContentHint: true });
     expect(tools[3]?.annotations).toEqual({ readOnlyHint: false });
 
     const result = await tools[1]?.execute({});

@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import logoUrl from "../assets/logo.svg";
 import { sanitizeFileName } from "../domain/templates";
-import { validate } from "../domain/tree";
+import { downloadNotes, validate } from "../domain/tree";
 import { buildZip, downloadBlob } from "../domain/zip";
 import { loadDefaultIcons } from "../state/defaultIcons";
 import { showAlert, showConfirm } from "../state/dialogs";
@@ -67,6 +67,13 @@ export function Header() {
     try {
       const { blob, name } = await buildZip(layout, await loadDefaultIcons());
       downloadBlob(blob, name);
+      const notes = downloadNotes(layout);
+      if (notes.length) {
+        void showAlert(`${name} is downloading. One more step before pyRevit can use it:`, {
+          title: "Before you use it",
+          details: notes,
+        });
+      }
     } catch (error) {
       console.error("Error creating ZIP:", error);
       void showAlert((error as Error).message, { title: "Failed to create the ZIP file" });

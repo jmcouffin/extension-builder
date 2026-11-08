@@ -2,6 +2,7 @@
 // it with the reasons, or ask before it replaces work in progress, then load
 // it as one undo step.
 
+import { TYPES } from "../domain/bundleTypes";
 import { initialLayout } from "../domain/model";
 import { showAlert, showConfirm } from "../state/dialogs";
 import { layoutOf, useStore } from "../state/store";
@@ -29,11 +30,26 @@ export async function openSpecResult(result: SpecResult, from: string): Promise<
     });
     return false;
   }
-  if (hasWork()) {
-    const ok = await showConfirm(
-      `Open "${result.layout.extensionName}" ${from}? It replaces the extension you are building here; Undo brings yours back.`,
-      { title: "Open extension", confirmLabel: "Open" },
-    );
+  // pyRevit runs a bundle's script.py when its button is clicked, so code
+  // that came with a link or a file is always shown before it is taken in.
+  const scripted = Object.values(result.layout.elements)
+    .filter((el) => el.code?.trim())
+    .map((el) => `${TYPES[el.type].label} "${el.name}"`);
+  const replaces = hasWork();
+  if (scripted.length || replaces) {
+    const name = result.layout.extensionName;
+    const lines = [
+      `Open "${name}" ${from}?`,
+      replaces ? "It replaces the extension you are building here; Undo brings yours back." : "",
+      scripted.length
+        ? `It brings its own Python, which Revit runs when you click these buttons. Read their script.py before you use them:`
+        : "",
+    ].filter(Boolean);
+    const ok = await showConfirm(lines.join(" "), {
+      title: scripted.length ? "Open an extension with scripts" : "Open extension",
+      confirmLabel: "Open",
+      ...(scripted.length ? { details: scripted } : {}),
+    });
     if (!ok) return false;
   }
   useStore.getState().loadLayout(result.layout);
@@ -53,6 +69,8 @@ export async function openSpecFromLocation(): Promise<void> {
   try {
     window.history.replaceState(window.history.state, "", withoutSpec(window.location.href));
     await openSpecResult(await readSpecSource(source), "from this link");
+  } catch (error) {
+    await showAlert((error as Error).message, { title: "Could not open that extension" });
   } finally {
     importing = false;
   }

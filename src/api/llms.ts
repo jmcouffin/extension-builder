@@ -69,10 +69,15 @@ pyRevit is the open-source Revit add-in framework (https://pyrevitlabs.io). An e
    - **A file**: give the JSON as \`<name>.json\`; the user opens it with the builder's Load button.
 3. **Or act in the page yourself**, when you run in the user's browser:
    - with WebMCP, the page registers tools on \`document.modelContext\`: \`get_extension_schema\`, \`get_extension\`, \`validate_extension\`, \`set_extension\` (one undo step) and \`download_extension\`;
-   - by script, the same tools are on \`window.pyrevitBuilder\`: \`await pyrevitBuilder.call("set_extension", { spec })\`, or \`getExtension()\`, \`setExtension(spec)\`, \`validate(spec)\`, \`download()\`, \`schema\`.
+   - by script, the same tools are on \`window.pyrevitBuilder\`: \`await pyrevitBuilder.call("set_extension", { spec })\`, or \`getExtension()\`, \`setExtension(spec)\`, \`validate(spec)\`, \`download()\`, \`schema()\`.
    Edit by reading the extension, changing the JSON, and writing it back.
 
-The builder refuses a spec it can't turn into folders pyRevit loads, and says where: \`tabs[0].panels[1].items[2].hyperlink is required for a URL Button\`. Fix what it says and try again.
+The builder checks a spec at two levels, and says what to fix:
+- **errors**: the spec is malformed (wrong shape, unknown type or parameter, bad value, a bundle where pyRevit doesn't allow it), with the JSON path of each, e.g. \`tabs[0].panels[1].items[2].type: Pulldown cannot contain Stack\`. It is not opened at all.
+- **problems**: it opens, but pyRevit would skip or break part of it (a required parameter left out, a one-row stack, two names making the same folder), so download is refused until they are fixed.
+- **warnings** don't block anything: sample values still in place, a family file to add after unzipping.
+
+A spec that brings its own \`script\` is opened only after the user has seen which buttons run custom Python.
 
 ## The extension spec (version ${SPEC_VERSION})
 
@@ -82,9 +87,11 @@ ${JSON.stringify(EXAMPLE_SPEC, null, 2)}
 
 - \`name\`, then \`tabs\` → \`panels\` → \`items\`, each list in ribbon order.
 - Every bundle has a \`type\` and a \`name\` (its folder name: unique among its siblings, ignoring case). \`title\` is the text under the icon (\`\\n\` breaks the line; default: the name); \`tooltip\` shows on hover.
+- Fill every required parameter (in bold below): nothing is filled in for you.
 - \`script\` is the Python of \`script.py\` (pyRevit runs IronPython by default; \`from pyrevit import revit, DB, forms, script\`). Leave it out for a starter script.
 - \`icon\`, \`icon_dark\`, \`icon_on\` are PNG data URLs (\`data:image/png;base64,...\`, ideally 96x96). Leave them out for the pyRevit icon.
-- A stack holds 2 or 3 bundles; pyRevit drops a stack with one. A pulldown or split button holds commands, not stacks or other groups.
+- A stack holds 2 or 3 bundles; pyRevit drops a stack with one. A pulldown or split button holds commands, not stacks or other groups. A \`nobutton\` only goes in a pulldown or split button, never directly in a panel.
+- A \`content\` button loads a Revit family: the user puts the \`.rfa\` file named in \`content\` into its folder after unzipping.
 - Only the parameters listed for a type are accepted. Yes/no parameters are \`true\`/\`false\`; versions are numbers.
 
 ## Bundle types

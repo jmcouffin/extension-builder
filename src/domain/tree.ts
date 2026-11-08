@@ -124,6 +124,29 @@ export function sampleValues(layout: LayoutParts): string[] {
   return notes;
 }
 
+/**
+ * What the user must do after unzipping, for a download that is otherwise
+ * sound: a content bundle's family file can only come from them.
+ */
+export function downloadNotes(layout: LayoutParts): string[] {
+  const notes: string[] = [];
+  const walk = (node: TreeNode, parentPath: string) => {
+    if (node.type !== "folder") return;
+    const full = parentPath ? `${parentPath}/${node.name}` : node.name;
+    if (node.contentFile && node.postfix) {
+      notes.push(`Put your ${node.contentFile} family file in ${full} after unzipping.`);
+    }
+    for (const child of node.children) walk(child, full);
+  };
+  walk(buildFolderStructure(layout), "");
+  return notes;
+}
+
+/** Everything worth a look that doesn't block download: samples, then notes. */
+export function downloadWarnings(layout: LayoutParts): string[] {
+  return [...sampleValues(layout), ...downloadNotes(layout)];
+}
+
 /** Defaults that are placeholders to replace, as opposed to real values like a URL. */
 const SAMPLE_KEYS: FieldKey[] = ["assembly", "command_class"];
 
@@ -149,12 +172,6 @@ export function validate(layout: LayoutParts): string[] {
       );
     } else {
       seenFolders.set(key, full);
-    }
-
-    if (node.contentFile && node.postfix) {
-      problems.push(
-        `${full} is a ${node.postfix.replace(".", "")} bundle and needs a ${node.contentFile} family file. Add your own .rfa into that folder after unzipping.`,
-      );
     }
 
     // A stack with fewer than minChildren is skipped by pyRevit
@@ -185,6 +202,16 @@ export function validate(layout: LayoutParts): string[] {
     if (missing.length) {
       problems.push(
         `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Set them in Properties.`,
+      );
+    }
+  }
+
+  for (const element of Object.values(layout.elements)) {
+    const min = Number(element.min_revit_version);
+    const max = Number(element.max_revit_version);
+    if (min && max && min > max) {
+      problems.push(
+        `"${element.name}" has a Min Revit Version (${min}) above its Max (${max}), so no Revit would load it.`,
       );
     }
   }

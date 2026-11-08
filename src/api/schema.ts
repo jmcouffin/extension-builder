@@ -3,13 +3,13 @@
 // /api/extension.schema.json and used as the input schema of the agent tools.
 
 import { FIELDS, type FieldKey, ORDER, TYPES, type TypeId } from "../domain/bundleTypes";
-import { EXAMPLE_SPEC, SCHEMA_PATH, SPEC_VERSION, specKeysOf } from "./spec";
+import { EXAMPLE_SPEC, PNG_DATA_URL, SCHEMA_PATH, SPEC_VERSION, specKeysOf } from "./spec";
 
 type Schema = Record<string, unknown>;
 
 const NAME: Schema = {
   type: "string",
-  minLength: 1,
+  pattern: "\\S",
   description:
     "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced.",
 };
@@ -64,7 +64,7 @@ function fieldSchema(key: FieldKey): Schema {
 
 const PNG = {
   type: "string",
-  pattern: "^data:image/png;base64,",
+  pattern: PNG_DATA_URL.source,
   description: "A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon.",
 };
 
@@ -111,7 +111,7 @@ function bundleSchema(type: TypeId): Schema {
   return {
     type: "object",
     title: def.label,
-    required: ["type", "name", ...(def.required ?? []), ...(def.container ? ["items"] : [])],
+    required: ["type", "name", ...(def.required ?? [])],
     properties,
     additionalProperties: false,
   };
@@ -148,7 +148,7 @@ export function extensionSchema(origin = "https://builder.pyrevitlabs.io"): Sche
               minItems: 1,
               items: {
                 type: "object",
-                required: ["name", "items"],
+                required: ["name"],
                 properties: {
                   name: { ...NAME, description: "Panel name, shown under its buttons." },
                   items: {

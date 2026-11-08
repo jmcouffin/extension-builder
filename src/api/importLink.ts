@@ -8,7 +8,9 @@
 // The spec lives in the fragment because a fragment never reaches the
 // server, has no practical length limit in browsers, and stays out of logs.
 
-import { layoutFromSpec, type SpecResult } from "./spec";
+import { layoutFromSpec, MAX_SPEC_CHARS, type SpecResult } from "./spec";
+
+const FETCH_TIMEOUT_MS = 15_000;
 
 export type SpecSource = { kind: "inline"; text: string } | { kind: "url"; url: string };
 
@@ -66,10 +68,18 @@ export async function readSpecSource(source: SpecSource): Promise<SpecResult> {
   }
   if (target.protocol !== "https:") return failed("spec_url must be an https:// URL.");
   try {
-    const response = await fetch(target, { credentials: "omit" });
+    const response = await fetch(target, {
+      credentials: "omit",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
     if (!response.ok) return failed(`${target} answered ${response.status}.`);
+    const size = Number(response.headers.get("content-length") ?? 0);
+    if (size > MAX_SPEC_CHARS) return failed(`${target} is too large for a spec.`);
     return layoutFromSpec(await response.text());
-  } catch {
+  } catch (error) {
+    if ((error as Error).name === "TimeoutError") {
+      return failed(`${target} did not answer within ${FETCH_TIMEOUT_MS / 1000} seconds.`);
+    }
     return failed(
       `${target} could not be read. Its host must allow cross-origin requests (GitHub raw files and gists do).`,
     );

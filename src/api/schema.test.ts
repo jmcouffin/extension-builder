@@ -37,4 +37,33 @@ describe("the published JSON Schema", () => {
     const result = layoutFromSpec(one(bundle));
     expect(result.errors.length + result.problems.length).toBeGreaterThan(0);
   });
+
+  it("accepts every spec the builder opens without errors", () => {
+    const sound = [
+      one({ type: "pulldown", name: "G", items: [{ type: "nobutton", name: "N" }] }),
+      one({ type: "combobox", name: "C", members: [{ id: "a", text: "A", tooltip: "t" }] }),
+      one({ type: "panelbutton", name: "P", engine_persistent: true }),
+      one({ type: "content", name: "F", content: "f.rfa", content_alt: "g.rfa" }),
+      one({ type: "invokebutton", name: "I", assembly: "Lib.dll" }),
+      one({ type: "pushbutton", name: "B", icon: "data:image/png;base64,iVBORw0KGgo=" }),
+    ];
+    for (const spec of sound) {
+      expect(layoutFromSpec(spec).errors).toEqual([]);
+      expect(validate(spec), JSON.stringify(validate.errors)).toBe(true);
+    }
+  });
+
+  it.each([
+    ["a blank name", { type: "pushbutton", name: "   " }],
+    [
+      "a PNG data URL that isn't base64",
+      { type: "pushbutton", name: "B", icon: "data:image/png;base64,!!!" },
+    ],
+    ["a No Button in a panel", { type: "nobutton", name: "N" }],
+    ["a forced context", { type: "panelbutton", name: "P", context: "selection" }],
+    ["a year as text", { type: "pushbutton", name: "B", min_revit_version: "2024" }],
+  ])("both refuse %s", (_label, bundle) => {
+    expect(validate(one(bundle))).toBe(false);
+    expect(layoutFromSpec(one(bundle)).errors.length).toBeGreaterThan(0);
+  });
 });

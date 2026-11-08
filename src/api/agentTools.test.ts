@@ -87,12 +87,20 @@ describe("agent tools", () => {
     expect(good).toMatchObject({ ok: true, errors: [], problems: [], warnings: [] });
 
     const bad = await callTool("validate_extension", {
-      spec: one({ type: "urlbutton", name: "D" }),
+      spec: one({ type: "urlbutton", name: "D", hyperlink: 42 }),
     });
     expect(bad.ok).toBe(false);
     expect(bad.errors).toEqual([
-      { path: "tabs[0].panels[0].items[0].hyperlink", message: "is required for a URL Button" },
+      { path: "tabs[0].panels[0].items[0].hyperlink", message: "must be a string" },
     ]);
+
+    // A required parameter left out reads, but blocks download.
+    const missing = await callTool("validate_extension", {
+      spec: one({ type: "urlbutton", name: "D" }),
+    });
+    expect(missing.ok).toBe(false);
+    expect(missing.errors).toEqual([]);
+    expect(missing.problems).toEqual([expect.stringMatching(/missing: Hyperlink/)]);
 
     const lone = await callTool("validate_extension", { spec: LONE_STACK });
     expect(lone.ok).toBe(false);

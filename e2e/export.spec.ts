@@ -86,12 +86,29 @@ test.describe("export", () => {
   });
 
   test("refuses to export a broken extension, and lists why", async ({ page }) => {
-    await addCommand(page, "Family");
-    await setType(page, "content");
+    await addCommand(page, "Docs");
+    await setType(page, "urlbutton");
+    const hyperlink = page.locator('#propertiesPalette [data-field="hyperlink"]');
+    await hyperlink.fill("");
+    await hyperlink.press("Enter");
 
     await page.locator("#downloadZip").click();
     await expect(appDialog(page)).toContainText("This extension will not work as built");
-    await expect(appDialog(page).locator(".dialog-details li")).toContainText([/content\.rfa/]);
+    await expect(appDialog(page).locator(".dialog-details li")).toContainText([/Hyperlink/]);
+    await acceptDialog(page);
+  });
+
+  test("a content button downloads, with a note about its family file", async ({ page }) => {
+    await addCommand(page, "Family");
+    await setType(page, "content");
+
+    const downloadPromise = page.waitForEvent("download");
+    await page.locator("#downloadZip").click();
+    await downloadPromise;
+    await expect(appDialog(page)).toContainText("One more step");
+    await expect(appDialog(page).locator(".dialog-details li")).toContainText([
+      /content\.rfa family file in .*Family\.content/,
+    ]);
     await acceptDialog(page);
   });
 

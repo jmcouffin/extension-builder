@@ -41,7 +41,7 @@ export interface WebMcpTool {
   title: string;
   description: string;
   inputSchema: JsonSchema;
-  annotations: { readOnlyHint: boolean };
+  annotations: { readOnlyHint: boolean; untrustedContentHint?: boolean };
   execute(input: unknown, options?: unknown): Promise<WebMcpToolResult>;
 }
 
@@ -93,7 +93,10 @@ export function toWebMcpTool(tool: AgentTool): WebMcpTool {
     title: tool.title,
     description: tool.description,
     inputSchema: tool.inputSchema,
-    annotations: { readOnlyHint: tool.readOnly },
+    annotations: {
+      readOnlyHint: tool.readOnly,
+      ...(tool.untrustedContent ? { untrustedContentHint: true } : {}),
+    },
     async execute(input) {
       const result = await callTool(tool.name, input);
       return {

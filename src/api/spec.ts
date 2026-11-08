@@ -5,6 +5,7 @@
 // builder's internal layout without loss (icons included when asked).
 
 import {
+  accepts,
   FIELD_KEYS,
   FIELDS,
   type FieldKey,
@@ -15,8 +16,8 @@ import {
   type TypeId,
 } from "../domain/bundleTypes";
 import type { Element, Layout } from "../domain/model";
-import { sanitizeFileName } from "../domain/templates";
-import { sampleValues, validate } from "../domain/tree";
+import { yamlValue } from "../domain/templates";
+import { downloadWarnings, validate } from "../domain/tree";
 
 export const SPEC_VERSION = 1;
 
@@ -85,11 +86,17 @@ export interface SpecResult {
   errors: SpecIssue[];
   /** The layout reads, but pyRevit would skip or break part of it; download is refused. */
   problems: string[];
-  /** Fine to download, but worth a look: sample values still in place. */
+  /** Fine to download, but worth a look: sample values still in place, files to add after unzipping. */
   warnings: string[];
 }
 
-const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
+/** A spec's size limit; icons are what make one large. */
+export const MAX_SPEC_CHARS = 8_000_000;
+
+/** Panel > stack > pulldown > command is as deep as pyRevit goes. */
+const MAX_DEPTH = 3;
+
+export const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
 
 /** The type a spec's `type` names: an id ("toggle") or a postfix ("smartbutton", ".smartbutton"). */
 export function resolveType(type: unknown): TypeId | null {
@@ -102,7 +109,8 @@ export function resolveType(type: unknown): TypeId | null {
 /** The parameters a bundle of `type` can carry in a spec, beyond name/title/tooltip. */
 export function specKeysOf(type: TypeId): string[] {
   const def = TYPES[type];
-  const keys: string[] = [...def.fields];
+  // A forced context (Panel Button: zero-doc) is pyRevit's, not the spec's.
+  const keys: string[] = def.fields.filter((k) => !(k === "context" && def.forcedContext));
   if (def.script) keys.push("script");
   if (def.icons?.length) keys.push("icon");
   if (def.darkIcons?.length) keys.push("icon_dark");
@@ -111,13 +119,14 @@ export function specKeysOf(type: TypeId): string[] {
   return keys;
 }
 
+const MEMBER_KEYS = ["id", "text", "icon", "tooltip", "group"] as const;
+
+/** Members as pyRevit's YAML list; every value double-quoted, so "yes" stays a string. */
 function membersYaml(members: MemberSpec[]): string {
-  const quote = (v: string) => (/^[\w .,()/-]*$/.test(v) && v.trim() === v ? v : JSON.stringify(v));
   return members
     .map((m) =>
-      Object.entries(m)
-        .filter(([, v]) => typeof v === "string" && v !== "")
-        .map(([k, v], i) => `${i === 0 ? "- " : "  "}${k}: ${quote(String(v))}`)
+      MEMBER_KEYS.filter((k) => typeof m[k] === "string" && m[k] !== "")
+        .map((k, i) => `${i === 0 ? "- " : "  "}${k}: ${yamlValue(m[k])}`)
         .join("\n"),
     )
     .join("\n");
@@ -132,8 +141,8 @@ function fieldValue(key: FieldKey, value: unknown): { value?: string; error?: st
       if (typeof value !== "boolean") return { error: "must be true or false" };
       return value ? { value: "true" } : {};
     case "year": {
-      const year = typeof value === "number" ? String(value) : String(value).trim();
-      if (year === "") return {};
+      if (typeof value !== "number") return { error: "must be a number, like 2024" };
+      const year = String(value);
       const allowed = (def.options ?? []).map((o) => o.value).filter(Boolean);
       if (!allowed.includes(year)) return { error: `must be one of ${allowed.join(", ")}` };
       return { value: year };
@@ -153,6 +162,13 @@ function fieldValue(key: FieldKey, value: unknown): { value?: string; error?: st
             !m || typeof m !== "object" || typeof m.id !== "string" || typeof m.text !== "string",
         );
         if (bad >= 0) return { error: `item ${bad} needs an "id" and a "text"` };
+        for (const [i, m] of value.entries()) {
+          const extra = Object.keys(m).find((k) => !(MEMBER_KEYS as readonly string[]).includes(k));
+          if (extra)
+            return { error: `item ${i} has "${extra}"; a member takes ${MEMBER_KEYS.join(", ")}` };
+          const notText = MEMBER_KEYS.find((k) => m[k] !== undefined && typeof m[k] !== "string");
+          if (notText) return { error: `item ${i}: "${notText}" must be a string` };
+        }
         return { value: membersYaml(value as MemberSpec[]) };
       }
       if (typeof value !== "string") return { error: "must be a string" };
@@ -176,6 +192,13 @@ export function layoutFromSpec(input: unknown): SpecResult {
 
   let spec = input;
   if (typeof spec === "string") {
+    if (spec.length > MAX_SPEC_CHARS) {
+      err(
+        "",
+        `is ${Math.round(spec.length / 1e6)} MB; a spec may be ${MAX_SPEC_CHARS / 1e6} MB at most`,
+      );
+      return fail();
+    }
     try {
       spec = JSON.parse(spec);
     } catch {
@@ -209,19 +232,17 @@ export function layoutFromSpec(input: unknown): SpecResult {
     nextIds: { tab: 1, panel: 1, element: 1 },
   };
 
-  /** Two siblings whose folders would collide. */
-  const checkNames = (names: { name: string; path: string }[]) => {
-    const seen = new Map<string, string>();
-    for (const { name, path } of names) {
-      const key = sanitizeFileName(name).toLowerCase();
-      const other = seen.get(key);
-      if (other)
-        err(`${path}.name`, `"${name}" makes the same folder as ${other}; names must differ`);
-      else seen.set(key, path);
+  const readBundle = (
+    raw: unknown,
+    path: string,
+    container: TypeId | "panel",
+    owner: Partial<Element>,
+    depth = 1,
+  ): string | null => {
+    if (depth > MAX_DEPTH) {
+      err(path, `is nested too deep; pyRevit nests at most ${MAX_DEPTH} levels in a panel`);
+      return null;
     }
-  };
-
-  const readBundle = (raw: unknown, path: string, container: string, owner: Partial<Element>) => {
     if (!isObject(raw)) {
       err(path, "must be an object with a type and a name");
       return null;
@@ -234,7 +255,13 @@ export function layoutFromSpec(input: unknown): SpecResult {
       );
       return null;
     }
-    const rejected = rejectionReason(container as TypeId | "panel", type);
+    // A panel takes every type but No Button, which only goes in a menu.
+    const rejected =
+      container === "panel"
+        ? accepts("panel").includes(type)
+          ? null
+          : `a ${TYPES[type].label} can't sit in a panel; it goes in a pulldown or split button`
+        : rejectionReason(container, type);
     if (rejected) err(`${path}.type`, rejected);
     if (typeof raw.name !== "string" || !raw.name.trim())
       err(`${path}.name`, "must be a non-empty string");
@@ -286,12 +313,10 @@ export function layoutFromSpec(input: unknown): SpecResult {
       else if (stored !== undefined) element[key as FieldKey] = stored;
     }
 
-    // Required keys are not filled in for you here (the builder's start
-    // values, like a pyrevitlabs.io hyperlink, would be a silent surprise).
-    for (const key of def.required ?? []) {
-      if (!element[key] && raw[key] === undefined)
-        err(`${path}.${key}`, `is required for a ${def.label}`);
-    }
+    // A required key left out is not filled in (the builder's start values,
+    // like a pyrevitlabs.io hyperlink, would be a silent surprise): it is a
+    // problem that blocks download, as in the builder, so an agent can still
+    // load and fix an extension the user left that way.
     if (def.forcedContext) element.context = def.forcedContext;
 
     const id = `element${layout.nextIds.element++}`;
@@ -303,18 +328,18 @@ export function layoutFromSpec(input: unknown): SpecResult {
       else {
         const children: string[] = [];
         items.forEach((child, i) => {
-          const childId = readBundle(child, `${path}.items[${i}]`, type, { parentId: id });
+          const childId = readBundle(
+            child,
+            `${path}.items[${i}]`,
+            type,
+            { parentId: id },
+            depth + 1,
+          );
           if (childId) children.push(childId);
         });
         if (def.maxChildren && children.length > def.maxChildren) {
           err(`${path}.items`, `a ${def.label} holds at most ${def.maxChildren}`);
         }
-        checkNames(
-          children.map((c, i) => ({
-            name: layout.elements[c]?.name ?? "",
-            path: `${path}.items[${i}]`,
-          })),
-        );
         element.children = children;
       }
     } else if (raw.items !== undefined) {
@@ -338,8 +363,8 @@ export function layoutFromSpec(input: unknown): SpecResult {
     const tabId = `tab${layout.nextIds.tab++}`;
     const tab = { name: String(rawTab.name ?? "").trim(), panels: [] as string[] };
     layout.tabs[tabId] = tab;
-    if (!Array.isArray(rawTab.panels) || rawTab.panels.length === 0) {
-      err(`${tabPath}.panels`, "must be a non-empty array of panels");
+    if (!Array.isArray(rawTab.panels)) {
+      err(`${tabPath}.panels`, "must be an array of panels");
       continue;
     }
     for (const [p, rawPanel] of (rawTab.panels as unknown[]).entries()) {
@@ -367,24 +392,11 @@ export function layoutFromSpec(input: unknown): SpecResult {
         const id = readBundle(raw, `${panelPath}.items[${i}]`, "panel", { panelId });
         if (id) panel.elements.push(id);
       });
-      checkNames(
-        panel.elements.map((id, i) => ({
-          name: layout.elements[id]?.name ?? "",
-          path: `${panelPath}.items[${i}]`,
-        })),
-      );
     }
-    checkNames(
-      tab.panels.map((id, i) => ({
-        name: layout.panels[id]?.name ?? "",
-        path: `${tabPath}.panels[${i}]`,
-      })),
-    );
   }
-  checkNames(Object.values(layout.tabs).map((tab, i) => ({ name: tab.name, path: `tabs[${i}]` })));
 
   if (errors.length) return fail();
-  return { layout, errors, problems: validate(layout), warnings: sampleValues(layout) };
+  return { layout, errors, problems: validate(layout), warnings: downloadWarnings(layout) };
 }
 
 export interface SpecOptions {
@@ -416,7 +428,8 @@ export function specFromLayout(
     }
     if (def.script && el.code) out.script = el.code;
     if (icons) {
-      if (el.iconData) out.icon = el.iconData;
+      // The builder keeps an icon across a change to a type that has none.
+      if (el.iconData && def.icons?.length) out.icon = el.iconData;
       if (el.iconDarkData && def.darkIcons?.length) out.icon_dark = el.iconDarkData;
       if (el.iconOnData && def.toggle) out.icon_on = el.iconOnData;
     }

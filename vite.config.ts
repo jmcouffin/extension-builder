@@ -11,6 +11,8 @@ import { defineConfig } from "vitest/config";
  * src/api/files.ts is loaded through Vite's module runner rather than imported
  * here, so the config itself stays loadable by Node as is.
  */
+const API_PATHS = ["llms.txt", "api/extension.schema.json", "api/example.json"];
+
 function apiFiles(): Plugin {
   const files = async (): Promise<Record<string, string>> => {
     const { module } = await runnerImport<typeof import("./src/api/files")>(
@@ -23,6 +25,7 @@ function apiFiles(): Plugin {
     configureServer(server) {
       server.middlewares.use(async (req, res, next) => {
         const path = (req.url ?? "").split("?")[0]?.replace(/^\//, "") ?? "";
+        if (!API_PATHS.includes(path)) return next();
         const body = (await files())[path];
         if (body === undefined) return next();
         res.setHeader(

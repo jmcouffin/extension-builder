@@ -1,6 +1,6 @@
 import { initialLayout } from "../domain/model";
 import { buildFolderStructure, formatFolderStructure } from "../domain/tree";
-import { EXAMPLE_SPEC, layoutFromSpec, specFromLayout } from "./spec";
+import { EXAMPLE_SPEC, layoutFromSpec, MAX_SPEC_CHARS, specFromLayout } from "./spec";
 
 /** The layout of a spec that must read. */
 function read(spec: unknown) {
@@ -39,9 +39,11 @@ describe("extension spec", () => {
     expect(specFromLayout(back.layout)).toEqual(spec);
   });
 
-  it("requires what pyRevit requires, and warns about sample values", () => {
-    expect(layoutFromSpec(one({ type: "urlbutton", name: "Docs" })).errors).toEqual([
-      { path: "tabs[0].panels[0].items[0].hyperlink", message: "is required for a URL Button" },
+  it("leaves out nothing it fills in: a missing required parameter blocks download", () => {
+    const url = read(one({ type: "urlbutton", name: "Docs" }));
+    expect(url.errors).toEqual([]);
+    expect(url.problems).toEqual([
+      expect.stringMatching(/URL Button "Docs" is missing: Hyperlink/),
     ]);
     const link = read(
       one({
@@ -68,7 +70,7 @@ describe("extension spec", () => {
     );
     expect(r.errors).toEqual([]);
     expect(Object.values(r.layout.elements)[0]?.members).toBe(
-      '- id: a\n  text: Alpha\n- id: b\n  text: "Beta: two"',
+      '- id: "a"\n  text: "Alpha"\n- id: "b"\n  text: "Beta: two"',
     );
     expect(
       layoutFromSpec(one({ type: "smartbutton", name: "S" })).layout?.elements.element1?.type,
@@ -102,7 +104,7 @@ describe("extension spec", () => {
     );
   });
 
-  it("refuses two bundles that would share a folder", () => {
+  it("reports two bundles that would share a folder as a problem", () => {
     const spec = {
       name: "X",
       tabs: [
@@ -120,7 +122,8 @@ describe("extension spec", () => {
         },
       ],
     };
-    expect(layoutFromSpec(spec).errors[0]?.path).toBe("tabs[0].panels[0].items[1].name");
+    const r = read(spec);
+    expect(r.problems).toEqual([expect.stringMatching(/same folder/)]);
   });
 
   it("reports what pyRevit would skip as problems, not errors", () => {
@@ -129,5 +132,76 @@ describe("extension spec", () => {
     );
     expect(r.errors).toEqual([]);
     expect(r.problems[0]).toMatch(/stack with 1 command/);
+  });
+
+  it("loads back what get_extension gives for layouts the builder can hold", () => {
+    const layout = initialLayout();
+    const button = layout.elements.element1;
+    if (!button) throw new Error("no button");
+    // An icon kept across a change to a type without icons.
+    button.iconData = "data:image/png;base64,iVBORw0KGgo=";
+    button.type = "combobox";
+    button.members = "- id: a\n  text: A";
+    expect(layoutFromSpec(specFromLayout(layout)).errors).toEqual([]);
+    // A required parameter cleared in Properties.
+    button.type = "urlbutton";
+    expect(read(specFromLayout(layout)).problems).toEqual([
+      expect.stringMatching(/missing: Hyperlink/),
+    ]);
+  });
+
+  it("writes members as strings YAML can't retype, and refuses keys pyRevit doesn't read", () => {
+    const r = read(
+      one({
+        type: "combobox",
+        name: "C",
+        members: [
+          { id: "yes", text: "- x" },
+          { id: "0x1F", text: "null" },
+        ],
+      }),
+    );
+    expect(Object.values(r.layout.elements)[0]?.members).toBe(
+      '- id: "yes"\n  text: "- x"\n- id: "0x1F"\n  text: "null"',
+    );
+    expect(
+      layoutFromSpec(
+        one({ type: "combobox", name: "C", members: [{ id: "a", text: "b", "x\nengine": "y" }] }),
+      ).errors[0]?.message,
+    ).toMatch(/item 0 has "x\nengine"/);
+  });
+
+  it("puts a No Button only in a menu, and a year only as a number", () => {
+    expect(layoutFromSpec(one({ type: "nobutton", name: "N" })).errors[0]?.message).toMatch(
+      /can't sit in a panel/,
+    );
+    expect(
+      layoutFromSpec(one({ type: "pulldown", name: "G", items: [{ type: "nobutton", name: "N" }] }))
+        .errors,
+    ).toEqual([]);
+    expect(
+      layoutFromSpec(one({ type: "pushbutton", name: "B", min_revit_version: "2024" })).errors[0]
+        ?.message,
+    ).toBe("must be a number, like 2024");
+  });
+
+  it("refuses a context pyRevit forces, and a min version above the max", () => {
+    expect(
+      layoutFromSpec(one({ type: "panelbutton", name: "P", context: "selection" })).errors[0]
+        ?.message,
+    ).toMatch(/is not a parameter of a Panel Button/);
+    const r = read(
+      one({ type: "pushbutton", name: "B", min_revit_version: 2026, max_revit_version: 2024 }),
+    );
+    expect(r.problems).toEqual([expect.stringMatching(/above its Max/)]);
+  });
+
+  it("never throws, however deep or large the spec", () => {
+    let deep: Record<string, unknown> = { type: "pushbutton", name: "Leaf" };
+    for (let i = 0; i < 20000; i++) deep = { type: "stack", name: `S${i}`, items: [deep] };
+    const result = layoutFromSpec(one(deep));
+    expect(result.layout).toBeNull();
+    expect(result.errors.some((e) => /nested too deep/.test(e.message))).toBe(true);
+    expect(layoutFromSpec("x".repeat(MAX_SPEC_CHARS + 1)).errors[0]?.message).toMatch(/MB at most/);
   });
 });
