@@ -26,13 +26,20 @@ function apiFiles(): Plugin {
       server.middlewares.use(async (req, res, next) => {
         const path = (req.url ?? "").split("?")[0]?.replace(/^\//, "") ?? "";
         if (!API_PATHS.includes(path)) return next();
-        const body = (await files())[path];
-        if (body === undefined) return next();
-        res.setHeader(
-          "Content-Type",
-          path.endsWith(".json") ? "application/json; charset=utf-8" : "text/plain; charset=utf-8",
-        );
-        res.end(body);
+        try {
+          const body = (await files())[path];
+          if (body === undefined) return next();
+          res.setHeader(
+            "Content-Type",
+            path.endsWith(".json")
+              ? "application/json; charset=utf-8"
+              : "text/plain; charset=utf-8",
+          );
+          res.end(body);
+        } catch (error) {
+          // Vite's error page, rather than a request that never answers.
+          next(error);
+        }
       });
     },
     async generateBundle() {

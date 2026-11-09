@@ -75,7 +75,10 @@ export async function readSpecSource(source: SpecSource): Promise<SpecResult> {
     if (!response.ok) return failed(`${target} answered ${response.status}.`);
     const size = Number(response.headers.get("content-length") ?? 0);
     if (size > MAX_SPEC_CHARS) return failed(`${target} is too large for a spec.`);
-    return layoutFromSpec(await response.text());
+    // Content-Length can be missing or wrong: stop reading past the cap.
+    const text = await readCapped(response, MAX_SPEC_CHARS);
+    if (text === null) return failed(`${target} is too large for a spec.`);
+    return layoutFromSpec(text);
   } catch (error) {
     if ((error as Error).name === "TimeoutError") {
       return failed(`${target} did not answer within ${FETCH_TIMEOUT_MS / 1000} seconds.`);
@@ -84,6 +87,31 @@ export async function readSpecSource(source: SpecSource): Promise<SpecResult> {
       `${target} could not be read. Its host must allow cross-origin requests (GitHub raw files and gists do).`,
     );
   }
+}
+
+/** A response's text, or null once it passes `maxBytes` (it stops reading there). */
+export async function readCapped(response: Response, maxBytes: number): Promise<string | null> {
+  if (!response.body) return "";
+  const reader = response.body.getReader();
+  const chunks: Uint8Array[] = [];
+  let total = 0;
+  for (;;) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      await reader.cancel();
+      return null;
+    }
+    chunks.push(value);
+  }
+  const bytes = new Uint8Array(total);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return new TextDecoder().decode(bytes);
 }
 
 function failed(message: string): SpecResult {

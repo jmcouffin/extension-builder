@@ -1,4 +1,4 @@
-import { importLink, readSpecSource, specSourceOf, withoutSpec } from "./importLink";
+import { importLink, readCapped, readSpecSource, specSourceOf, withoutSpec } from "./importLink";
 import { EXAMPLE_SPEC } from "./spec";
 
 const SITE = "https://builder.pyrevitlabs.io/";
@@ -51,5 +51,11 @@ describe("import link", () => {
     expect(withoutSpec(`${SITE}?spec_url=https%3A%2F%2Fx.io&theme=dark`)).toBe(
       `${SITE}?theme=dark`,
     );
+  });
+
+  it("stops reading a hosted spec past the cap, whatever Content-Length says", async () => {
+    const big = new Response("x".repeat(1000));
+    expect(await readCapped(big, 999)).toBeNull();
+    expect(await readCapped(new Response("{}"), 999)).toBe("{}");
   });
 });

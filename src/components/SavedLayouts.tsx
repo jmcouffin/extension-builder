@@ -35,8 +35,10 @@ function importFile() {
         // parseLayout says it's not JSON.
       }
       if (looksLikeSpec(parsed)) {
-        useSaves.getState().closeManager();
-        await openSpecResult(layoutFromSpec(parsed), `in ${file.name}`);
+        // Refused or cancelled, the manager stays open to pick another file.
+        if (await openSpecResult(layoutFromSpec(parsed), `in ${file.name}`)) {
+          useSaves.getState().closeManager();
+        }
         return;
       }
       useStore.getState().loadLayout(parseLayout(text));

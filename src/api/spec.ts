@@ -191,14 +191,26 @@ export function layoutFromSpec(input: unknown): SpecResult {
   const fail = (): SpecResult => ({ layout: null, errors, problems: [], warnings: [] });
 
   let spec = input;
+  // An agent may pass an object rather than text: measure it as JSON, which
+  // also refuses one that can't be JSON (a cycle, a BigInt).
+  let size: number;
+  try {
+    size = typeof spec === "string" ? spec.length : (JSON.stringify(spec) ?? "").length;
+  } catch (error) {
+    // Too deep overflows the stack; a cycle or a BigInt is a TypeError.
+    err(
+      "",
+      error instanceof RangeError
+        ? `is nested too deep; pyRevit nests at most ${MAX_DEPTH} levels in a panel`
+        : "can't be written as JSON",
+    );
+    return fail();
+  }
+  if (size > MAX_SPEC_CHARS) {
+    err("", `is ${Math.round(size / 1e6)} MB; a spec may be ${MAX_SPEC_CHARS / 1e6} MB at most`);
+    return fail();
+  }
   if (typeof spec === "string") {
-    if (spec.length > MAX_SPEC_CHARS) {
-      err(
-        "",
-        `is ${Math.round(spec.length / 1e6)} MB; a spec may be ${MAX_SPEC_CHARS / 1e6} MB at most`,
-      );
-      return fail();
-    }
     try {
       spec = JSON.parse(spec);
     } catch {

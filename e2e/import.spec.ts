@@ -79,6 +79,22 @@ test.describe("import link", () => {
     await expect(page.locator("#extensionName")).toHaveValue("Acme Tools");
     await expect(item(page, "Renumber")).toBeVisible();
   });
+  test("Load keeps its panel open when a spec is cancelled", async ({ page }) => {
+    await openApp(page);
+    await addCommand(page, "Mine");
+    await page.locator("#loadConfig").click();
+    const chooserPromise = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: "Import from file" }).click();
+    await (await chooserPromise).setFiles({
+      name: "acme.json",
+      mimeType: "application/json",
+      buffer: Buffer.from(JSON.stringify(EXAMPLE_SPEC)),
+    });
+    await appDialog(page).getByRole("button", { name: "Cancel", exact: true }).click();
+    await expect(appDialog(page)).toHaveCount(0);
+    await expect(page.locator(".saved-hint")).toBeVisible();
+    await expect(item(page, "Mine")).toBeVisible();
+  });
 });
 
 test.describe("published API files", () => {

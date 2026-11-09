@@ -205,4 +205,12 @@ describe("extension spec", () => {
     expect(result.errors.some((e) => /nested too deep/.test(e.message))).toBe(true);
     expect(layoutFromSpec("x".repeat(MAX_SPEC_CHARS + 1)).errors[0]?.message).toMatch(/MB at most/);
   });
+
+  it("caps an object as it caps text, and refuses one that isn't JSON", () => {
+    const huge = one({ type: "pushbutton", name: "B", tooltip: "x".repeat(MAX_SPEC_CHARS) });
+    expect(layoutFromSpec(huge).errors[0]?.message).toMatch(/MB at most/);
+    const cyclic: Record<string, unknown> = { name: "X", tabs: [] };
+    cyclic.self = cyclic;
+    expect(layoutFromSpec(cyclic).errors[0]?.message).toBe("can't be written as JSON");
+  });
 });
