@@ -18,9 +18,11 @@
 //   March 2026), and unregisterTool(name),
 // - results in the MCP shape { content: [{ type: "text", text }] }, and
 //   arguments passed as a JSON string (deprecated in Chrome 155).
-// So: prefer document over navigator, registerTool over provideContext,
-// return the MCP shape (which the current API serializes like any value),
-// and accept string arguments.
+// So: prefer document over navigator, registerTool over provideContext, and
+// accept string arguments. Results: on document.modelContext the tool's own
+// JSON object, which the browser serializes for the agent (wrapping it in the
+// MCP shape there made the agent read JSON in a string in JSON); on the older
+// navigator.modelContext builds, the MCP shape they expected.
 //
 // Agents that drive the page by script instead (a browser extension's JS
 // tool, Playwright) get the same tools at window.pyrevitBuilder.
@@ -42,14 +44,21 @@ export interface WebMcpTool {
   description: string;
   inputSchema: JsonSchema;
   annotations: { readOnlyHint: boolean; untrustedContentHint?: boolean };
-  execute(input: unknown, options?: unknown): Promise<WebMcpToolResult>;
+  execute(input: unknown, options?: unknown): Promise<ToolResult | McpToolResult>;
 }
 
 /** An MCP CallToolResult: one text block holding the tool's JSON result. */
-export interface WebMcpToolResult {
+export interface McpToolResult {
   content: { type: "text"; text: string }[];
   isError?: boolean;
 }
+
+/**
+ * How a tool hands back its result: "plain", the tool's JSON object (the
+ * current draft serializes it), or "mcp", wrapped as an MCP CallToolResult
+ * for the older builds.
+ */
+export type ResultShape = "plain" | "mcp";
 
 /** navigator/document.modelContext, as any of its versions may have it. */
 export interface ModelContextLike {
@@ -87,7 +96,7 @@ declare global {
   }
 }
 
-export function toWebMcpTool(tool: AgentTool): WebMcpTool {
+export function toWebMcpTool(tool: AgentTool, shape: ResultShape = "plain"): WebMcpTool {
   return {
     name: tool.name,
     title: tool.title,
@@ -99,6 +108,7 @@ export function toWebMcpTool(tool: AgentTool): WebMcpTool {
     },
     async execute(input) {
       const result = await callTool(tool.name, input);
+      if (shape === "plain") return result;
       return {
         content: [{ type: "text", text: JSON.stringify(result) }],
         ...(result.ok ? {} : { isError: true }),
@@ -107,11 +117,13 @@ export function toWebMcpTool(tool: AgentTool): WebMcpTool {
   };
 }
 
-function modelContext(): ModelContextLike | null {
-  const context =
-    (typeof document !== "undefined" ? document.modelContext : undefined) ??
-    (typeof navigator !== "undefined" ? navigator.modelContext : undefined);
-  return context && typeof context === "object" ? context : null;
+/** The browser's model context, and the result shape its version expects. */
+function modelContext(): { context: ModelContextLike; shape: ResultShape } | null {
+  const current = typeof document !== "undefined" ? document.modelContext : undefined;
+  if (current && typeof current === "object") return { context: current, shape: "plain" };
+  const legacy = typeof navigator !== "undefined" ? navigator.modelContext : undefined;
+  if (legacy && typeof legacy === "object") return { context: legacy, shape: "mcp" };
+  return null;
 }
 
 function warn(error: unknown) {
@@ -145,8 +157,9 @@ export function registerWebMcp(): () => void {
   installPageApi();
 
   const undo: (() => void)[] = [() => delete window.pyrevitBuilder];
-  const context = modelContext();
-  const tools = AGENT_TOOLS.map(toWebMcpTool);
+  const found = modelContext();
+  const context = found?.context ?? null;
+  const tools = AGENT_TOOLS.map((tool) => toWebMcpTool(tool, found?.shape));
   try {
     if (context && typeof context.registerTool === "function") {
       const controller = new AbortController();

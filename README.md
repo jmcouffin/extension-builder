@@ -411,6 +411,11 @@ console error, a failed request or a native dialog. Across all sizes it checks:
   their schemas; `set_extension` builds the example in the ribbon,
   `get_extension` reads it back unchanged, `download_extension` downloads it, a
   broken spec is refused, and `window.pyrevitBuilder` works without WebMCP;
+- **webmcp-native**: the same through Chromium's own WebMCP (the
+  `WebMCPTesting` feature, as `chrome://flags/#enable-webmcp-testing` turns
+  on): `getTools()` lists the five tools with their hints, and `executeTool()`
+  builds, reads back, validates and downloads, each result the tool's own
+  JSON. Skipped if a Chromium has no WebMCP behind the flag;
 - **export**: the ZIP holds only folder suffixes pyRevit knows, real PNG icons,
   no `__init__.py` / `entrypoint.py` / `.pyrevit`; broken extensions are refused
   with a list; save and load of a layout file round-trips.
