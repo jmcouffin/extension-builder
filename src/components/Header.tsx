@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import logoUrl from "../assets/logo.svg";
 import { sanitizeFileName } from "../domain/templates";
-import { validate } from "../domain/tree";
+import { brokenButtons, downloadNotes, sampleValues, validate } from "../domain/tree";
 import { buildZip, downloadBlob } from "../domain/zip";
 import { loadDefaultIcons } from "../state/defaultIcons";
 import { showAlert, showConfirm } from "../state/dialogs";
@@ -67,6 +67,20 @@ export function Header() {
     try {
       const { blob, name } = await buildZip(layout, await loadDefaultIcons());
       downloadBlob(blob, name);
+      // What won't work, and what is left to do, said once it is downloading.
+      const broken = brokenButtons(layout);
+      const rest = [...sampleValues(layout), ...downloadNotes(layout)];
+      if (broken.length || rest.length) {
+        void showAlert(
+          broken.length
+            ? `${name} is downloading, but ${broken.length === 1 ? "one button won't" : `${broken.length} buttons won't`} work as built. Why:`
+            : `${name} is downloading. One more step before pyRevit can use it:`,
+          {
+            title: broken.length ? "Downloaded, with buttons that won't work" : "Before you use it",
+            details: [...broken, ...rest],
+          },
+        );
+      }
     } catch (error) {
       console.error("Error creating ZIP:", error);
       void showAlert((error as Error).message, { title: "Failed to create the ZIP file" });

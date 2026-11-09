@@ -245,6 +245,8 @@ export interface TypeDef {
   toggle?: boolean;
   forcedContext?: string;
   required?: FieldKey[];
+  /** What pyRevit does with the bundle when a required key is left empty. */
+  missingEffect?: string;
   /** Values a new bundle of this type starts with, so a required key is never left blank. */
   defaults?: Partial<Record<FieldKey, string>>;
   contentFile?: string;
@@ -342,6 +344,8 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // URLButton logs "does not specify target url" and the button opens
     // nothing without it (pyrevitlib/pyrevit/extensions/components.py).
     required: ["hyperlink"],
+    missingEffect:
+      "pyRevit logs an error when it loads the button, and the button has no page to open.",
     defaults: { hyperlink: "https://pyrevitlabs.io" },
     fields: ["hyperlink", "context", "large_icon", ...COMMON],
   },
@@ -356,6 +360,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     darkIcons: ["icon.dark.png"],
     contentFile: "content.rfa",
     required: ["content"],
+    missingEffect: "the button has no family to load, so clicking it fails.",
     defaults: { content: "content.rfa" },
     help: "Needs a content.rfa family in this folder.",
     fields: ["content", "content_alt", "context", "large_icon", ...COMMON],
@@ -372,6 +377,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // LinkButton is built with needs_commandclass=True, and LinkButtonBuilder
     // returns no button without both (components.py, LinkButtonBuilder.cs).
     required: ["assembly", "command_class"],
+    missingEffect: "pyRevit doesn't create the button: it has no add-in command to call.",
     defaults: { assembly: SAMPLE_ASSEMBLY, command_class: SAMPLE_COMMAND_CLASS },
     advanced: true,
     fields: ["assembly", "command_class", "availability_class", "large_icon", ...COMMON],
@@ -389,6 +395,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     // Only the assembly is needed: with no command_class pyRevit invokes the
     // assembly itself (CommandTypeGenerator.BuildCommandArguments).
     required: ["assembly"],
+    missingEffect: "the button has no assembly to load, so clicking it fails.",
     defaults: { assembly: SAMPLE_ASSEMBLY },
     advanced: true,
     fields: ["assembly", "command_class", "availability_class", "large_icon", ...COMMON],
@@ -455,6 +462,7 @@ export const TYPES: Record<TypeId, TypeDef> = {
     accepts: [],
     icons: [],
     required: ["members"],
+    missingEffect: "the combo box shows up empty, with nothing to pick.",
     defaults: { members: SAMPLE_MEMBERS },
     fields: ["members", ...COMMON],
   },

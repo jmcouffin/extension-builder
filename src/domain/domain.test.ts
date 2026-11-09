@@ -8,7 +8,7 @@ import {
   type TreeNode,
   yamlValue,
 } from "./templates";
-import { buildFolderStructure, validate } from "./tree";
+import { brokenButtons, buildFolderStructure, validate } from "./tree";
 
 function yamlOf(folder: FolderNode | null): string {
   const file = folder?.children.find((c) => c.name === "bundle.yaml");
@@ -248,11 +248,14 @@ describe("full tree and validator", () => {
     expect(validate(layout).some((p) => /same folder/i.test(p))).toBe(true);
   });
 
-  it("reports a linkbutton with no assembly", () => {
+  it("downloads a linkbutton with no assembly, saying why it won't work", () => {
     const layout = sampleLayout();
     layout.panels.panel2?.elements.push("el32");
     layout.elements.el32 = el({ type: "linkbutton", name: "Broken", panelId: "panel2" });
-    expect(validate(layout).length).toBeGreaterThan(0);
+    expect(validate(layout)).toEqual([]);
+    expect(brokenButtons(layout)).toEqual([
+      'Link Button "Broken" has no Assembly and Command Class: pyRevit doesn\'t create the button: it has no add-in command to call. Set them in Properties.',
+    ]);
   });
 });
 

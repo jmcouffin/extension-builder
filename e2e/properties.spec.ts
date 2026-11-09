@@ -147,15 +147,24 @@ test.describe("Properties", () => {
     await expect(page.locator(".status-samples")).toContainText("1 sample value to replace");
   });
 
-  test("an emptied required parameter is marked and blocks the download", async ({ page }) => {
+  test("an emptied required parameter is marked, and the download says why it breaks", async ({
+    page,
+  }) => {
     await addCommand(page, "Docs");
     await setType(page, "urlbutton");
     const hyperlink = cell(page, "Hyperlink");
     await hyperlink.locator("input").fill("");
     await hyperlink.locator("input").press("Enter");
     await expect(hyperlink).toHaveClass(/is-missing/);
+    await expect(page.locator(".status-broken")).toHaveText("1 button won't work");
+
+    const downloadPromise = page.waitForEvent("download");
     await page.locator("#downloadZip").click();
-    await expect(appDialog(page)).toContainText("Hyperlink");
+    await downloadPromise;
+    await expect(appDialog(page)).toContainText("one button won't work as built");
+    await expect(appDialog(page).locator(".dialog-details li")).toContainText([
+      /URL Button "Docs" has no Hyperlink: pyRevit logs an error/,
+    ]);
     await acceptDialog(page);
   });
 

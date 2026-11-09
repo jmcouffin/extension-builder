@@ -43,7 +43,7 @@ export function sanitizeFileName(name: unknown): string {
   // biome-ignore lint/suspicious/noControlCharactersInRegex: control codes are illegal in Windows paths
   out = out.replace(/[<>:"/\\|?*\u0000-\u001f]/g, " ");
   out = out.replace(/\s+/g, " ").trim();
-  out = out.replace(/^[.\s]+/, "");
+  out = out.replace(/^[._\s]+/, "");
   out = out.replace(/[.\s]+$/, "");
   return out || "Untitled";
 }
@@ -74,8 +74,10 @@ export function yamlLine(key: string, value: unknown): string {
 
 export function indent(text: string, spaces: number): string {
   const pad = " ".repeat(spaces);
+  // YAML 1.1 also breaks lines at U+0085, U+2028 and U+2029; a line that
+  // isn't indented would leave the block.
   return String(text)
-    .replace(/\r\n|\r|\n/g, "\n")
+    .replace(/\r\n|\r|\n|\u0085|\u2028|\u2029/g, "\n")
     .split("\n")
     .map((line) => (line.length ? pad + line : line))
     .join("\n");
@@ -194,14 +196,24 @@ export function buildInstallReadme(extensionName: string): string {
   ].join("\n");
 }
 
+/** A Python string literal for any text: JSON's escapes are valid Python. */
+export function pyString(text: string): string {
+  return JSON.stringify(text);
+}
+
+/** One line of text that is safe inside a """docstring""". */
+function docLine(text: string): string {
+  return text.replace(/\\/g, "/").replace(/"/g, "'").replace(/\s+/g, " ").trim();
+}
+
 export function commandScript(title: string, author: string): string {
   return `# -*- coding: utf-8 -*-
-"""${title}
+"""${docLine(title)}
 
 Created with the pyRevit Extension Builder.
 """
-__title__ = "${title}"
-__author__ = "${author}"
+__title__ = ${pyString(title)}
+__author__ = ${pyString(author)}
 
 from pyrevit import revit, DB, UI, script, forms
 
@@ -237,20 +249,20 @@ else:
  */
 export function toggleScript(title: string, author: string): string {
   return `# -*- coding: utf-8 -*-
-"""${title}
+"""${docLine(title)}
 
 A toggle button: a pyRevit smartbutton with on.png / off.png icons whose
 state survives between runs.
 
 Created with the pyRevit Extension Builder.
 """
-__title__ = "${title}"
-__author__ = "${author}"
+__title__ = ${pyString(title)}
+__author__ = ${pyString(author)}
 
 from pyrevit import revit, DB, UI, script, forms
 
 # Env var name for this toggle's state. Change it to keep two toggles separate.
-ENV_VAR = "${title}".replace(" ", "_").upper() + "_ENABLED"
+ENV_VAR = ${pyString(title.replace(/\s+/g, "_").toUpperCase())} + "_ENABLED"
 
 # Flip the state and tell the button which icon to show.
 enabled = not script.get_envvar(ENV_VAR)

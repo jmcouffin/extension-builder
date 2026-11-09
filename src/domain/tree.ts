@@ -124,6 +124,52 @@ export function sampleValues(layout: LayoutParts): string[] {
   return notes;
 }
 
+/**
+ * What the user must do after unzipping, for a download that is otherwise
+ * sound: a content bundle's family file can only come from them.
+ */
+export function downloadNotes(layout: LayoutParts): string[] {
+  const notes: string[] = [];
+  const walk = (node: TreeNode, parentPath: string) => {
+    if (node.type !== "folder") return;
+    const full = parentPath ? `${parentPath}/${node.name}` : node.name;
+    if (node.contentFile && node.postfix) {
+      notes.push(`Put your ${node.contentFile} family file in ${full} after unzipping.`);
+    }
+    for (const child of node.children) walk(child, full);
+  };
+  walk(buildFolderStructure(layout), "");
+  return notes;
+}
+
+/**
+ * Bundles with a required bundle.yaml key left empty, and what pyRevit does
+ * with each. They don't block download: the extension still loads, and the
+ * person (or agent) is told which buttons won't work and why.
+ */
+export function brokenButtons(layout: LayoutParts): string[] {
+  const out: string[] = [];
+  for (const element of Object.values(layout.elements)) {
+    const typeDef = getType(element.type);
+    if (!typeDef?.required) continue;
+    const missing = typeDef.required.filter((key) => !element[key]?.trim());
+    if (!missing.length) continue;
+    const labels = missing.map((k) => FIELDS[k].label).join(" and ");
+    out.push(
+      `${typeDef.label} "${element.name}" has no ${labels}: ${typeDef.missingEffect ?? "it won't work."} Set ${missing.length > 1 ? "them" : "it"} in Properties.`,
+    );
+  }
+  return out;
+}
+
+/**
+ * Everything worth a look that doesn't block download: buttons that won't
+ * work, sample values, then files to add after unzipping.
+ */
+export function downloadWarnings(layout: LayoutParts): string[] {
+  return [...brokenButtons(layout), ...sampleValues(layout), ...downloadNotes(layout)];
+}
+
 /** Defaults that are placeholders to replace, as opposed to real values like a URL. */
 const SAMPLE_KEYS: FieldKey[] = ["assembly", "command_class"];
 
@@ -151,12 +197,6 @@ export function validate(layout: LayoutParts): string[] {
       seenFolders.set(key, full);
     }
 
-    if (node.contentFile && node.postfix) {
-      problems.push(
-        `${full} is a ${node.postfix.replace(".", "")} bundle and needs a ${node.contentFile} family file. Add your own .rfa into that folder after unzipping.`,
-      );
-    }
-
     // A stack with fewer than minChildren is skipped by pyRevit
     // (StackBuilder.cs:80), so it is worse than useless: it looks fine in the
     // preview and produces no button at all.
@@ -176,15 +216,12 @@ export function validate(layout: LayoutParts): string[] {
 
   for (const r of rejected) problems.push(`Element "${r.element.name}" was skipped: ${r.reason}`);
 
-  // Required bundle.yaml keys. Without them pyRevit logs an error and the
-  // command never binds to anything.
   for (const element of Object.values(layout.elements)) {
-    const typeDef = getType(element.type);
-    if (!typeDef?.required) continue;
-    const missing = typeDef.required.filter((key) => !element[key]);
-    if (missing.length) {
+    const min = Number(element.min_revit_version);
+    const max = Number(element.max_revit_version);
+    if (min && max && min > max) {
       problems.push(
-        `${typeDef.label} "${element.name}" is missing: ${missing.map((k) => FIELDS[k].label).join(", ")}. Set them in Properties.`,
+        `"${element.name}" has a Min Revit Version (${min}) above its Max (${max}), so no Revit would load it.`,
       );
     }
   }
