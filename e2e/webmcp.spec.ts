@@ -7,20 +7,20 @@ interface Recorded {
   description: string;
   inputSchema: Record<string, unknown>;
   annotations?: { readOnlyHint?: boolean };
-  execute(
-    input: unknown,
-  ): Promise<{ content: { type: string; text: string }[]; isError?: boolean }>;
+  execute(input: unknown): Promise<unknown>;
 }
 type Recorder = { __webmcpTools: Recorded[] };
 
-/** Run a registered tool the way an agent would, and parse its JSON result. */
+/**
+ * Run a registered tool the way the browser does for an agent: call execute,
+ * then serialize what it returns to JSON.
+ */
 async function run(page: import("@playwright/test").Page, name: string, input: unknown = {}) {
   return page.evaluate(
     async ([name, input]) => {
       const tool = (window as unknown as Recorder).__webmcpTools.find((t) => t.name === name);
       if (!tool) throw new Error(`no tool ${name}`);
-      const result = await tool.execute(input);
-      return { isError: !!result.isError, ...JSON.parse(result.content[0]?.text ?? "{}") };
+      return JSON.parse(JSON.stringify(await tool.execute(input)));
     },
     [name, input] as const,
   );
@@ -101,7 +101,9 @@ test.describe("WebMCP", () => {
 
   test("an agent builds an extension and downloads it", async ({ page }) => {
     const set = await run(page, "set_extension", { spec: EXAMPLE_SPEC });
-    expect(set).toMatchObject({ isError: false, ok: true, problems: [] });
+    expect(set).toMatchObject({ ok: true, problems: [] });
+    // The tool's own result, not an MCP envelope holding JSON in a string.
+    expect(set).not.toHaveProperty("content");
 
     await expect(page.locator(".tab.active .tab-name")).toHaveValue("Acme");
     await expect(page.locator(".panel-name")).toHaveValue("Sheets");
@@ -127,7 +129,7 @@ test.describe("WebMCP", () => {
         tabs: [{ name: "T", panels: [{ name: "P", items: [{ type: "button" }] }] }],
       },
     });
-    expect(refused).toMatchObject({ isError: true, ok: false });
+    expect(refused).toMatchObject({ ok: false });
     expect(refused.errors.length).toBeGreaterThan(0);
     await expect(page.locator("#ribbonContainer .panel")).toHaveCount(1);
     await expect(page.locator(".tab.active .tab-name")).not.toHaveValue("T");

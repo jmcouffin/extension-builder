@@ -1,6 +1,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { useStore } from "../state/store";
-import { type ModelContextLike, registerWebMcp, type WebMcpTool } from "./webmcp";
+import type { ToolResult } from "./agentTools";
+import {
+  type McpToolResult,
+  type ModelContextLike,
+  registerWebMcp,
+  type WebMcpTool,
+} from "./webmcp";
 
 type Holder = { modelContext?: ModelContextLike };
 
@@ -40,14 +46,16 @@ describe("WebMCP registration", () => {
     expect(tools[1]?.annotations).toEqual({ readOnlyHint: true, untrustedContentHint: true });
     expect(tools[3]?.annotations).toEqual({ readOnlyHint: false });
 
-    const result = await tools[1]?.execute({});
-    expect(result?.isError).toBeUndefined();
-    const parsed = JSON.parse(result?.content[0]?.text ?? "{}");
-    expect(parsed.ok).toBe(true);
-    expect(parsed.spec.name).toBe(useStore.getState().extensionName);
+    // The current API serializes what execute returns: the tool's own
+    // result, not an MCP envelope with JSON in a string.
+    const result = (await tools[1]?.execute({})) as ToolResult;
+    expect(result.ok).toBe(true);
+    expect((result.spec as { name: string }).name).toBe(useStore.getState().extensionName);
+    expect(result).not.toHaveProperty("content");
 
-    const refused = await tools[3]?.execute({ spec: {} });
-    expect(refused?.isError).toBe(true);
+    const refused = (await tools[3]?.execute({ spec: {} })) as ToolResult;
+    expect(refused.ok).toBe(false);
+    expect(refused.errors).not.toEqual([]);
 
     dispose();
     dispose = null;
@@ -55,13 +63,22 @@ describe("WebMCP registration", () => {
     expect(window.pyrevitBuilder).toBeUndefined();
   });
 
-  it("falls back to navigator.modelContext.provideContext", () => {
+  it("falls back to navigator.modelContext.provideContext, with MCP-shaped results", async () => {
     const provideContext = vi.fn();
     const clearContext = vi.fn();
     fake(navigator, { provideContext, clearContext });
     dispose = registerWebMcp();
     expect(provideContext).toHaveBeenCalledOnce();
-    expect(provideContext.mock.calls[0]?.[0].tools).toHaveLength(5);
+    const tools: WebMcpTool[] = provideContext.mock.calls[0]?.[0].tools;
+    expect(tools).toHaveLength(5);
+
+    // The older builds expected an MCP CallToolResult.
+    const result = (await tools[1]?.execute({})) as McpToolResult;
+    expect(JSON.parse(result.content[0]?.text ?? "{}").ok).toBe(true);
+    expect(result.isError).toBeUndefined();
+    const refused = (await tools[3]?.execute({ spec: {} })) as McpToolResult;
+    expect(refused.isError).toBe(true);
+
     dispose();
     dispose = null;
     expect(clearContext).toHaveBeenCalledOnce();
