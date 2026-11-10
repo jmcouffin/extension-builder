@@ -58,6 +58,14 @@ describe("the published JSON Schema", () => {
       "a PNG data URL that isn't base64",
       { type: "pushbutton", name: "B", icon: "data:image/png;base64,!!!" },
     ],
+    [
+      "a JPEG icon",
+      { type: "pushbutton", name: "B", icon: "data:image/jpeg;base64,/9j/4AAQSkZJRg==" },
+    ],
+    [
+      "JPEG bytes called PNG",
+      { type: "pushbutton", name: "B", icon: "data:image/png;base64,/9j/4AAQSkZJRg==" },
+    ],
     ["a No Button in a panel", { type: "nobutton", name: "N" }],
     ["a forced context", { type: "panelbutton", name: "P", context: "selection" }],
     ["a year as text", { type: "pushbutton", name: "B", min_revit_version: "2024" }],

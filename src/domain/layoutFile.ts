@@ -4,6 +4,7 @@
 
 import { isTypeId, LAYOUT_VERSION, TYPES } from "./bundleTypes";
 import type { Element, Layout, NextIds } from "./model";
+import { isPngDataUrl } from "./png";
 
 export const FILE_VERSION = "2.0";
 
@@ -56,9 +57,13 @@ type LooseElement = Omit<Element, "type"> & { url?: string; command?: string; ty
  *   invokebutton  -> keeps its type, but `command` becomes `command_class`
  *   iconData      -> split into iconData / iconDarkData / iconOnData
  *   context, panelId/parentId normalisation
+ *
+ * Any version: an icon that isn't a PNG (the builder once took JPEG, GIF,
+ * BMP and SVG, which pyRevit can't load as icon.png) goes back to the
+ * default icon, and is listed in `dropped` for the user to hear about.
  */
 // biome-ignore lint/suspicious/noExplicitAny: input is untrusted JSON, validated above
-export function migrate(state: any): Layout {
+export function migrate(state: any, dropped?: string[]): Layout {
   const version = state.version || "1.0";
   const major = majorOf(version);
   const elements: Record<string, LooseElement> = { ...(state.elements || {}) };
@@ -99,6 +104,14 @@ export function migrate(state: any): Layout {
     if (!Object.hasOwn(el, "iconDarkData")) el.iconDarkData = null;
     if (!Object.hasOwn(el, "iconOnData")) el.iconOnData = null;
     if (el.iconData === undefined) el.iconData = null;
+    for (const [key, label] of ICON_FIELDS) {
+      // An empty value is no icon, not a refused one: no need to tell anyone.
+      if (el[key] === "") el[key] = null;
+      if (el[key] != null && !isPngDataUrl(el[key])) {
+        el[key] = null;
+        dropped?.push(`"${el.name || id}": ${label}`);
+      }
+    }
 
     // Ownership must be exactly one of panelId / parentId.
     const parent = el.parentId ? elements[el.parentId] : undefined;
@@ -149,7 +162,7 @@ export function rebuildNextIds(state: Pick<Layout, "tabs" | "panels" | "elements
   return next;
 }
 
-export function parseLayout(text: string): Layout {
+export function parseLayout(text: string, dropped?: string[]): Layout {
   let parsed: unknown;
   try {
     parsed = JSON.parse(text);
@@ -158,5 +171,23 @@ export function parseLayout(text: string): Layout {
   }
   const problem = validateLoadedState(parsed);
   if (problem) throw new Error(problem);
-  return migrate(parsed);
+  return migrate(parsed, dropped);
+}
+
+/** The icon fields of a bundle, and what Properties calls them. */
+const ICON_FIELDS = [
+  ["iconData", "icon"],
+  ["iconDarkData", "dark icon"],
+  ["iconOnData", "on icon"],
+] as const;
+
+/** Tell the user which icons a load set back to the default, if any. */
+export function droppedIconsNotice(
+  dropped: string[],
+): { message: string; details: string[] } | null {
+  if (!dropped.length) return null;
+  return {
+    message: `${dropped.length === 1 ? "One icon wasn't a PNG and is" : `${dropped.length} icons weren't PNG and are`} back to the default pyRevit icon: pyRevit loads icons as icon.png. Pick a PNG for ${dropped.length === 1 ? "it" : "them"} in Properties.`,
+    details: dropped,
+  };
 }

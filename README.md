@@ -359,6 +359,14 @@ Properties for those types:
 | Graphics | icon, dark icon, on icon (Toggle), script, `large_icon` | per type |
 | Other | `highlight` (new / updated), `is_beta` | all buttons and groups |
 
+Icons are PNG, and only PNG, because pyRevit loads them as `icon.png`. The picker
+offers PNG files and checks the file's bytes, not its name: a JPEG, GIF, BMP,
+WebP or SVG is refused with what it really is. A saved layout, a file or the
+draft that still holds such an icon (the builder used to take them) loads with
+the default icon in its place, and a dialog names the icons it reset. The spec
+reader and its JSON Schema take only `data:image/png;base64,iVBORw0KGgo...`, the
+start every PNG shares, and the ZIP never writes anything else into an icon.
+
 Required keys start filled, so a new bundle is always well-formed:
 `hyperlink` with `https://pyrevitlabs.io`, `content` with `content.rfa`,
 `members` with two sample items, and `assembly` / `command_class` with

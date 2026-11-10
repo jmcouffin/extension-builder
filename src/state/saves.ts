@@ -40,7 +40,8 @@ interface SavesState {
   closeManager(): void;
   save(layout: Layout): { error: string | null; replaced: boolean };
   remove(id: string): void;
-  read(id: string): Layout | null;
+  /** A save as a layout; icons that aren't PNG are reset and named in `dropped`. */
+  read(id: string, dropped?: string[]): Layout | null;
 }
 
 export const useSaves = create<SavesState>((set, get) => ({
@@ -73,11 +74,11 @@ export const useSaves = create<SavesState>((set, get) => ({
     set({ saves: next });
   },
 
-  read: (id) => {
+  read: (id, dropped) => {
     const found = get().saves.find((s) => s.id === id);
     if (!found) return null;
     try {
-      return parseLayout(JSON.stringify(found.data));
+      return parseLayout(JSON.stringify(found.data), dropped);
     } catch {
       return null;
     }

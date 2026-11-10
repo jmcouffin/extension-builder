@@ -65,7 +65,8 @@ function fieldSchema(key: FieldKey): Schema {
 const PNG = {
   type: "string",
   pattern: PNG_DATA_URL.source,
-  description: "A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon.",
+  description:
+    "A PNG as a data URL, ideally 96x96; only PNG (JPEG, GIF, BMP, SVG are refused). Absent: the pyRevit icon.",
 };
 
 function bundleSchema(type: TypeId): Schema {

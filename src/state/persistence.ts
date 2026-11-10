@@ -8,8 +8,9 @@
 // This is deliberately separate from Save/Load layout, which is the explicit
 // file the user keeps. The draft is a convenience; the file is the artefact.
 
-import { migrate, snapshot, validateLoadedState } from "../domain/layoutFile";
+import { droppedIconsNotice, migrate, snapshot, validateLoadedState } from "../domain/layoutFile";
 import type { Layout } from "../domain/model";
+import { showAlert } from "./dialogs";
 import { layoutOf, useStore } from "./store";
 
 const DRAFT_KEY = "pyrevit-extension-builder:draft:v2";
@@ -26,7 +27,7 @@ function storage(): Storage | null {
   }
 }
 
-export function readDraft(): Layout | null {
+export function readDraft(dropped?: string[]): Layout | null {
   const store = storage();
   if (!store) return null;
   try {
@@ -39,7 +40,7 @@ export function readDraft(): Layout | null {
       store.removeItem(DRAFT_KEY);
       return null;
     }
-    return migrate(parsed);
+    return migrate(parsed, dropped);
   } catch (error) {
     console.warn("Ignoring an unreadable draft:", error);
     store.removeItem(DRAFT_KEY);
@@ -75,10 +76,15 @@ export function startDraftPersistence(): () => void {
     return () => {};
   }
 
-  const restored = readDraft();
+  const dropped: string[] = [];
+  const restored = readDraft(dropped);
   if (restored) {
     useStore.getState().loadLayout(restored);
     console.info("Restored your last draft. RESET discards it.");
+    // Queued: the dialog shows once the page is up.
+    const notice = droppedIconsNotice(dropped);
+    if (notice)
+      void showAlert(notice.message, { title: "Icons must be PNG", details: notice.details });
   }
 
   let timer: ReturnType<typeof setTimeout> | null = null;

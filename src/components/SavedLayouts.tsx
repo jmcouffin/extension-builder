@@ -2,7 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { openSpecResult } from "../api/openSpec";
 import { layoutFromSpec, looksLikeSpec } from "../api/spec";
-import { parseLayout } from "../domain/layoutFile";
+import { droppedIconsNotice, parseLayout } from "../domain/layoutFile";
 import { sanitizeFileName } from "../domain/templates";
 import { downloadBlob } from "../domain/zip";
 import { showAlert, showConfirm } from "../state/dialogs";
@@ -41,13 +41,22 @@ function importFile() {
         }
         return;
       }
-      useStore.getState().loadLayout(parseLayout(text));
+      const dropped: string[] = [];
+      useStore.getState().loadLayout(parseLayout(text, dropped));
       useSaves.getState().closeManager();
+      tellDroppedIcons(dropped);
     } catch (error) {
       void showAlert((error as Error).message, { title: "Could not load that layout" });
     }
   });
   input.click();
+}
+
+/** Say which icons a load set back to the default, as they weren't PNG. */
+export function tellDroppedIcons(dropped: string[]) {
+  const notice = droppedIconsNotice(dropped);
+  if (notice)
+    void showAlert(notice.message, { title: "Icons must be PNG", details: notice.details });
 }
 
 export function SavedLayouts() {
@@ -56,7 +65,8 @@ export function SavedLayouts() {
   const { closeManager, read, remove } = useSaves.getState();
 
   const load = (id: string) => {
-    const layout = read(id);
+    const dropped: string[] = [];
+    const layout = read(id, dropped);
     if (!layout) {
       void showAlert("This save is damaged and cannot be opened. Delete it and save again.", {
         title: "Could not load that layout",
@@ -65,6 +75,7 @@ export function SavedLayouts() {
     }
     useStore.getState().loadLayout(layout);
     closeManager();
+    tellDroppedIcons(dropped);
   };
 
   const erase = async (id: string, name: string) => {

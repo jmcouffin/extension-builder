@@ -20,14 +20,15 @@ import {
   withDefaults,
 } from "../domain/bundleTypes";
 import type { Element } from "../domain/model";
+import { iconRefusal, pngDataUrl } from "../domain/png";
 import { sanitizeFileName } from "../domain/templates";
-import { readFileAsDataUrl } from "../domain/zip";
 import { FALLBACK_ICON } from "../state/defaultIcons";
-import { showConfirm } from "../state/dialogs";
+import { showAlert, showConfirm } from "../state/dialogs";
 import { type ElementPayload, useStore } from "../state/store";
 import { useIcons } from "./IconsContext";
 
-const IMAGE_TYPES = "image/png,image/jpeg,image/gif,image/bmp,image/svg+xml";
+/** pyRevit loads icon.png: the picker offers PNG files, and checks their bytes. */
+const IMAGE_TYPES = "image/png,.png";
 
 /**
  * The palette's "a value is being edited" flag: Revit greys Apply out until a
@@ -274,8 +275,15 @@ function IconProp({
             const file = e.target.files?.[0];
             e.target.value = "";
             if (!file) return;
-            const url = await readFileAsDataUrl(file);
-            if (url) onPick(url);
+            // A file name or MIME type can lie (and "All files" lets anything
+            // through): only PNG bytes become an icon.
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const refusal = iconRefusal(file.name, bytes);
+            if (refusal) {
+              void showAlert(refusal, { title: "Icons must be PNG" });
+              return;
+            }
+            onPick(pngDataUrl(bytes));
           }}
         />
       </span>
