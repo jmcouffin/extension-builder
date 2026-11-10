@@ -1,5 +1,6 @@
 import JSZip from "jszip";
 import type { Layout } from "./model";
+import { isPngDataUrl } from "./png";
 import type { FileNode, FolderNode } from "./templates";
 import { buildFolderStructure } from "./tree";
 
@@ -26,12 +27,14 @@ export function resolveIconData(
   const key = node.iconKey ?? "";
   const isDark = key.includes(".dark.");
 
+  // Only a PNG goes into icon.png; anything else (which loading and the
+  // picker already refuse) falls back to the default icon.
   if (element) {
     if (isDark) {
-      if (element.iconDarkData) return element.iconDarkData;
+      if (isPngDataUrl(element.iconDarkData)) return element.iconDarkData;
     } else if (key === "on.png") {
-      if (element.iconOnData) return element.iconOnData;
-    } else if (element.iconData) {
+      if (isPngDataUrl(element.iconOnData)) return element.iconOnData;
+    } else if (isPngDataUrl(element.iconData)) {
       return element.iconData;
     }
   }
@@ -88,7 +91,7 @@ export function downloadBlob(blob: Blob, filename: string) {
   }, 1000);
 }
 
-export function readFileAsDataUrl(file: Blob): Promise<string | null> {
+function readFileAsDataUrl(file: Blob): Promise<string | null> {
   return new Promise((resolve) => {
     const reader = new FileReader();
     reader.onload = () => resolve(typeof reader.result === "string" ? reader.result : null);

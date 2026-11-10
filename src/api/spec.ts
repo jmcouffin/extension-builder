@@ -16,6 +16,10 @@ import {
   type TypeId,
 } from "../domain/bundleTypes";
 import type { Element, Layout } from "../domain/model";
+import { isPngDataUrl, PNG_DATA_URL } from "../domain/png";
+
+export { PNG_DATA_URL };
+
 import { yamlValue } from "../domain/templates";
 import { downloadWarnings, validate } from "../domain/tree";
 
@@ -95,8 +99,6 @@ export const MAX_SPEC_CHARS = 8_000_000;
 
 /** Panel > stack > pulldown > command is as deep as pyRevit goes. */
 const MAX_DEPTH = 3;
-
-export const PNG_DATA_URL = /^data:image\/png;base64,[A-Za-z0-9+/]+={0,2}$/;
 
 /** The type a spec's `type` names: an id ("toggle") or a postfix ("smartbutton", ".smartbutton"). */
 export function resolveType(type: unknown): TypeId | null {
@@ -303,8 +305,13 @@ export function layoutFromSpec(input: unknown): SpecResult {
       }
       if (key === "icon" || key === "icon_dark" || key === "icon_on") {
         if (!allowed.includes(key)) err(at, `a ${def.label} has no ${key}`);
-        else if (typeof value !== "string" || !PNG_DATA_URL.test(value)) {
-          err(at, 'must be a PNG data URL: "data:image/png;base64,..."');
+        else if (!isPngDataUrl(value)) {
+          err(
+            at,
+            typeof value === "string" && value.startsWith("data:image/png;base64,")
+              ? 'is not a PNG image: its data doesn\'t start like one (base64 "iVBORw0KGgo")'
+              : 'must be a PNG data URL: "data:image/png;base64,...". pyRevit icons are PNG; JPEG, GIF, BMP and SVG are refused',
+          );
         } else
           element[
             key === "icon" ? "iconData" : key === "icon_dark" ? "iconDarkData" : "iconOnData"

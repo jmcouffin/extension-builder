@@ -89,7 +89,7 @@ ${JSON.stringify(EXAMPLE_SPEC, null, 2)}
 - Every bundle has a \`type\` and a \`name\` (its folder name: unique among its siblings, ignoring case). \`title\` is the text under the icon (\`\\n\` breaks the line; default: the name); \`tooltip\` shows on hover.
 - Fill every required parameter (in bold below): nothing is filled in for you, and a button without one won't work in Revit.
 - \`script\` is the Python of \`script.py\` (pyRevit runs IronPython by default; \`from pyrevit import revit, DB, forms, script\`). Leave it out for a starter script.
-- \`icon\`, \`icon_dark\`, \`icon_on\` are PNG data URLs (\`data:image/png;base64,...\`, ideally 96x96). Leave them out for the pyRevit icon.
+- \`icon\`, \`icon_dark\`, \`icon_on\` are PNG data URLs (\`data:image/png;base64,iVBORw0KGgo...\`, ideally 96x96). Only PNG: a JPEG, GIF, BMP or SVG is refused, as pyRevit loads icons as \`icon.png\`. Leave them out for the pyRevit icon.
 - A stack holds 2 or 3 bundles; pyRevit drops a stack with one. A pulldown or split button holds commands, not stacks or other groups. A \`nobutton\` only goes in a pulldown or split button, never directly in a panel.
 - A \`content\` button loads a Revit family: the user puts the \`.rfa\` file named in \`content\` into its folder after unzipping.
 - Only the parameters listed for a type are accepted. Yes/no parameters are \`true\`/\`false\`; versions are numbers.
