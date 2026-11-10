@@ -50,5 +50,6 @@ export function pngDataUrl(bytes: Uint8Array): string {
 export function iconRefusal(fileName: string, bytes: Uint8Array): string | null {
   if (isPngBytes(bytes)) return null;
   const kind = imageKind(bytes);
-  return `"${fileName}" ${kind ? `is a ${kind} image` : "is not a PNG image"}. pyRevit icons are PNG files (ideally 96 × 96 pixels): save it as PNG and pick it again.`;
+  const article = kind === "SVG" || kind === "ICO" ? "an" : "a";
+  return `"${fileName}" ${kind ? `is ${article} ${kind} image` : "is not a PNG image"}. pyRevit icons are PNG files (ideally 96 × 96 pixels): save it as PNG and pick it again.`;
 }
