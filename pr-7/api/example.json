@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "name": "Acme Tools",
+  "tabs": [
+    {
+      "name": "Acme",
+      "panels": [
+        {
+          "name": "Sheets",
+          "items": [
+            {
+              "type": "pushbutton",
+              "name": "Renumber",
+              "title": "Renumber\nSheets",
+              "tooltip": "Renumber the selected sheets in order.",
+              "author": "Acme BIM",
+              "context": "selection",
+              "script": "from pyrevit import revit\nprint(len(revit.get_selection()))"
+            },
+            {
+              "type": "stack",
+              "name": "Help",
+              "items": [
+                {
+                  "type": "urlbutton",
+                  "name": "Docs",
+                  "hyperlink": "https://pyrevitlabs.io"
+                },
+                {
+                  "type": "toggle",
+                  "name": "Auto Save",
+                  "tooltip": "Turn auto save on or off."
+                }
+              ]
+            },
+            {
+              "type": "pulldown",
+              "name": "Export",
+              "items": [
+                {
+                  "type": "pushbutton",
+                  "name": "To PDF",
+                  "min_revit_version": 2024
+                },
+                {
+                  "type": "pushbutton",
+                  "name": "To DWG",
+                  "engine_clean": true
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

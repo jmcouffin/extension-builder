@@ -1,0 +1,1589 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://builder.pyrevitlabs.io/api/extension.schema.json",
+  "title": "pyRevit extension",
+  "description": "A pyRevit extension for the pyRevit Extension Builder: tabs, holding panels, holding bundles (buttons, stacks, pulldowns...). Open it in the builder with #spec=<URL-encoded JSON>, or load it as a file there.",
+  "type": "object",
+  "required": [
+    "name",
+    "tabs"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "const": 1
+    },
+    "name": {
+      "type": "string",
+      "pattern": "\\S",
+      "description": "Extension name; the folder becomes <name>.extension."
+    },
+    "tabs": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "name",
+          "panels"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "\\S",
+            "description": "Ribbon tab name."
+          },
+          "panels": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "object",
+              "required": [
+                "name"
+              ],
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "pattern": "\\S",
+                  "description": "Panel name, shown under its buttons."
+                },
+                "items": {
+                  "type": "array",
+                  "items": {
+                    "oneOf": [
+                      {
+                        "$ref": "#/$defs/pushbutton"
+                      },
+                      {
+                        "$ref": "#/$defs/toggle"
+                      },
+                      {
+                        "$ref": "#/$defs/panelbutton"
+                      },
+                      {
+                        "$ref": "#/$defs/urlbutton"
+                      },
+                      {
+                        "$ref": "#/$defs/content"
+                      },
+                      {
+                        "$ref": "#/$defs/pulldown"
+                      },
+                      {
+                        "$ref": "#/$defs/splitbutton"
+                      },
+                      {
+                        "$ref": "#/$defs/splitpushbutton"
+                      },
+                      {
+                        "$ref": "#/$defs/stack"
+                      },
+                      {
+                        "$ref": "#/$defs/combobox"
+                      },
+                      {
+                        "$ref": "#/$defs/linkbutton"
+                      },
+                      {
+                        "$ref": "#/$defs/invokebutton"
+                      }
+                    ]
+                  }
+                }
+              },
+              "additionalProperties": false
+            }
+          }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "pushbutton": {
+      "type": "object",
+      "title": "Push Button",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "pushbutton",
+          "description": "Push Button (.pushbutton folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "engine_clean": {
+          "type": "boolean",
+          "description": "Clean Engine. Run in a fresh engine every time instead of a cached one."
+        },
+        "engine_full_frame": {
+          "type": "boolean",
+          "description": "Full Frame. IronPython full-frame mode, needed by some libraries."
+        },
+        "engine_persistent": {
+          "type": "boolean",
+          "description": "Persistent. Keep the engine alive after the script ends, for scripts that leave windows open."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "script": {
+          "type": "string",
+          "description": "Python for script.py (IronPython or CPython, pyRevit API). Absent: a starter script."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        }
+      },
+      "additionalProperties": false
+    },
+    "toggle": {
+      "type": "object",
+      "title": "Toggle",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "toggle",
+          "description": "Toggle (.smartbutton folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "engine_clean": {
+          "type": "boolean",
+          "description": "Clean Engine. Run in a fresh engine every time instead of a cached one."
+        },
+        "engine_full_frame": {
+          "type": "boolean",
+          "description": "Full Frame. IronPython full-frame mode, needed by some libraries."
+        },
+        "engine_persistent": {
+          "type": "boolean",
+          "description": "Persistent. Keep the engine alive after the script ends, for scripts that leave windows open."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "script": {
+          "type": "string",
+          "description": "Python for script.py (IronPython or CPython, pyRevit API). Absent: a starter script."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_on": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "The icon while the toggle is on."
+        }
+      },
+      "additionalProperties": false
+    },
+    "panelbutton": {
+      "type": "object",
+      "title": "Panel Button",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "panelbutton",
+          "description": "Panel Button (.panelbutton folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "engine_clean": {
+          "type": "boolean",
+          "description": "Clean Engine. Run in a fresh engine every time instead of a cached one."
+        },
+        "engine_full_frame": {
+          "type": "boolean",
+          "description": "Full Frame. IronPython full-frame mode, needed by some libraries."
+        },
+        "engine_persistent": {
+          "type": "boolean",
+          "description": "Persistent. Keep the engine alive after the script ends, for scripts that leave windows open."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "script": {
+          "type": "string",
+          "description": "Python for script.py (IronPython or CPython, pyRevit API). Absent: a starter script."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        }
+      },
+      "additionalProperties": false
+    },
+    "urlbutton": {
+      "type": "object",
+      "title": "URL Button",
+      "required": [
+        "type",
+        "name",
+        "hyperlink"
+      ],
+      "properties": {
+        "type": {
+          "const": "urlbutton",
+          "description": "URL Button (.urlbutton folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "hyperlink": {
+          "type": "string",
+          "description": "Hyperlink. The page a URL Button opens in the browser."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        }
+      },
+      "additionalProperties": false
+    },
+    "content": {
+      "type": "object",
+      "title": "Content Button",
+      "required": [
+        "type",
+        "name",
+        "content"
+      ],
+      "properties": {
+        "type": {
+          "const": "content",
+          "description": "Content Button (.content folder). Needs a content.rfa family in this folder."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "content": {
+          "type": "string",
+          "description": "Family File. The .rfa family the button loads. Add the file to the bundle folder after unzipping."
+        },
+        "content_alt": {
+          "type": "string",
+          "description": "Ctrl+Click Family. An alternative family loaded on Ctrl+Click."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        }
+      },
+      "additionalProperties": false
+    },
+    "pulldown": {
+      "type": "object",
+      "title": "Pulldown",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "pulldown",
+          "description": "Pulldown (.pulldown folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/pushbutton"
+              },
+              {
+                "$ref": "#/$defs/toggle"
+              },
+              {
+                "$ref": "#/$defs/panelbutton"
+              },
+              {
+                "$ref": "#/$defs/urlbutton"
+              },
+              {
+                "$ref": "#/$defs/content"
+              },
+              {
+                "$ref": "#/$defs/linkbutton"
+              },
+              {
+                "$ref": "#/$defs/invokebutton"
+              },
+              {
+                "$ref": "#/$defs/nobutton"
+              }
+            ]
+          },
+          "description": "The bundles inside, in order. Allowed: pushbutton, toggle, panelbutton, urlbutton, content, linkbutton, invokebutton, nobutton."
+        }
+      },
+      "additionalProperties": false
+    },
+    "splitbutton": {
+      "type": "object",
+      "title": "Split Button",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "splitbutton",
+          "description": "Split Button (.splitbutton folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/pushbutton"
+              },
+              {
+                "$ref": "#/$defs/toggle"
+              },
+              {
+                "$ref": "#/$defs/panelbutton"
+              },
+              {
+                "$ref": "#/$defs/urlbutton"
+              },
+              {
+                "$ref": "#/$defs/content"
+              },
+              {
+                "$ref": "#/$defs/linkbutton"
+              },
+              {
+                "$ref": "#/$defs/invokebutton"
+              },
+              {
+                "$ref": "#/$defs/nobutton"
+              }
+            ]
+          },
+          "description": "The bundles inside, in order. Allowed: pushbutton, toggle, panelbutton, urlbutton, content, linkbutton, invokebutton, nobutton."
+        }
+      },
+      "additionalProperties": false
+    },
+    "splitpushbutton": {
+      "type": "object",
+      "title": "Split Push Button",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "splitpushbutton",
+          "description": "Split Push Button (.splitpushbutton folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "context": {
+          "type": "string",
+          "enum": [
+            "",
+            "zero-doc",
+            "selection",
+            "doc-project",
+            "doc-family",
+            "active-floor-plan",
+            "active-3d-view",
+            "active-detail-view",
+            "active-drafting-view"
+          ],
+          "description": "Context. When the button is enabled. With none, it always is."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/pushbutton"
+              },
+              {
+                "$ref": "#/$defs/toggle"
+              },
+              {
+                "$ref": "#/$defs/panelbutton"
+              },
+              {
+                "$ref": "#/$defs/urlbutton"
+              },
+              {
+                "$ref": "#/$defs/content"
+              },
+              {
+                "$ref": "#/$defs/linkbutton"
+              },
+              {
+                "$ref": "#/$defs/invokebutton"
+              },
+              {
+                "$ref": "#/$defs/nobutton"
+              }
+            ]
+          },
+          "description": "The bundles inside, in order. Allowed: pushbutton, toggle, panelbutton, urlbutton, content, linkbutton, invokebutton, nobutton."
+        }
+      },
+      "additionalProperties": false
+    },
+    "stack": {
+      "type": "object",
+      "title": "Stack",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "stack",
+          "description": "Stack (.stack folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "items": {
+          "type": "array",
+          "maxItems": 3,
+          "minItems": 2,
+          "items": {
+            "oneOf": [
+              {
+                "$ref": "#/$defs/pushbutton"
+              },
+              {
+                "$ref": "#/$defs/toggle"
+              },
+              {
+                "$ref": "#/$defs/urlbutton"
+              },
+              {
+                "$ref": "#/$defs/content"
+              },
+              {
+                "$ref": "#/$defs/linkbutton"
+              },
+              {
+                "$ref": "#/$defs/invokebutton"
+              },
+              {
+                "$ref": "#/$defs/pulldown"
+              },
+              {
+                "$ref": "#/$defs/splitbutton"
+              },
+              {
+                "$ref": "#/$defs/splitpushbutton"
+              }
+            ]
+          },
+          "description": "The bundles inside, in order. Allowed: pushbutton, toggle, urlbutton, content, linkbutton, invokebutton, pulldown, splitbutton, splitpushbutton."
+        }
+      },
+      "additionalProperties": false
+    },
+    "combobox": {
+      "type": "object",
+      "title": "Combo Box",
+      "required": [
+        "type",
+        "name",
+        "members"
+      ],
+      "properties": {
+        "type": {
+          "const": "combobox",
+          "description": "Combo Box (.combobox folder)."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "members": {
+          "description": "Members. The combo box's items, as a YAML list; each needs an id and a text. A YAML list, or the same as objects.",
+          "oneOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "array",
+              "minItems": 1,
+              "items": {
+                "type": "object",
+                "required": [
+                  "id",
+                  "text"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "text": {
+                    "type": "string"
+                  },
+                  "icon": {
+                    "type": "string"
+                  },
+                  "tooltip": {
+                    "type": "string"
+                  },
+                  "group": {
+                    "type": "string"
+                  }
+                },
+                "additionalProperties": false
+              }
+            }
+          ]
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        }
+      },
+      "additionalProperties": false
+    },
+    "linkbutton": {
+      "type": "object",
+      "title": "Link Button",
+      "required": [
+        "type",
+        "name",
+        "assembly",
+        "command_class"
+      ],
+      "properties": {
+        "type": {
+          "const": "linkbutton",
+          "description": "Link Button (.linkbutton folder). Binds to a .NET class. For a web link, use URL Button."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "assembly": {
+          "type": "string",
+          "description": "Assembly. The compiled .NET assembly (no .dll), resolved from this bundle's bin/ or Revit's add-ins."
+        },
+        "command_class": {
+          "type": "string",
+          "description": "Command Class. Namespace-qualified IExternalCommand class to run."
+        },
+        "availability_class": {
+          "type": "string",
+          "description": "Availability Class. IExternalCommandAvailability class deciding when the button is enabled."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        }
+      },
+      "additionalProperties": false
+    },
+    "invokebutton": {
+      "type": "object",
+      "title": "Invoke Button",
+      "required": [
+        "type",
+        "name",
+        "assembly"
+      ],
+      "properties": {
+        "type": {
+          "const": "invokebutton",
+          "description": "Invoke Button (.invokebutton folder). Runs a .NET assembly; the command class is optional."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "assembly": {
+          "type": "string",
+          "description": "Assembly. The compiled .NET assembly (no .dll), resolved from this bundle's bin/ or Revit's add-ins."
+        },
+        "command_class": {
+          "type": "string",
+          "description": "Command Class. Namespace-qualified IExternalCommand class to run."
+        },
+        "availability_class": {
+          "type": "string",
+          "description": "Availability Class. IExternalCommandAvailability class deciding when the button is enabled."
+        },
+        "large_icon": {
+          "type": "boolean",
+          "description": "Large Icon. Use the large icon size where Revit would use the medium one, in stacks and lists."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "help_url": {
+          "type": "string",
+          "description": "Help URL. Opened when the user presses F1 over the button."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        },
+        "highlight": {
+          "type": "string",
+          "enum": [
+            "",
+            "new",
+            "updated"
+          ],
+          "description": "Highlight. Revit's orange dot marking a new or updated button."
+        },
+        "beta": {
+          "type": "boolean",
+          "description": "Beta. Hidden unless the user turns on beta tools in pyRevit's settings."
+        },
+        "icon": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Light icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        },
+        "icon_dark": {
+          "type": "string",
+          "pattern": "^data:image\\/png;base64,[A-Za-z0-9+/]+={0,2}$",
+          "description": "Dark theme icon. A PNG as a data URL, ideally 96x96. Absent: the pyRevit icon."
+        }
+      },
+      "additionalProperties": false
+    },
+    "nobutton": {
+      "type": "object",
+      "title": "No Button",
+      "required": [
+        "type",
+        "name"
+      ],
+      "properties": {
+        "type": {
+          "const": "nobutton",
+          "description": "No Button (.nobutton folder). A script bundle with no ribbon button."
+        },
+        "name": {
+          "type": "string",
+          "pattern": "\\S",
+          "description": "Folder name. Unique among its siblings, ignoring case; characters a folder name can't hold are replaced."
+        },
+        "title": {
+          "type": "string",
+          "description": "Text under the icon; \\n breaks the line. Default: the name."
+        },
+        "tooltip": {
+          "type": "string",
+          "description": "Shown when hovering the button."
+        },
+        "author": {
+          "type": "string",
+          "description": "Author. Shown in the button's tooltip, and written as __author__ in its script."
+        },
+        "engine_clean": {
+          "type": "boolean",
+          "description": "Clean Engine. Run in a fresh engine every time instead of a cached one."
+        },
+        "engine_full_frame": {
+          "type": "boolean",
+          "description": "Full Frame. IronPython full-frame mode, needed by some libraries."
+        },
+        "engine_persistent": {
+          "type": "boolean",
+          "description": "Persistent. Keep the engine alive after the script ends, for scripts that leave windows open."
+        },
+        "min_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Min Revit Version. Older Revit versions skip this button."
+        },
+        "max_revit_version": {
+          "type": "integer",
+          "enum": [
+            2021,
+            2022,
+            2023,
+            2024,
+            2025,
+            2026,
+            2027,
+            2028
+          ],
+          "description": "Max Revit Version. Newer Revit versions skip this button."
+        }
+      },
+      "additionalProperties": false
+    }
+  },
+  "examples": [
+    {
+      "version": 1,
+      "name": "Acme Tools",
+      "tabs": [
+        {
+          "name": "Acme",
+          "panels": [
+            {
+              "name": "Sheets",
+              "items": [
+                {
+                  "type": "pushbutton",
+                  "name": "Renumber",
+                  "title": "Renumber\nSheets",
+                  "tooltip": "Renumber the selected sheets in order.",
+                  "author": "Acme BIM",
+                  "context": "selection",
+                  "script": "from pyrevit import revit\nprint(len(revit.get_selection()))"
+                },
+                {
+                  "type": "stack",
+                  "name": "Help",
+                  "items": [
+                    {
+                      "type": "urlbutton",
+                      "name": "Docs",
+                      "hyperlink": "https://pyrevitlabs.io"
+                    },
+                    {
+                      "type": "toggle",
+                      "name": "Auto Save",
+                      "tooltip": "Turn auto save on or off."
+                    }
+                  ]
+                },
+                {
+                  "type": "pulldown",
+                  "name": "Export",
+                  "items": [
+                    {
+                      "type": "pushbutton",
+                      "name": "To PDF",
+                      "min_revit_version": 2024
+                    },
+                    {
+                      "type": "pushbutton",
+                      "name": "To DWG",
+                      "engine_clean": true
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
