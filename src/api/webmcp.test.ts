@@ -44,7 +44,9 @@ describe("WebMCP registration", () => {
     ]);
     // get_extension returns what a link may have put there.
     expect(tools[1]?.annotations).toEqual({ readOnlyHint: true, untrustedContentHint: true });
-    expect(tools[3]?.annotations).toEqual({ readOnlyHint: false });
+    // set_extension replaces the user's work; download_extension only adds a file.
+    expect(tools[3]?.annotations).toEqual({ readOnlyHint: false, destructiveHint: true });
+    expect(tools[4]?.annotations).toEqual({ readOnlyHint: false });
 
     // The current API serializes what execute returns: the tool's own
     // result, not an MCP envelope with JSON in a string.

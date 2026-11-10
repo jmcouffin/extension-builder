@@ -39,6 +39,12 @@ export interface AgentTool {
   /** True when the tool only reads: it changes nothing in the builder. */
   readOnly: boolean;
   /**
+   * True when the tool can throw away the user's work: it replaces what is in
+   * the builder (Undo can still take it back). Only meaningful when readOnly
+   * is false.
+   */
+  destructive?: boolean;
+  /**
    * True when the result carries text the user or a link put in the
    * extension (names, tooltips, scripts), which an agent must not take as
    * instructions: an import link can come from anyone.
@@ -175,6 +181,7 @@ const setExtension: AgentTool = {
   description: `Replaces the whole extension in the builder with the given spec, which the user then sees as the ribbon. It is one undo step: the user can take it back with Undo (Ctrl+Z). Refused, with the errors and their JSON paths, if the spec is malformed. When it loads, any "problems" (download refused until fixed) and "warnings" are returned. Icons: what the spec holds replaces every icon, so to keep the user's custom icons, read them with get_extension include_icons: true and pass them back. ${WORKFLOW}`,
   inputSchema: specInput("The whole extension, replacing the current one."),
   readOnly: false,
+  destructive: true,
   async execute(input) {
     const result = layoutFromSpec(input.spec);
     if (!result.layout) {
@@ -232,13 +239,22 @@ const downloadExtension: AgentTool = {
   },
 };
 
-export const AGENT_TOOLS: readonly AgentTool[] = [
-  getExtensionSchema,
-  getExtension,
-  validateExtension,
-  setExtension,
-  downloadExtension,
-];
+export const AGENT_TOOLS: readonly AgentTool[] = Object.freeze(
+  [getExtensionSchema, getExtension, validateExtension, setExtension, downloadExtension].map(
+    (tool) => Object.freeze(tool),
+  ),
+);
+
+/**
+ * The arguments a tool's inputSchema does not declare, when it forbids
+ * them (additionalProperties: false). Agents mistype argument names
+ * ("includeIcons"); ignoring them silently hides the mistake.
+ */
+export function unknownArguments(tool: AgentTool, args: Record<string, unknown>): string[] {
+  if (tool.inputSchema.additionalProperties !== false) return [];
+  const known = Object.keys((tool.inputSchema.properties as Record<string, unknown>) ?? {});
+  return Object.keys(args).filter((key) => !known.includes(key));
+}
 
 /**
  * The arguments of a call, as an object. Tolerates what agents send: nothing,
@@ -270,6 +286,16 @@ export async function callTool(name: string, input?: unknown): Promise<ToolResul
   }
   const args = argumentsOf(input);
   if (!args) return { ok: false, message: `The arguments of ${name} must be a JSON object.` };
+  const unknown = unknownArguments(tool, args);
+  if (unknown.length) {
+    const known = Object.keys((tool.inputSchema.properties as Record<string, unknown>) ?? {});
+    return {
+      ok: false,
+      message: `${name} does not take ${unknown.map((k) => `"${k}"`).join(", ")}; ${
+        known.length ? `its arguments are: ${known.join(", ")}` : "it takes no arguments"
+      }. Nothing changed.`,
+    };
+  }
   try {
     return await tool.execute(args);
   } catch (error) {

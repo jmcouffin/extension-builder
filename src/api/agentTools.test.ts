@@ -175,6 +175,26 @@ describe("agent tools", () => {
     expect(await callTool("get_extension", "not json")).toMatchObject({ ok: false });
   });
 
+  it("refuses arguments a tool does not declare, names the right ones, and changes nothing", async () => {
+    const before = names();
+    const typo = await callTool("get_extension", { includeIcons: true });
+    expect(typo.ok).toBe(false);
+    expect(typo.message).toContain('"includeIcons"');
+    expect(typo.message).toContain("include_icons");
+    const extra = await callTool("set_extension", { spec: EXAMPLE_SPEC, force: true });
+    expect(extra.ok).toBe(false);
+    expect(names()).toEqual(before);
+    const none = await callTool("download_extension", { now: true });
+    expect(none.message).toContain("takes no arguments");
+    expect(downloadBlob).not.toHaveBeenCalled();
+  });
+
+  it("marks set_extension destructive, and freezes the tools", () => {
+    expect(AGENT_TOOLS.filter((t) => t.destructive).map((t) => t.name)).toEqual(["set_extension"]);
+    expect(Object.isFrozen(AGENT_TOOLS)).toBe(true);
+    expect(AGENT_TOOLS.every((t) => Object.isFrozen(t))).toBe(true);
+  });
+
   it("accepts arguments as a JSON string, as older WebMCP builds send them", async () => {
     expect(argumentsOf(undefined)).toEqual({});
     expect(argumentsOf('{"include_icons":true}')).toEqual({ include_icons: true });
