@@ -45,6 +45,7 @@ describe("PNG icons only", () => {
     );
     expect(iconRefusal("logo.png", JPEG)).toMatch(/^"logo\.png" is a JPEG image/);
     expect(iconRefusal("notes.txt", text("hello"))).toMatch(/is not a PNG image/);
+    expect(iconRefusal("logo.svg", text("<svg/>"))).toMatch(/^"logo\.svg" is an SVG image/);
   });
 
   it("resets icons that aren't PNG when a layout loads, and names them", () => {
@@ -63,6 +64,17 @@ describe("PNG icons only", () => {
       /^2 icons weren't PNG and are back to the default/,
     );
     expect(droppedIconsNotice([])).toBeNull();
+
+    // An empty icon is no icon: reset quietly, not reported as refused.
+    const empty = initialLayout();
+    const first = empty.elements.element1;
+    if (!first) throw new Error("no button");
+    first.iconData = "";
+    const none: string[] = [];
+    expect(
+      migrate(JSON.parse(JSON.stringify(snapshot(empty))), none).elements.element1?.iconData,
+    ).toBeNull();
+    expect(none).toEqual([]);
   });
 
   it("refuses a spec icon that isn't PNG, even under a PNG data URL", () => {
@@ -73,9 +85,13 @@ describe("PNG icons only", () => {
       ],
     });
     expect(layoutFromSpec(spec(JPEG_URL)).errors[0]?.message).toMatch(
-      /JPEG, GIF, BMP and SVG are refused/,
+      /JPEG, GIF, BMP, WebP and SVG are refused/,
     );
     expect(layoutFromSpec(spec(LYING_URL)).errors[0]?.message).toMatch(/is not a PNG image/);
+    // Starts like a PNG, but isn't valid base64.
+    expect(layoutFromSpec(spec("data:image/png;base64,iVBORw0KGgo!!!")).errors[0]?.message).toMatch(
+      /invalid base64 characters or padding/,
+    );
     expect(layoutFromSpec(spec(pngDataUrl(png))).errors).toEqual([]);
   });
 
