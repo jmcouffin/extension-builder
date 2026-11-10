@@ -308,9 +308,11 @@ export function layoutFromSpec(input: unknown): SpecResult {
         else if (!isPngDataUrl(value)) {
           err(
             at,
-            typeof value === "string" && value.startsWith("data:image/png;base64,")
-              ? 'is not a PNG image: its data doesn\'t start like one (base64 "iVBORw0KGgo")'
-              : 'must be a PNG data URL: "data:image/png;base64,...". pyRevit icons are PNG; JPEG, GIF, BMP and SVG are refused',
+            typeof value === "string" && value.startsWith("data:image/png;base64,iVBORw0KGgo")
+              ? "is not an acceptable PNG data URL: it contains invalid base64 characters or padding"
+              : typeof value === "string" && value.startsWith("data:image/png;base64,")
+                ? 'is not a PNG image: its data doesn\'t start like one (base64 "iVBORw0KGgo")'
+                : 'must be a PNG data URL: "data:image/png;base64,...". pyRevit icons are PNG; JPEG, GIF, BMP, WebP and SVG are refused',
           );
         } else
           element[
