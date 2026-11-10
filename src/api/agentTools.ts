@@ -4,16 +4,32 @@
 // agents that drive the page by script. Every tool speaks the extension spec
 // (spec.ts), and every result is plain JSON.
 //
-// The tools are coarse on purpose: an agent reads the whole extension, edits
-// the JSON, and writes it back. A write is one undo step in the builder, so
-// the user can always take it back.
+// An agent reads the extension with get_extension, then either changes part
+// of it by name with edit_extension, or writes a new one whole with
+// set_extension. Every write is one undo step in the builder, so the user can
+// always take it back.
+//
+// Browsers don't check arguments against inputSchema (the WebMCP draft only
+// asks that they parse to an object, and Chromium hands execute anything), so
+// every tool checks its own; inputSchema is guidance for the agent. That is
+// why the spec-taking tools carry a short one pointing to
+// get_extension_schema, rather than the whole schema twice.
 
+import type { Layout } from "../domain/model";
 import { brokenButtons, downloadWarnings, validate } from "../domain/tree";
 import { buildZip, downloadBlob } from "../domain/zip";
 import { loadDefaultIcons } from "../state/defaultIcons";
 import { layoutOf, useStore } from "../state/store";
+import { applyEdits, EDIT_OPS, MAX_EDITS } from "./edits";
 import { extensionSchema } from "./schema";
-import { layoutFromSpec, SPEC_VERSION, specFromLayout } from "./spec";
+import {
+  type BundleSpec,
+  type ExtensionSpec,
+  layoutFromSpec,
+  SCHEMA_PATH,
+  SPEC_VERSION,
+  specFromLayout,
+} from "./spec";
 
 /** A JSON Schema, as a plain object. */
 export type JsonSchema = Record<string, unknown>;
@@ -36,6 +52,8 @@ export interface AgentTool {
   /** Written for a model reading it cold. */
   description: string;
   inputSchema: JsonSchema;
+  /** The shape of every result, refusals included (WebMCP's outputSchema). */
+  outputSchema: JsonSchema;
   /** True when the tool only reads: it changes nothing in the builder. */
   readOnly: boolean;
   /**
@@ -58,24 +76,85 @@ const SITE = "https://builder.pyrevitlabs.io";
 const ABOUT =
   "This page is the pyRevit Extension Builder. pyRevit is an open-source add-in framework for Autodesk Revit that turns folders of Python scripts into Revit ribbon buttons. An extension is one such folder (<name>.extension): ribbon tabs, holding panels, holding bundles (push buttons that run a Python script, URL buttons, toggles, stacks, pulldowns, split buttons, combo boxes...). The builder shows the extension as a Revit ribbon the user edits, and downloads it as a ZIP to unzip into their pyRevit extensions folder.";
 
-const WORKFLOW = `To change the extension: call get_extension, edit the returned spec, check it with validate_extension, then write it back whole with set_extension. Every bundle type and parameter is in get_extension_schema; a guide with examples is at ${SITE}/llms.txt.`;
+const WORKFLOW = `To change the extension: call get_extension, then change part of it by name with edit_extension, or write a new spec whole with set_extension (check one first with validate_extension). Every bundle type and parameter is in get_extension_schema; a guide with examples is at ${SITE}/llms.txt.`;
 
-/** The inputSchema of a tool that takes a spec, with the schema's $defs at the root so its $refs resolve. */
+/**
+ * The inputSchema of a tool that takes a spec: short, pointing to
+ * get_extension_schema for the full one (29 KB, which would otherwise be
+ * loaded twice before any call). The tool checks the spec itself.
+ */
 function specInput(description: string): JsonSchema {
-  const schema = extensionSchema();
-  const spec: JsonSchema = {};
-  for (const [key, value] of Object.entries(schema)) {
-    if (!["$schema", "$id", "$defs", "examples"].includes(key)) spec[key] = value;
-  }
-  spec.description = `${description} ${String(schema.description ?? "")}`.trim();
   return {
     type: "object",
-    properties: { spec },
+    properties: {
+      spec: {
+        type: "object",
+        description: `${description} An extension spec: {"name": ..., "tabs": [{"name": ..., "panels": [{"name": ..., "items": [bundles]}]}]}, each bundle {"type": ..., "name": ..., parameters..., "items" for a stack or group}, as get_extension returns. Its full JSON Schema, with every bundle type and parameter, is what get_extension_schema returns (also at ${SITE}/${SCHEMA_PATH}). The builder checks the spec and answers with the JSON path of anything wrong.`,
+        required: ["name", "tabs"],
+        properties: {
+          version: { const: SPEC_VERSION },
+          name: { type: "string" },
+          tabs: { type: "array", items: { type: "object" } },
+        },
+      },
+    },
     required: ["spec"],
     additionalProperties: false,
-    $defs: schema.$defs,
   };
 }
+
+const ISSUES: JsonSchema = {
+  type: "array",
+  description:
+    "Why the input was refused, at a JSON path in the spec or the arguments. Nothing changed.",
+  items: {
+    type: "object",
+    required: ["path", "message"],
+    properties: {
+      path: {
+        type: "string",
+        description: 'E.g. "tabs[0].panels[1].items[2].hyperlink" or "edits[0].path[1]".',
+      },
+      message: { type: "string" },
+    },
+    additionalProperties: false,
+  },
+};
+
+/** The result every tool shares, plus what one tool adds. */
+function resultSchema(extra: Record<string, JsonSchema> = {}): JsonSchema {
+  return {
+    type: "object",
+    required: ["ok", "message"],
+    properties: {
+      ok: {
+        type: "boolean",
+        description: "False when the tool refused or failed; then nothing changed.",
+      },
+      message: {
+        type: "string",
+        description: "What happened, in a sentence or two, to act on or tell the user.",
+      },
+      errors: ISSUES,
+      problems: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "pyRevit would skip part of the extension; download is refused until they are fixed.",
+      },
+      warnings: {
+        type: "array",
+        items: { type: "string" },
+        description:
+          "Worth telling the user, nothing is blocked: buttons that won't work and why, sample values, files to add after unzipping.",
+      },
+      ...extra,
+    },
+    additionalProperties: false,
+  };
+}
+
+const NO_ARGUMENTS: JsonSchema = { type: "object", properties: {}, additionalProperties: false };
 
 function currentLayout() {
   return layoutOf(useStore.getState());
@@ -97,7 +176,13 @@ const getExtensionSchema: AgentTool = {
   name: "get_extension_schema",
   title: "Get the extension JSON Schema",
   description: `Returns the JSON Schema (draft 2020-12) of an extension spec: the format get_extension returns and set_extension takes. It lists every bundle type under $defs, with each type's parameters, which are required, and which bundles a stack, pulldown or split button may hold. Read it before writing bundle types or parameters you have not seen in get_extension's output. ${WORKFLOW}`,
-  inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  inputSchema: NO_ARGUMENTS,
+  outputSchema: resultSchema({
+    schema: {
+      type: "object",
+      description: "The JSON Schema (draft 2020-12) of an extension spec.",
+    },
+  }),
   readOnly: true,
   async execute() {
     return {
@@ -124,6 +209,9 @@ const getExtension: AgentTool = {
     },
     additionalProperties: false,
   },
+  outputSchema: resultSchema({
+    spec: { type: "object", description: "The extension open in the builder, as a spec." },
+  }),
   readOnly: true,
   untrustedContent: true,
   async execute(input) {
@@ -156,6 +244,7 @@ const validateExtension: AgentTool = {
   title: "Validate an extension spec",
   description: `Checks an extension spec without changing anything in the builder. Returns "errors" (the spec is malformed, with the JSON path of each: set_extension would refuse it), "problems" (it would load, but pyRevit would skip or break part of it, so download would be refused) and "warnings" (buttons that won't work because a required parameter is empty, and why; sample values worth replacing; files to add after unzipping). ok is true when there are no errors and no problems. ${WORKFLOW}`,
   inputSchema: specInput("The extension spec to check."),
+  outputSchema: resultSchema(),
   readOnly: true,
   async execute(input) {
     const result = layoutFromSpec(input.spec);
@@ -180,6 +269,7 @@ const setExtension: AgentTool = {
   title: "Replace the extension",
   description: `Replaces the whole extension in the builder with the given spec, which the user then sees as the ribbon. It is one undo step: the user can take it back with Undo (Ctrl+Z). Refused, with the errors and their JSON paths, if the spec is malformed. When it loads, any "problems" (download refused until fixed) and "warnings" are returned. Icons: what the spec holds replaces every icon, so to keep the user's custom icons, read them with get_extension include_icons: true and pass them back. ${WORKFLOW}`,
   inputSchema: specInput("The whole extension, replacing the current one."),
+  outputSchema: resultSchema(),
   readOnly: false,
   destructive: true,
   async execute(input) {
@@ -206,11 +296,155 @@ const setExtension: AgentTool = {
   },
 };
 
+/**
+ * What an icon stands as while edits go through the spec: a data URL no icon
+ * has, that still passes the spec's PNG check (every PNG, as base64, starts
+ * "iVBORw0KGgo").
+ */
+const ICON_TOKEN = "data:image/png;base64,iVBORw0KGgoQnVpbGRlckljb24";
+const ICON_KEYS = ["icon", "icon_dark", "icon_on"] as const;
+
+/**
+ * Set the spec's icons aside for unique tokens, so they survive any edit
+ * (renames and moves included) without being re-read or sent back: an icon
+ * the agent doesn't touch comes back exactly as it was.
+ */
+function stashIcons(spec: ExtensionSpec): Map<string, string> {
+  const stash = new Map<string, string>();
+  const walk = (bundles: BundleSpec[] | undefined) => {
+    for (const bundle of bundles ?? []) {
+      for (const key of ICON_KEYS) {
+        const value = bundle[key];
+        if (typeof value !== "string") continue;
+        const token = `${ICON_TOKEN}${stash.size.toString(36)}`;
+        stash.set(token, value);
+        bundle[key] = token;
+      }
+      walk(bundle.items);
+    }
+  };
+  for (const tab of spec.tabs) for (const panel of tab.panels) walk(panel.items);
+  return stash;
+}
+
+function restoreIcons(layout: Layout, stash: Map<string, string>) {
+  for (const el of Object.values(layout.elements)) {
+    for (const key of ["iconData", "iconDarkData", "iconOnData"] as const) {
+      const value = el[key];
+      if (value && stash.has(value)) el[key] = stash.get(value) ?? null;
+    }
+  }
+}
+
+const editExtension: AgentTool = {
+  name: "edit_extension",
+  title: "Edit part of the extension",
+  description: `Changes part of the extension in place, by name, without sending the whole spec back: change a bundle's parameters or name, add, remove or move a tab, panel or bundle. "edits" apply in order, all or none, as one undo step; icons you don't touch are kept. Each edit has an "op" and a "path" of names from the top: [] is the extension, ["Tab"] a tab, ["Tab", "Panel"] a panel, ["Tab", "Panel", "Button"] a bundle, ["Tab", "Panel", "Stack", "Button"] a bundle inside a stack or group.
+- update: {"op": "update", "path": [...], "set": {"tooltip": "...", "min_revit_version": 2024}}. null removes a key. The extension, a tab or a panel only takes "name".
+- add: {"op": "add", "path": [where], "item": {...}, "index": n}: a tab into [], a panel into ["Tab"], a bundle into a panel or a stack or group, written as in a spec. index is optional (default: last).
+- remove: {"op": "remove", "path": [...]}.
+- move: {"op": "move", "path": [...], "to": [where], "index": n}.
+Refused, with the edit and the reason, if a path matches nothing or the result would be malformed; nothing changes then. Returns problems and warnings like set_extension. ${WORKFLOW}`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      edits: {
+        type: "array",
+        minItems: 1,
+        maxItems: MAX_EDITS,
+        description: "Applied in order, all or none.",
+        items: {
+          type: "object",
+          required: ["op", "path"],
+          properties: {
+            op: { enum: [...EDIT_OPS] },
+            path: {
+              type: "array",
+              items: { type: "string" },
+              description:
+                "Names from the top: [] extension, [tab], [tab, panel], [tab, panel, bundle, ...].",
+            },
+            set: { type: "object", description: "update: the keys to set; null removes one." },
+            item: { type: "object", description: "add: the tab, panel or bundle, as in a spec." },
+            to: {
+              type: "array",
+              items: { type: "string" },
+              description: "move: the tab, panel or group it goes into.",
+            },
+            index: {
+              type: "integer",
+              minimum: 0,
+              description: "add, move: position among its new siblings.",
+            },
+          },
+          additionalProperties: false,
+        },
+      },
+    },
+    required: ["edits"],
+    additionalProperties: false,
+  },
+  outputSchema: resultSchema(),
+  readOnly: false,
+  // It can remove: not only additive, though each call is one undo step.
+  destructive: true,
+  async execute(input) {
+    const state = useStore.getState();
+    const layout = currentLayout();
+    const activeTab = layout.tabs[state.activeTabId]?.name;
+    const spec = specFromLayout(layout, { icons: true });
+    const stash = stashIcons(spec);
+
+    const edited = applyEdits(spec, input.edits);
+    if (!edited.spec) {
+      const [first] = edited.errors;
+      return {
+        ok: false,
+        message: `Nothing changed: ${first ? `${first.path} ${first.message}` : "the edits are wrong"}. Fix it and call edit_extension again (get_extension shows the names).`,
+        errors: edited.errors,
+      };
+    }
+    const result = layoutFromSpec(edited.spec);
+    if (!result.layout) {
+      return {
+        ok: false,
+        message: `Nothing changed: after these edits the extension would have ${plural(result.errors.length, "error")} (the paths are in the edited extension).`,
+        errors: result.errors,
+      };
+    }
+    restoreIcons(result.layout, stash);
+    // Stay on the tab the user was on, if it's still there.
+    const keep = Object.entries(result.layout.tabs).find(([, tab]) => tab.name === activeTab)?.[0];
+    if (keep) result.layout.activeTabId = keep;
+    useStore.getState().loadLayout(result.layout);
+
+    const done = edited.done.join("; ");
+    return {
+      ok: true,
+      message: `${done.charAt(0).toUpperCase()}${done.slice(1)}. One undo step for the user.${
+        result.problems.length
+          ? ` ${plural(result.problems.length, "problem")} to fix before it can be downloaded.`
+          : ""
+      }`,
+      problems: result.problems,
+      warnings: result.warnings,
+    };
+  },
+};
+
 const downloadExtension: AgentTool = {
   name: "download_extension",
   title: "Download the extension ZIP",
   description: `Builds the extension open in the builder into a ZIP and downloads it in the user's browser, as the page's Download button does. The user unzips it into a folder pyRevit loads extensions from. Refused, with the problems, if pyRevit would skip or break part of the extension; fix them with set_extension first. A button with a required parameter left empty (a URL Button's hyperlink, say) doesn't stop the download: the reply says which buttons won't work and why ("broken"), to tell the user. Returns the file name. ${WORKFLOW}`,
-  inputSchema: { type: "object", properties: {}, additionalProperties: false },
+  inputSchema: NO_ARGUMENTS,
+  outputSchema: resultSchema({
+    file_name: { type: "string", description: "The ZIP the browser downloaded." },
+    broken: {
+      type: "array",
+      items: { type: "string" },
+      description: "Buttons that won't work as built, and why; tell the user.",
+    },
+  }),
   readOnly: false,
   async execute() {
     const layout = currentLayout();
@@ -255,6 +489,7 @@ export const AGENT_TOOLS: readonly AgentTool[] = deepFreeze([
   getExtensionSchema,
   getExtension,
   validateExtension,
+  editExtension,
   setExtension,
   downloadExtension,
 ]);

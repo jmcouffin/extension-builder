@@ -39,7 +39,7 @@ test.describe("the browser's own WebMCP", () => {
     );
   });
 
-  test("lists the five tools, with their hints", async ({ page }) => {
+  test("lists the six tools, with their hints", async ({ page }) => {
     const tools = await page.evaluate(async () =>
       (
         await (document as unknown as { modelContext: NativeModelContext }).modelContext.getTools()
@@ -51,6 +51,7 @@ test.describe("the browser's own WebMCP", () => {
     );
     expect(tools.sort((a, b) => a.name.localeCompare(b.name))).toEqual([
       { name: "download_extension", readOnly: false, untrusted: false },
+      { name: "edit_extension", readOnly: false, untrusted: false },
       { name: "get_extension", readOnly: true, untrusted: true },
       { name: "get_extension_schema", readOnly: true, untrusted: false },
       { name: "set_extension", readOnly: false, untrusted: false },
@@ -68,6 +69,15 @@ test.describe("the browser's own WebMCP", () => {
     }
 
     expect((await run(page, "get_extension")).spec).toEqual(EXAMPLE_SPEC);
+    expect(
+      await run(page, "edit_extension", {
+        edits: [
+          { op: "update", path: ["Acme", "Sheets", "Help", "Docs"], set: { tooltip: "Read me" } },
+        ],
+      }),
+    ).toMatchObject({ ok: true, problems: [] });
+    const docs = (await run(page, "get_extension")).spec.tabs[0].panels[0].items[1].items[0];
+    expect(docs).toMatchObject({ name: "Docs", tooltip: "Read me" });
     expect(
       await run(page, "validate_extension", {
         spec: {
