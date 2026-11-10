@@ -296,14 +296,18 @@ const setExtension: AgentTool = {
   },
 };
 
-/** A valid PNG data URL no icon has: what an icon stands as while edits go through the spec. */
-const ICON_TOKEN = "data:image/png;base64,QnVpbGRlckljb24";
+/**
+ * What an icon stands as while edits go through the spec: a data URL no icon
+ * has, that still passes the spec's PNG check (every PNG, as base64, starts
+ * "iVBORw0KGgo").
+ */
+const ICON_TOKEN = "data:image/png;base64,iVBORw0KGgoQnVpbGRlckljb24";
 const ICON_KEYS = ["icon", "icon_dark", "icon_on"] as const;
 
 /**
  * Set the spec's icons aside for unique tokens, so they survive any edit
- * (renames and moves included) without going through the spec reader,
- * which takes only PNGs where the builder also keeps JPEG, GIF, BMP and SVG.
+ * (renames and moves included) without being re-read or sent back: an icon
+ * the agent doesn't touch comes back exactly as it was.
  */
 function stashIcons(spec: ExtensionSpec): Map<string, string> {
   const stash = new Map<string, string>();
