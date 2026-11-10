@@ -39,14 +39,16 @@ describe("WebMCP registration", () => {
       "get_extension_schema",
       "get_extension",
       "validate_extension",
+      "edit_extension",
       "set_extension",
       "download_extension",
     ]);
     // get_extension returns what a link may have put there.
     expect(tools[1]?.annotations).toEqual({ readOnlyHint: true, untrustedContentHint: true });
     // set_extension replaces the user's work; download_extension only adds a file.
-    expect(tools[3]?.annotations).toEqual({ readOnlyHint: false, destructiveHint: true });
-    expect(tools[4]?.annotations).toEqual({ readOnlyHint: false });
+    expect(tools[4]?.annotations).toEqual({ readOnlyHint: false, destructiveHint: true });
+    expect(tools.every((t) => t.outputSchema?.required)).toBe(true);
+    expect(tools[5]?.annotations).toEqual({ readOnlyHint: false });
 
     // The current API serializes what execute returns: the tool's own
     // result, not an MCP envelope with JSON in a string.
@@ -55,7 +57,7 @@ describe("WebMCP registration", () => {
     expect((result.spec as { name: string }).name).toBe(useStore.getState().extensionName);
     expect(result).not.toHaveProperty("content");
 
-    const refused = (await tools[3]?.execute({ spec: {} })) as ToolResult;
+    const refused = (await tools[4]?.execute({ spec: {} })) as ToolResult;
     expect(refused.ok).toBe(false);
     expect(refused.errors).not.toEqual([]);
 
@@ -72,13 +74,14 @@ describe("WebMCP registration", () => {
     dispose = registerWebMcp();
     expect(provideContext).toHaveBeenCalledOnce();
     const tools: WebMcpTool[] = provideContext.mock.calls[0]?.[0].tools;
-    expect(tools).toHaveLength(5);
+    expect(tools).toHaveLength(6);
 
     // The older builds expected an MCP CallToolResult.
     const result = (await tools[1]?.execute({})) as McpToolResult;
+    expect(result.structuredContent.ok).toBe(true);
     expect(JSON.parse(result.content[0]?.text ?? "{}").ok).toBe(true);
     expect(result.isError).toBeUndefined();
-    const refused = (await tools[3]?.execute({ spec: {} })) as McpToolResult;
+    const refused = (await tools[4]?.execute({ spec: {} })) as McpToolResult;
     expect(refused.isError).toBe(true);
 
     dispose();
@@ -103,7 +106,7 @@ describe("WebMCP registration", () => {
     dispose = registerWebMcp();
     expect(registerWebMcp()).toBe(dispose);
     const api = window.pyrevitBuilder;
-    expect(api?.tools).toHaveLength(5);
+    expect(api?.tools).toHaveLength(6);
     expect((await api?.call("get_extension", {}))?.ok).toBe(true);
     expect((await api?.validate({ name: "X" }))?.ok).toBe(false);
     expect(api?.schema()).toMatchObject({ title: "pyRevit extension" });
