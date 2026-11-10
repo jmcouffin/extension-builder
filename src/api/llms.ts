@@ -70,7 +70,7 @@ pyRevit is the open-source Revit add-in framework (https://pyrevitlabs.io). An e
 3. **Or act in the page yourself**, when you run in the user's browser:
    - with WebMCP, the page registers tools on \`document.modelContext\`: \`get_extension_schema\`, \`get_extension\`, \`validate_extension\`, \`edit_extension\`, \`set_extension\` and \`download_extension\`. Each write is one undo step;
    - by script, the same tools are on \`window.pyrevitBuilder\`: \`await pyrevitBuilder.call("edit_extension", { edits })\`, or \`getExtension()\`, \`edit(edits)\`, \`setExtension(spec)\`, \`validate(spec)\`, \`download()\`, \`schema()\`.
-   For a small change, \`edit_extension\` addresses a tab, panel or bundle by its names and changes only that, e.g. \`{"edits": [{"op": "update", "path": ["Acme", "Sheets", "Docs"], "set": {"tooltip": "Read the docs"}}]}\`; ops are \`update\` (\`set\`, where null removes a key), \`add\` (\`item\`, \`index\`), \`remove\` and \`move\` (\`to\`, \`index\`), all applied or none. To rewrite most of it, edit the spec from \`get_extension\` and write it whole with \`set_extension\`.
+   For a small change, `edit_extension` addresses a tab, panel or bundle by its names and changes only that, e.g. `{"edits": [{"op": "update", "path": ["Acme", "Sheets", "Help", "Docs"], "set": {"tooltip": "Read the docs"}}]}`; ops are `update` (`set`, where null removes a key), `add` (`item`, `index`), `remove` and `move` (`to`, `index`), all applied or none. To rewrite most of it, edit the spec from `get_extension` and write it whole with `set_extension`.
    Edit by reading the extension, changing the JSON, and writing it back.
 
 The builder checks a spec at two levels, and says what to fix:
