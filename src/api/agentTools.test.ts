@@ -31,11 +31,12 @@ beforeEach(() => {
 });
 
 describe("agent tools", () => {
-  it("declares the five tools, read-only where they only read", () => {
+  it("declares the six tools, read-only where they only read", () => {
     expect(AGENT_TOOLS.map((t) => [t.name, t.readOnly])).toEqual([
       ["get_extension_schema", true],
       ["get_extension", true],
       ["validate_extension", true],
+      ["edit_extension", false],
       ["set_extension", false],
       ["download_extension", false],
     ]);
@@ -45,14 +46,55 @@ describe("agent tools", () => {
     }
   });
 
-  it("gives spec-taking tools an input schema that holds the extension schema", () => {
+  it("gives spec-taking tools a short input schema that points to get_extension_schema", () => {
     const ajv = new Ajv2020({ allErrors: true, strict: false });
     for (const name of ["validate_extension", "set_extension"]) {
       const tool = AGENT_TOOLS.find((t) => t.name === name);
-      const check = ajv.compile(tool?.inputSchema ?? {});
+      const schema = tool?.inputSchema ?? {};
+      // Not the 29 KB extension schema, loaded twice before any call.
+      expect(JSON.stringify(schema).length).toBeLessThan(1500);
+      expect(JSON.stringify(schema)).toContain("get_extension_schema");
+      const check = ajv.compile(schema);
       expect(check({ spec: EXAMPLE_SPEC }), JSON.stringify(check.errors)).toBe(true);
-      expect(check({ spec: one({ type: "button", name: "B" }) })).toBe(false);
       expect(check({})).toBe(false);
+    }
+  });
+
+  it("checks the spec itself, as browsers don't check arguments against inputSchema", async () => {
+    // Accepted by the short schema, refused by the tool, with the path.
+    const result = await callTool("validate_extension", {
+      spec: one({ type: "button", name: "B" }),
+    });
+    expect(result.ok).toBe(false);
+    expect(result.errors).toEqual([
+      expect.objectContaining({ path: "tabs[0].panels[0].items[0].type" }),
+    ]);
+    expect((await callTool("set_extension", { spec: [1] })).ok).toBe(false);
+  });
+
+  it("declares an outputSchema every result matches, refusals included", async () => {
+    const ajv = new Ajv2020({ allErrors: true, strict: false });
+    const calls: [string, unknown][] = [
+      ["get_extension_schema", {}],
+      ["get_extension", {}],
+      ["get_extension", { include_icons: true }],
+      ["validate_extension", { spec: EXAMPLE_SPEC }],
+      ["validate_extension", { spec: one({ type: "button", name: "B" }) }],
+      ["edit_extension", { edits: [{ op: "update", path: ["Nope"], set: { name: "X" } }] }],
+      ["set_extension", { spec: { name: "X" } }],
+      ["set_extension", { spec: EXAMPLE_SPEC }],
+      [
+        "edit_extension",
+        { edits: [{ op: "update", path: ["Acme", "Sheets", "Renumber"], set: { tooltip: "T" } }] },
+      ],
+      ["download_extension", {}],
+      ["get_extension", { includeIcons: true }],
+    ];
+    for (const [name, input] of calls) {
+      const tool = AGENT_TOOLS.find((t) => t.name === name);
+      const check = ajv.compile(tool?.outputSchema ?? {});
+      const result = await callTool(name, input);
+      expect(check(result), `${name}: ${JSON.stringify(check.errors)}`).toBe(true);
     }
   });
 
@@ -189,8 +231,11 @@ describe("agent tools", () => {
     expect(downloadBlob).not.toHaveBeenCalled();
   });
 
-  it("marks set_extension destructive, and freezes the tools", () => {
-    expect(AGENT_TOOLS.filter((t) => t.destructive).map((t) => t.name)).toEqual(["set_extension"]);
+  it("marks the tools that can remove destructive, and freezes the tools", () => {
+    expect(AGENT_TOOLS.filter((t) => t.destructive).map((t) => t.name)).toEqual([
+      "edit_extension",
+      "set_extension",
+    ]);
     expect(Object.isFrozen(AGENT_TOOLS)).toBe(true);
     expect(AGENT_TOOLS.every((t) => Object.isFrozen(t))).toBe(true);
   });
@@ -200,5 +245,92 @@ describe("agent tools", () => {
     expect(argumentsOf('{"include_icons":true}')).toEqual({ include_icons: true });
     const result = await callTool("set_extension", JSON.stringify({ spec: EXAMPLE_SPEC }));
     expect(result.ok).toBe(true);
+  });
+
+  it("edit_extension changes one bundle by name, as one undo step", async () => {
+    await callTool("set_extension", { spec: EXAMPLE_SPEC });
+    const before = useStore.temporal.getState().pastStates.length;
+    const result = await callTool("edit_extension", {
+      edits: [
+        {
+          op: "update",
+          path: ["Acme", "Sheets", "Help", "Docs"],
+          set: { tooltip: "Read the docs" },
+        },
+        { op: "add", path: ["Acme", "Sheets"], item: { type: "pushbutton", name: "Purge" } },
+      ],
+    });
+    expect(result).toMatchObject({ ok: true, problems: [] });
+    expect(result.message).toMatch(
+      /^Updated "Acme" \/ "Sheets" \/ "Help" \/ "Docs"; added bundle "Purge"/,
+    );
+    expect(useStore.temporal.getState().pastStates.length).toBe(before + 1);
+    const docs = Object.values(useStore.getState().elements).find((e) => e.name === "Docs");
+    expect(docs?.tooltip).toBe("Read the docs");
+    useStore.temporal.getState().undo();
+    expect(Object.values(useStore.getState().elements).some((e) => e.name === "Purge")).toBe(false);
+  });
+
+  it("edit_extension keeps icons it doesn't touch, a JPEG included, across a rename", async () => {
+    await callTool("set_extension", { spec: EXAMPLE_SPEC });
+    const jpeg = "data:image/jpeg;base64,/9j/4AAQSkZJRg==";
+    const renumber = Object.entries(useStore.getState().elements).find(
+      ([, e]) => e.name === "Renumber",
+    );
+    useStore.setState((s) => {
+      const el = s.elements[renumber?.[0] ?? ""];
+      if (el) el.iconData = jpeg;
+    });
+    const result = await callTool("edit_extension", {
+      edits: [
+        { op: "update", path: ["Acme", "Sheets", "Renumber"], set: { name: "Renumber All" } },
+      ],
+    });
+    expect(result.ok).toBe(true);
+    const renamed = Object.values(useStore.getState().elements).find(
+      (e) => e.name === "Renumber All",
+    );
+    expect(renamed?.iconData).toBe(jpeg);
+  });
+
+  it("edit_extension keeps the user on their tab", async () => {
+    await callTool("set_extension", {
+      spec: {
+        ...EXAMPLE_SPEC,
+        tabs: [...EXAMPLE_SPEC.tabs, { name: "Second", panels: [{ name: "P", items: [] }] }],
+      },
+    });
+    const second = Object.entries(useStore.getState().tabs).find(
+      ([, t]) => t.name === "Second",
+    )?.[0];
+    useStore.getState().activateTab(second ?? "");
+    await callTool("edit_extension", {
+      edits: [{ op: "update", path: ["Acme", "Sheets", "Renumber"], set: { tooltip: "x" } }],
+    });
+    const active = useStore.getState().tabs[useStore.getState().activeTabId];
+    expect(active?.name).toBe("Second");
+  });
+
+  it("edit_extension changes nothing when an edit or its result is wrong", async () => {
+    await callTool("set_extension", { spec: EXAMPLE_SPEC });
+    const before = JSON.stringify(useStore.getState().elements);
+    const badPath = await callTool("edit_extension", {
+      edits: [{ op: "update", path: ["Acme", "Sheets", "Nope"], set: { tooltip: "x" } }],
+    });
+    expect(badPath.ok).toBe(false);
+    expect(badPath.message).toMatch(
+      /no bundle named "Nope" in "Acme" \/ "Sheets"; it has "Renumber", "Help", "Export"/,
+    );
+    const badValue = await callTool("edit_extension", {
+      edits: [
+        { op: "update", path: ["Acme", "Sheets", "Renumber"], set: { tooltip: "fine" } },
+        { op: "update", path: ["Acme", "Sheets", "Renumber"], set: { beta: "yes" } },
+      ],
+    });
+    expect(badValue).toMatchObject({
+      ok: false,
+      errors: [{ path: "tabs[0].panels[0].items[0].beta", message: "must be true or false" }],
+    });
+    expect(JSON.stringify(useStore.getState().elements)).toBe(before);
   });
 });

@@ -44,59 +44,50 @@ test.describe("WebMCP", () => {
     await openApp(page);
   });
 
-  test("registers the five tools with their schemas", async ({ page }) => {
+  test("registers the six tools, with short input schemas and an output schema", async ({
+    page,
+  }) => {
     const tools = await page.evaluate(() =>
       (window as unknown as Recorder).__webmcpTools.map((t) => ({
         name: t.name,
         readOnly: t.annotations?.readOnlyHint,
         type: t.inputSchema.type,
-        hasSpec: "spec" in ((t.inputSchema.properties as object | undefined) ?? {}),
-        hasDefs: "$defs" in t.inputSchema,
+        args: Object.keys((t.inputSchema.properties as object | undefined) ?? {}),
+        // The whole tool list stays small: no 29 KB schema inlined twice.
+        small: JSON.stringify(t.inputSchema).length < 3000,
+        output: (t as unknown as { outputSchema?: { required?: string[] } }).outputSchema?.required,
         described: t.description.length > 100,
       })),
     );
+    const common = { type: "object", small: true, output: ["ok", "message"], described: true };
     expect(tools).toEqual([
-      {
-        name: "get_extension_schema",
-        readOnly: true,
-        type: "object",
-        hasSpec: false,
-        hasDefs: false,
-        described: true,
-      },
-      {
-        name: "get_extension",
-        readOnly: true,
-        type: "object",
-        hasSpec: false,
-        hasDefs: false,
-        described: true,
-      },
-      {
-        name: "validate_extension",
-        readOnly: true,
-        type: "object",
-        hasSpec: true,
-        hasDefs: true,
-        described: true,
-      },
-      {
-        name: "set_extension",
-        readOnly: false,
-        type: "object",
-        hasSpec: true,
-        hasDefs: true,
-        described: true,
-      },
-      {
-        name: "download_extension",
-        readOnly: false,
-        type: "object",
-        hasSpec: false,
-        hasDefs: false,
-        described: true,
-      },
+      { name: "get_extension_schema", readOnly: true, args: [], ...common },
+      { name: "get_extension", readOnly: true, args: ["include_icons"], ...common },
+      { name: "validate_extension", readOnly: true, args: ["spec"], ...common },
+      { name: "edit_extension", readOnly: false, args: ["edits"], ...common },
+      { name: "set_extension", readOnly: false, args: ["spec"], ...common },
+      { name: "download_extension", readOnly: false, args: [], ...common },
     ]);
+  });
+
+  test("an agent edits one button by name, keeping the rest", async ({ page }) => {
+    await run(page, "set_extension", { spec: EXAMPLE_SPEC });
+    const edited = await run(page, "edit_extension", {
+      edits: [
+        { op: "update", path: ["Acme", "Sheets", "Renumber"], set: { name: "Renumber All" } },
+        { op: "remove", path: ["Acme", "Sheets", "Export"] },
+      ],
+    });
+    expect(edited).toMatchObject({ ok: true, problems: [] });
+    const ribbon = page.locator("#ribbonContainer");
+    await expect(item(ribbon, "Renumber All")).toBeVisible();
+    await expect(item(ribbon, "Docs")).toBeVisible();
+    await expect(ribbon.locator('[data-name="Export"]')).toHaveCount(0);
+
+    // One undo step brings both edits back.
+    await page.locator("#undoAction").click();
+    await expect(item(ribbon, "Renumber")).toBeVisible();
+    await expect(item(ribbon, "Export")).toBeVisible();
   });
 
   test("an agent builds an extension and downloads it", async ({ page }) => {

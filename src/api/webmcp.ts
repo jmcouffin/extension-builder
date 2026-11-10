@@ -43,6 +43,8 @@ export interface WebMcpTool {
   title: string;
   description: string;
   inputSchema: JsonSchema;
+  /** In the draft; Chromium 153 drops it, as WebIDL drops unknown members. */
+  outputSchema: JsonSchema;
   annotations: {
     readOnlyHint: boolean;
     destructiveHint?: boolean;
@@ -51,9 +53,14 @@ export interface WebMcpTool {
   execute(input: unknown, options?: unknown): Promise<ToolResult | McpToolResult>;
 }
 
-/** An MCP CallToolResult: one text block holding the tool's JSON result. */
+/**
+ * An MCP CallToolResult: one text block holding the tool's JSON result, and
+ * the same as structuredContent, which MCP asks for when a tool declares an
+ * outputSchema.
+ */
 export interface McpToolResult {
   content: { type: "text"; text: string }[];
+  structuredContent: ToolResult;
   isError?: boolean;
 }
 
@@ -82,6 +89,8 @@ export interface PyRevitBuilderApi {
   call(name: string, input?: unknown): Promise<ToolResult>;
   getExtension(options?: { include_icons?: boolean }): Promise<ToolResult>;
   setExtension(spec: unknown): Promise<ToolResult>;
+  /** edit_extension: change part of the extension by name, see its description. */
+  edit(edits: unknown[]): Promise<ToolResult>;
   validate(spec: unknown): Promise<ToolResult>;
   download(): Promise<ToolResult>;
   /** The JSON Schema of an extension spec. */
@@ -106,6 +115,7 @@ export function toWebMcpTool(tool: AgentTool, shape: ResultShape = "plain"): Web
     title: tool.title,
     description: tool.description,
     inputSchema: tool.inputSchema,
+    outputSchema: tool.outputSchema,
     annotations: {
       readOnlyHint: tool.readOnly,
       // MCP's ToolAnnotations hint; a browser that does not know it ignores
@@ -118,6 +128,7 @@ export function toWebMcpTool(tool: AgentTool, shape: ResultShape = "plain"): Web
       if (shape === "plain") return result;
       return {
         content: [{ type: "text", text: JSON.stringify(result) }],
+        structuredContent: result,
         ...(result.ok ? {} : { isError: true }),
       };
     },
@@ -144,6 +155,7 @@ function installPageApi() {
     call: callTool,
     getExtension: (options = {}) => callTool("get_extension", options),
     setExtension: (spec) => callTool("set_extension", { spec }),
+    edit: (edits) => callTool("edit_extension", { edits }),
     validate: (spec) => callTool("validate_extension", { spec }),
     download: () => callTool("download_extension", {}),
     schema: () => extensionSchema(),

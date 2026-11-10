@@ -39,7 +39,14 @@ an agent running in the user's browser. Everything lives in `src/api/`.
 | `/api/extension.schema.json` | `src/api/schema.ts` | The spec's JSON Schema (draft 2020-12), one `$defs` entry per bundle type. |
 | `/api/example.json` | `src/api/spec.ts` | `EXAMPLE_SPEC`, the example llms.txt shows. |
 | Import link | `src/api/importLink.ts` | `/#spec=<URL-encoded JSON>` (or base64url) opens the spec in the builder; `/?spec_url=<https URL>` fetches a hosted one. The spec is then taken out of the URL. Work in progress is replaced only after a confirm, as one undo step. Load also accepts a spec file. |
-| WebMCP tools | `src/api/agentTools.ts`, `webmcp.ts` | `get_extension_schema`, `get_extension`, `validate_extension`, `set_extension`, `download_extension`, registered on `document.modelContext` (or `navigator.modelContext`) when the browser has WebMCP, and always on `window.pyrevitBuilder` for agents that script the page. |
+| WebMCP tools | `src/api/agentTools.ts`, `edits.ts`, `webmcp.ts` | `get_extension_schema`, `get_extension`, `validate_extension`, `edit_extension`, `set_extension`, `download_extension`, registered on `document.modelContext` (or `navigator.modelContext`) when the browser has WebMCP, and always on `window.pyrevitBuilder` for agents that script the page. `edit_extension` changes part of the extension by name (`update`, `add`, `remove`, `move`, all or none, one undo step), so a small edit doesn't send the whole spec and its icons back. Every tool declares an `outputSchema` for its result (`ok`, `message`, `errors`, `problems`, `warnings`, and what it adds). |
+
+Browsers don't check a tool's arguments against its `inputSchema`: the WebMCP
+draft only asks that they parse to an object, and Chromium 153 hands `execute`
+anything (checked with its own WebMCP). So every tool checks its own
+arguments, and `inputSchema` is guidance for the agent: `validate_extension`
+and `set_extension` carry a short one pointing to `get_extension_schema`
+instead of inlining the 29 KB spec schema twice in the tool list.
 
 The three published files are generated at build time from the type table (a
 Vite plugin in `vite.config.ts`, served by the dev server too), so they always
@@ -415,15 +422,17 @@ console error, a failed request or a native dialog. Across all sizes it checks:
   replaced only after a confirm, and Undo brings it back; Load opens a spec
   file; `/llms.txt`, the schema and the example are served, and the link in
   llms.txt opens as it is;
-- **webmcp**: the five tools register on a fake `document.modelContext` with
-  their schemas; `set_extension` builds the example in the ribbon,
-  `get_extension` reads it back unchanged, `download_extension` downloads it, a
-  broken spec is refused, and `window.pyrevitBuilder` works without WebMCP;
+- **webmcp**: the six tools register on a fake `document.modelContext` with
+  short input schemas and an output schema; `set_extension` builds the example
+  in the ribbon, `edit_extension` renames one button and removes another in one
+  undo step, `get_extension` reads it back unchanged, `download_extension`
+  downloads it, a broken spec is refused, and `window.pyrevitBuilder` works
+  without WebMCP;
 - **webmcp-native**: the same through Chromium's own WebMCP (the
   `WebMCPTesting` feature, as `chrome://flags/#enable-webmcp-testing` turns
-  on): `getTools()` lists the five tools with their hints, and `executeTool()`
-  builds, reads back, validates and downloads, each result the tool's own
-  JSON. Skipped if a Chromium has no WebMCP behind the flag;
+  on): `getTools()` lists the six tools with their hints, and `executeTool()`
+  builds, reads back, edits by name, validates and downloads, each result the
+  tool's own JSON. Skipped if a Chromium has no WebMCP behind the flag;
 - **export**: the ZIP holds only folder suffixes pyRevit knows, real PNG icons,
   no `__init__.py` / `entrypoint.py` / `.pyrevit`; broken extensions are refused
   with a list; save and load of a layout file round-trips.
