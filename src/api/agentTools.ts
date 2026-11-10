@@ -239,11 +239,25 @@ const downloadExtension: AgentTool = {
   },
 };
 
-export const AGENT_TOOLS: readonly AgentTool[] = Object.freeze(
-  [getExtensionSchema, getExtension, validateExtension, setExtension, downloadExtension].map(
-    (tool) => Object.freeze(tool),
-  ),
-);
+function deepFreeze<T>(value: T): T {
+  if (
+    (typeof value === "object" || typeof value === "function") &&
+    value !== null &&
+    !Object.isFrozen(value)
+  ) {
+    Object.freeze(value);
+    for (const v of Object.values(value as Record<string, unknown>)) deepFreeze(v);
+  }
+  return value;
+}
+
+export const AGENT_TOOLS: readonly AgentTool[] = deepFreeze([
+  getExtensionSchema,
+  getExtension,
+  validateExtension,
+  setExtension,
+  downloadExtension,
+]);
 
 /**
  * The arguments a tool's inputSchema does not declare, when it forbids
