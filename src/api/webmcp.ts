@@ -43,7 +43,11 @@ export interface WebMcpTool {
   title: string;
   description: string;
   inputSchema: JsonSchema;
-  annotations: { readOnlyHint: boolean; untrustedContentHint?: boolean };
+  annotations: {
+    readOnlyHint: boolean;
+    destructiveHint?: boolean;
+    untrustedContentHint?: boolean;
+  };
   execute(input: unknown, options?: unknown): Promise<ToolResult | McpToolResult>;
 }
 
@@ -72,7 +76,7 @@ export interface ModelContextLike {
 export interface PyRevitBuilderApi {
   /** The extension spec version the tools speak. */
   readonly version: number;
-  /** Every tool: name, description, inputSchema, readOnly, execute. */
+  /** Every tool: name, description, inputSchema, readOnly, execute. Frozen. */
   readonly tools: readonly AgentTool[];
   /** Run a tool by name. Never throws; a refusal has `ok: false`. */
   call(name: string, input?: unknown): Promise<ToolResult>;
@@ -104,6 +108,9 @@ export function toWebMcpTool(tool: AgentTool, shape: ResultShape = "plain"): Web
     inputSchema: tool.inputSchema,
     annotations: {
       readOnlyHint: tool.readOnly,
+      // MCP's ToolAnnotations hint; a browser that does not know it ignores
+      // it (WebIDL dictionaries drop unknown members).
+      ...(tool.destructive && !tool.readOnly ? { destructiveHint: true } : {}),
       ...(tool.untrustedContent ? { untrustedContentHint: true } : {}),
     },
     async execute(input) {
