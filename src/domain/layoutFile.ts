@@ -105,7 +105,7 @@ export function migrate(state: any, dropped?: string[]): Layout {
     if (!Object.hasOwn(el, "iconOnData")) el.iconOnData = null;
     if (el.iconData === undefined) el.iconData = null;
     for (const [key, label] of ICON_FIELDS) {
-      if (el[key] && !isPngDataUrl(el[key])) {
+      if (el[key] != null && !isPngDataUrl(el[key])) {
         el[key] = null;
         dropped?.push(`"${el.name || id}": ${label}`);
       }
