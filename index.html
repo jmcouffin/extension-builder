@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>pyRevit Extension Builder</title>
     <link rel="icon" type="image/svg+xml" href="/src/assets/logo.svg" />
+    <!--
+      For AI agents: how to drive this page is in /llms.txt. The tools are
+      registered with WebMCP (document.modelContext) when the browser has it,
+      and are always at window.pyrevitBuilder for agents that script the page.
+    -->
+    <link rel="alternate" type="text/markdown" href="/llms.txt" title="llms.txt: how an AI agent uses the builder" />
     <script>
       // Apply the theme before first paint, so a reload never flashes the
       // default look. Same rule as src/theme/store.ts: ?theme= wins over the
